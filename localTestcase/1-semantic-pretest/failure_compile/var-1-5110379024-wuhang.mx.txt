@@ -1,0 +1,14 @@
+int main() {
+    void a;
+}
+
+/*!! metadata:
+=== comment ===
+var-1-5110379024-wuhang.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

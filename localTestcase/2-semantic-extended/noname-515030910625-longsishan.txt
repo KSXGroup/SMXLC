@@ -1,0 +1,17 @@
+int[][] graph = new int[][3];
+
+int main() {
+}
+
+/*!! metadata:
+=== comment ===
+noname-515030910625-longsishan.txt
+creator test
+=== assert ===
+failure_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/

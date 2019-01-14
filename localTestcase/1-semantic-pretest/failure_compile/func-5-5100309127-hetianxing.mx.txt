@@ -1,0 +1,24 @@
+class AI {
+    int a;
+}
+
+int f(int a, int b)
+{
+}
+
+int main() {
+    int b;
+    AI sa = new AI;
+    f(b, sa);
+}
+
+/*!! metadata:
+=== comment ===
+func-5-5100309127-hetianxing.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

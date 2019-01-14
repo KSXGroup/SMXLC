@@ -1,0 +1,22 @@
+int x = 10;
+int main() {
+    x = 20;
+    return x;
+}
+
+
+/*!! metadata:
+=== comment ===
+symtable2.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+20
+=== is_public ===
+True
+!!*/

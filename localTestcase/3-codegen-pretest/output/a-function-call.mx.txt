@@ -1,0 +1,29 @@
+void foo(int d, int x, int y) {
+    println(toString(d*1000 + x*10 + y));
+    if (d == 1) return;
+    int t = x; x = y; y = t;
+    foo(1, x, y);
+    println(toString(d*1000 + x*10 + y));
+}
+int main() {
+    foo(7, 5, 3);
+    return 0;
+}
+/*!! metadata:
+=== comment ===
+a-function-call.mx
+=== assert ===
+output
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+
+=== output ===
+7053
+1035
+7035
+=== is_public ===
+True
+!!*/

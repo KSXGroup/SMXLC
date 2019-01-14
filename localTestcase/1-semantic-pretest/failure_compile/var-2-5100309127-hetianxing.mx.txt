@@ -1,0 +1,16 @@
+int b;
+int c;
+int main() {
+}
+int c;
+
+/*!! metadata:
+=== comment ===
+var-2-5100309127-hetianxing.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

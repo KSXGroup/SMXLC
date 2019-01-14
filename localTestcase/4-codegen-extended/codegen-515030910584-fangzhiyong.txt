@@ -1,0 +1,42 @@
+int myInt(int n){
+	return n;
+}
+
+int myFactorial(int a, int b){
+	if (a <= 1 || b <= 1) return 1;
+	return myFactorial(a, b - 1) + myFactorial(a - 1, b) + myFactorial(a - 1, b - 1);
+}
+
+int main(){
+	int a;
+	int b;
+	int i;
+	int sum;
+
+	a = myInt(10);
+	b = myInt(10);
+	sum = 0;
+
+	for (i = 0; i <= 500; ++i){
+		sum = sum + myFactorial(a, b);
+	}
+
+	print(toString(sum));
+}
+
+/*!! metadata:
+=== comment ===
+codegen-515030910584-fangzhiyong.txt
+=== assert ===
+output
+=== timeout ===
+10.0
+=== input ===
+=== output ===
+732744063
+=== phase ===
+codegen extended
+=== is_public ===
+True
+
+!!*/

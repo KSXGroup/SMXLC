@@ -1,0 +1,31 @@
+int gcd(int x, int y) {
+  if (x%y == 0) return y;
+  else return gcd(y, x%y);
+}
+
+int main() {
+    println(toString(gcd(10,1)));
+    println(toString(gcd(34986,3087)));
+    println(toString(gcd(2907,1539)));
+
+    return 0;
+}
+/*!! metadata:
+=== comment ===
+gcd-5090379042-jiaxiao.mx
+=== assert ===
+output
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+
+=== output ===
+1
+1029
+171
+
+=== is_public ===
+True
+!!*/

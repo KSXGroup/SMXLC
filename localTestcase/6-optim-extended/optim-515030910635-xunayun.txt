@@ -1,0 +1,67 @@
+int mod;
+int n, m;
+int[] rev = new int[210000];
+int[] fact = new int[210000];
+int tot;
+int powermod(int x, int y) {
+	if (y == 0) {
+		return 1;
+	}
+	int tmp = powermod(x, y / 2);
+	if ((y & 1) == 1) {
+		return x * tmp % mod * tmp % mod;
+	} else {
+		return tmp * tmp % mod;
+	}
+}
+
+void solve() {
+	n--;
+	m--;
+	int row = n + m - 1;
+	int col = row - m + 1;
+	row--;
+	col--;
+	int answer = fact[row] * rev[col] % mod * rev[row - col] % mod;
+	tot = tot + answer;
+	tot = tot % mod;
+}
+int main() {
+	mod = 10007;
+	fact[0] = 1;
+	rev[0] = powermod(1, mod - 2);
+	int N = 210000;
+	tot = 0;
+	int i;
+	int j;
+	for (i = 1; i <= N - 1; i++) {
+		fact[i] = fact[i - 1] * i % mod;
+		rev[i] = powermod(fact[i], mod - 2);
+	}
+	for (i = 1000; i <= 5000; i++) {
+		for (j = 1; j <= 4000; j++) {
+			n = i;
+			m = j;
+			solve();
+		}
+	}
+	
+	println(toString(tot));
+}
+
+/*!! metadata:
+=== comment ===
+optim-515030910635-xunayun.txt
+=== input ===
+
+=== assert ===
+output
+=== timeout ===
+5.0
+=== output ===
+9493
+=== phase ===
+optim extended
+=== is_public ===
+True
+!!*/

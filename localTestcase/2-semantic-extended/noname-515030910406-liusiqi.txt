@@ -1,0 +1,23 @@
+void haha(){
+	int a;
+	return 1;
+}
+
+int main() {
+	printf("hehe\n");
+	return 0;
+}
+
+
+/*!! metadata:
+=== comment ===
+noname-515030910406-liusiqi.txt
+void return 1
+=== assert ===
+failure_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/

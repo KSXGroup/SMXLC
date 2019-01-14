@@ -1,0 +1,20 @@
+int f(int anything) {
+	return 0;
+}
+
+int main() {
+  int x = f(x);
+  printf("%d\n", x);
+  return x;
+}
+
+/*!! metadata:
+=== comment ===
+selfref-5090379042-jiaxiao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

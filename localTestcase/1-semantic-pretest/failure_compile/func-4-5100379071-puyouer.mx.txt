@@ -1,0 +1,20 @@
+int f(int a, int b) {
+    return a + b;
+}
+
+int main() {
+    int x;
+    x = f(1, 2, 3);
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+func-4-5100379071-puyouer.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

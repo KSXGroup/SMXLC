@@ -1,0 +1,16 @@
+int main() {
+    while (1) { }
+    break;
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+ctrflow-1-5100379071-puyouer.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

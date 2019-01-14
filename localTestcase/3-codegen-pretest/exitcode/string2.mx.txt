@@ -1,0 +1,19 @@
+int main() {
+    return "hahaha".substring(2, 3).length();
+}
+
+/*!! metadata:
+=== comment ===
+string2.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+2
+=== is_public ===
+True
+!!*/

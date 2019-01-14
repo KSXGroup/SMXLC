@@ -1,0 +1,22 @@
+class A {
+	void a() {
+	}
+}
+
+int main() {
+	A c = new A;
+    c.a(;
+	// c.a; // in case you want to implement function pointer
+}
+
+/*!! metadata:
+=== comment ===
+noname-515030910645-suyufeng.txt
+=== assert ===
+failure_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/

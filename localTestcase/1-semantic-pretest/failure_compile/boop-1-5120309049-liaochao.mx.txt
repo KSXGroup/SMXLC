@@ -1,0 +1,16 @@
+
+int main() {
+    if ("20" && "16") {
+    }
+}
+
+/*!! metadata:
+=== comment ===
+boop-1-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

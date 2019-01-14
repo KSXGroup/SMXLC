@@ -1,0 +1,19 @@
+int f(A x) {
+    int year = 2016;
+    return year;
+}
+
+int main() {
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+func-2-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

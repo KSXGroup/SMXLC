@@ -1,0 +1,24 @@
+int main() {
+    int a = 5;
+    int b;
+    int c;
+    c = a++;
+    b = c;
+    return a;
+}
+
+/*!! metadata:
+=== comment ===
+simple6.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+6
+=== is_public ===
+True
+!!*/

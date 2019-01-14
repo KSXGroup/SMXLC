@@ -1,0 +1,26 @@
+int main() {
+    int n = 20;
+    int sum = 0;
+    int i = 1;
+    while (i <= n) {
+        sum = sum + i;
+        i = i+1;
+    }
+    return sum;
+}
+
+/*!! metadata:
+=== comment ===
+loop1.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+210
+=== is_public ===
+True
+!!*/

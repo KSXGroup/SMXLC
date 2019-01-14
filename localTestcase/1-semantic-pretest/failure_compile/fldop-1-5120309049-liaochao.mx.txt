@@ -1,0 +1,19 @@
+class Foo {
+    int young;
+}
+
+int main() {
+    Foo chairman = new Foo;
+    chairman.naive = -2147483648;
+}
+
+/*!! metadata:
+=== comment ===
+fldop-1-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

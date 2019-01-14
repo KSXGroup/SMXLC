@@ -1,0 +1,14 @@
+int main() {
+    null = 2016;
+}
+
+/*!! metadata:
+=== comment ===
+asiop-4-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

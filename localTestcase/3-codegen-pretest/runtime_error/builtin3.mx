@@ -1,0 +1,19 @@
+int main() {
+    string text = "hello";
+    println(text);
+    println("world");
+    return 0;
+}
+/*!! metadata:
+=== comment ===
+builtin3.mx
+=== assert ===
+exception
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== is_public ===
+True
+!!*/

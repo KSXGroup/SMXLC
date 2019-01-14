@@ -1,0 +1,17 @@
+
+int main() {
+    string institute = "zhiyuan";
+    while (institute) {
+    }
+}
+
+/*!! metadata:
+=== comment ===
+ctrflow-4-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

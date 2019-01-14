@@ -1,0 +1,37 @@
+int x = 1;
+bool b(bool x){
+    return x;
+}
+class C{
+    C(){
+        x();
+        {int x;}
+    }
+    void x(){}
+}
+int main(){
+    string x = "789dcbadcba\n";
+    int y;
+    C c;
+    c.x();
+    b(true);
+    {y = x.parseInt();
+    int x = y;}
+    return y;
+}
+
+
+
+/*!! metadata:
+=== comment ===
+scope-515021910153-shengpeiyao.txt
+variables in different scopes with same name
+=== assert ===
+success_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/
+

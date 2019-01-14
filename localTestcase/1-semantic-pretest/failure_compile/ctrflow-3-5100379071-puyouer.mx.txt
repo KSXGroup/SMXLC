@@ -1,0 +1,18 @@
+class A { int a; }
+
+int main() {
+    A a = new A;
+    if (a) {}
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+ctrflow-3-5100379071-puyouer.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

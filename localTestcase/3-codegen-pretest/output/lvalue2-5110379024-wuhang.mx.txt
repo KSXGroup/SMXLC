@@ -1,0 +1,27 @@
+int[] a = new int[4];
+int main()
+{
+    int[] b = new int[4];
+    b[2]=2;
+    a=b;
+    println(toString(a[2]));
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+lvalue2-5110379024-wuhang.mx
+=== assert ===
+output
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+
+=== output ===
+2
+
+=== is_public ===
+True
+!!*/

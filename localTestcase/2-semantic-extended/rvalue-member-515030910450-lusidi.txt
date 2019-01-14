@@ -1,0 +1,29 @@
+class testret
+{
+    int name;
+    testret()
+    {
+	name = 2;
+    }
+}
+testret ret_const()
+{
+    testret r = new testret;
+    return r;
+}
+int main()
+{
+    ret_const() = new testret;
+}
+
+/*!! metadata:
+=== comment ===
+rvalue-member-515030910450-lusidi.txt
+=== assert ===
+failure_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/

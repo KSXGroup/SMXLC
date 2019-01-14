@@ -1,0 +1,22 @@
+int main() {
+    int[] a = new int[1];
+    a[0] = 10;
+    return a[0] + 20;
+}
+
+
+/*!! metadata:
+=== comment ===
+array2.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+30
+=== is_public ===
+True
+!!*/

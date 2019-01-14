@@ -1,0 +1,26 @@
+void func(int arg1, string arg2) {
+    print("...");
+}
+int x;
+int y;
+int z;
+int main() {
+    int a;
+    int b = 3;
+    int c;
+    int d;
+    // a = c = d = b << 2;
+    d = b << 2;
+    c = d;
+    a = c;
+}
+/*!! metadata:
+=== comment ===
+grammar_patch_1.mx
+=== assert ===
+success_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

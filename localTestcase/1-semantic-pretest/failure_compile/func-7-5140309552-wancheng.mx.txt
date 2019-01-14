@@ -1,0 +1,12 @@
+void main() {}
+
+/*!! metadata:
+=== comment ===
+func-7-5140309552-wancheng.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

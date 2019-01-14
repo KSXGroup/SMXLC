@@ -1,0 +1,27 @@
+int min(int a, int b) {
+    if (a <= b) return a;
+    return b;
+}
+
+int main() {
+    int x = 10;
+    int y = 20;
+    return min(x, y);
+}
+
+
+/*!! metadata:
+=== comment ===
+function1.mx
+=== assert ===
+exitcode
+=== phase ===
+codegen pretest
+=== timeout ===
+0.1
+=== input ===
+=== exitcode ===
+10
+=== is_public ===
+True
+!!*/

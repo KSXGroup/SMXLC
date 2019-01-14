@@ -1,0 +1,16 @@
+
+int mai() {
+    string str = "120";
+    int x = str >> 3;
+}
+
+/*!! metadata:
+=== comment ===
+bitop-1-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

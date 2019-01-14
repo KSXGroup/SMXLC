@@ -1,0 +1,22 @@
+class A {
+    int x;
+}
+
+class A {
+    int x;
+    int y;
+}
+
+int main() {
+}
+
+/*!! metadata:
+=== comment ===
+class-2-5120309049-liaochao.mx
+=== assert ===
+failure_compile
+=== phase ===
+semantic pretest
+=== is_public ===
+True
+!!*/

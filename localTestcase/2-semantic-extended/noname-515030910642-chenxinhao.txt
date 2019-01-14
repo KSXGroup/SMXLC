@@ -1,0 +1,24 @@
+class A {
+  B() {}
+}
+
+class B {
+  A() {}
+}
+
+int main() {
+  A b = new A;
+  B a = new B;
+}
+
+/*!! metadata:
+=== comment ===
+noname-515030910642-chenxinhao.txt
+=== assert ===
+failure_compile
+=== phase ===
+semantic extended
+=== is_public ===
+True
+
+!!*/
