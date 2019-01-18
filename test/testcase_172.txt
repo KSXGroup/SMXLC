@@ -1,0 +1,44 @@
+class MyClass1 {
+    
+    void MyClass2() {}
+    
+    MyClass2 foo() {
+        return new MyClass2();
+        // can distinguish btw MyClass2's construction method and MyClass1's member method by context
+    }
+    
+    MyClass1() {}
+}
+
+class MyClass2 {
+    
+    MyClass2() {}
+}
+
+int main() {
+    
+    MyClass1 obj = new MyClass1();
+    obj.foo();
+    return 0;
+}
+
+/*!! metadata:
+=== comment ===
+谢雨桐 
+=== is_public ===
+True
+=== assert ===
+success_compile
+=== timeout ===
+0
+=== input ===
+
+=== phase ===
+semantic pretest
+=== output ===
+
+=== exitcode ===
+0
+
+!!*/
+
