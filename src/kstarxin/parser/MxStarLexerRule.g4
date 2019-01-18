@@ -1,49 +1,49 @@
 lexer grammar MxStarLexerRule;
 
-Boolean 	:	'bool';
-Integer 	:	'int';
-String 		:	'string';
-Void		:	'void';
-If 		    :	'if';
+Boolean     :   'bool';
+Integer     :   'int';
+String 	    :   'string';
+Void        :   'void';
+If          :   'if';
 Else        :   'else';
-For		    :	'for';
-While		:	'while';
-Break		:	'break';
-Continue	:	'continue';
-Return		:	'return';
-New		    :	'new';
-Class		:	'class';
-This		:	'this';
+For         :   'for';
+While       :   'while';
+Break       :   'break';
+Continue    :   'continue';
+Return      :   'return';
+New         :   'new';
+Class       :   'class';
+This        :   'this';
 
 
-CommentLine	:	'//'.*?'\n' 	->skip;
+CommentLine	:   '//'.*?'\n'     ->skip;
 
-CommentBlock:	'/*'.*?'*/'	->skip;
+CommentBlock:   '/*'.*?'*/'     ->skip;
 
-Identifier	:	[a-zA-Z][0-9a-zA-Z_]*;
+WhiteSpace	:   [ \t\n\r]+      ->skip;
 
-WhiteSpace	:	[ \t\n\r]+	->skip;
+NewLine		:   '\r'?'\n'       ->skip;
 
-NewLine		:	'\r'?'\n'	->skip;
+Identifier	:   [a-zA-Z][0-9a-zA-Z_]*;
 
-BoolConst	:	'true' | 'false';
+BoolConst	:   'true' | 'false';
 
-NullConst	:	'null';
+NullConst	:   'null';
 
-fragment	EscapeCharacter	:	'\\'["abfnrtv0\\'];
-fragment 	StringCharacter	:	~["\\] | EscapeCharacter;
+fragment    EscapeCharacter	:   '\\'["abfnrtv0\\'];
+fragment    StringCharacter	:   ~["\\] | EscapeCharacter;
 
-StringConst	:	'"'StringCharacter*'"';
+StringConst	:   '"'StringCharacter*'"';
 
-fragment	Digit		    :	[0-9];
+fragment    Digit           :	[0-9];
 fragment    NonZeroDigit    :   [1-9];
-fragment 	DecimalInteger	:	'-'?[1-9]Digit* | [0];
+fragment    DecimalInteger  :	'-'?[1-9]Digit* | [0];
 
-IntegerConst:	DecimalInteger;
+IntegerConst:   DecimalInteger;
 
-ADD		    :	'+';
-SUB		    :	'-';
-MUL		    :	'*';
+ADD         :	'+';
+SUB         :	'-';
+MUL         :	'*';
 DIV         :   '/';
 MOD		    :	'%';
 GT		    :	'>';
@@ -55,33 +55,33 @@ EQ		    :	'==';
 NEQ		    :	'!=';
 NOT		    :	'!';
 
-SFTL		:	'<<';
-SFTR		:	'>>';
-BITNOT		:	'~';
-BITOR		:	'|';
-BITXOR		:	'^';
-BITAND		:	'&';
+SFTL        :	'<<';
+SFTR        :	'>>';
+BITNOT      :	'~';
+BITOR       :	'|';
+BITXOR      :	'^';
+BITAND      :	'&';
 AND         :   '&&';
 OR          :   '||';
 
-ASSIGN		:	'=';
+ASSIGN      :	'=';
 
-INC		    :	'++';
-DEC		    :	'--';
+INC         :	'++';
+DEC         :	'--';
 
-DOT		    :	'.';
+DOT         :	'.';
 
-SEMI		:	';';
-COMMA		:	',';
+SEMI        :	';';
+COMMA       :	',';
 
-LBRAC		:	'[';
-RBRAC		:	']';
+LBRAC       :	'[';
+RBRAC       :	']';
 
-LPAREN		:	'(';
-RPAREN		:	')';
+LPAREN      :	'(';
+RPAREN      :	')';
 
-LBRACE		:	'{';
-RBRACE		:	'}';
+LBRACE      :	'{';
+RBRACE      :	'}';
 
 
 
