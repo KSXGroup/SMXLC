@@ -16,24 +16,24 @@ Class       :   'class';
 This        :   'this';
 
 
-CommentLine	:   '//'.*?'\n'     ->skip;
+CommentLine :   '//'.*?'\n'     ->skip;
 
 CommentBlock:   '/*'.*?'*/'     ->skip;
 
-WhiteSpace	:   [ \t\n\r]+      ->skip;
+WhiteSpace  :   [ \t\n\r]+      ->skip;
 
-NewLine		:   '\r'?'\n'       ->skip;
+NewLine     :   '\r'?'\n'       ->skip;
 
-Identifier	:   [a-zA-Z][0-9a-zA-Z_]*;
+Identifier  :   [a-zA-Z][0-9a-zA-Z_]*;
 
-BoolConst	:   'true' | 'false';
+BoolConst   :   'true' | 'false';
 
-NullConst	:   'null';
+NullConst   :   'null';
 
 fragment    EscapeCharacter	:   '\\'["abfnrtv0\\'];
 fragment    StringCharacter	:   ~["\\] | EscapeCharacter;
 
-StringConst	:   '"'StringCharacter*'"';
+StringConst :       '"'StringCharacter*'"';
 
 fragment    Digit           :	[0-9];
 fragment    NonZeroDigit    :   [1-9];
@@ -45,15 +45,15 @@ ADD         :	'+';
 SUB         :	'-';
 MUL         :	'*';
 DIV         :   '/';
-MOD		    :	'%';
-GT		    :	'>';
+MOD         :	'%';
+GT          :	'>';
 GE          :   '>=';
-LT		    :	'<';
+LT          :	'<';
 LE          :   '<=';
 
-EQ		    :	'==';
-NEQ		    :	'!=';
-NOT		    :	'!';
+EQ          :	'==';
+NEQ         :	'!=';
+NOT         :	'!';
 
 SFTL        :	'<<';
 SFTR        :	'>>';
