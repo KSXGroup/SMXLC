@@ -28,11 +28,29 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitVariableDeclaration(MxStarParser.VariableDeclarationContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxStarParser#variableDeclarationList}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDeclarationList(MxStarParser.VariableDeclarationListContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxStarParser#variableDeclarator}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitVariableDeclarator(MxStarParser.VariableDeclaratorContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxStarParser#type}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitType(MxStarParser.TypeContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxStarParser#arrayType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrayType(MxStarParser.ArrayTypeContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#nonArrayType}.
 	 * @param ctx the parse tree
@@ -148,17 +166,29 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitClassDeclaration(MxStarParser.ClassDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxStarParser#classBody}.
+	 * Visit a parse tree produced by {@link MxStarParser#classBodyMember}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitClassBody(MxStarParser.ClassBodyContext ctx);
+	T visitClassBodyMember(MxStarParser.ClassBodyMemberContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxStarParser#classMemberFunctionDeclaration}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitClassMemberFunctionDeclaration(MxStarParser.ClassMemberFunctionDeclarationContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#classConstructorDeclaration}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitClassConstructorDeclaration(MxStarParser.ClassConstructorDeclarationContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link MxStarParser#constructorBody}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitConstructorBody(MxStarParser.ConstructorBodyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#expressionList}.
 	 * @param ctx the parse tree

@@ -37,7 +37,7 @@ StringConst :       '"'StringCharacter*'"';
 
 fragment    Digit           :	[0-9];
 fragment    NonZeroDigit    :   [1-9];
-fragment    DecimalInteger  :	'-'?[1-9]Digit* | [0];
+fragment    DecimalInteger  :	([1-9]Digit*) | [0];
 
 IntegerConst:   DecimalInteger;
 
@@ -82,8 +82,4 @@ RPAREN      :	')';
 
 LBRACE      :	'{';
 RBRACE      :	'}';
-
-
-
-
 

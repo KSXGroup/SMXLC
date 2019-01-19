@@ -7,23 +7,36 @@ program             :   declaration* EOF
 declaration         :   methodDeclaration
                     |   classDeclaration
                     |   variableDeclaration
+                    |   SEMI
                     ;
 
-variableDeclaration :   type Identifier (ASSIGN expression)? SEMI
+variableDeclaration :   type variableDeclarationList SEMI
                     ;
 
-type                :   nonArrayType (LBRAC RBRAC)*
+variableDeclarationList
+                    :
+                        variableDeclarator (COMMA variableDeclarator?)*
+                    ;
+
+variableDeclarator  :   Identifier (ASSIGN expression)?
+                    ;
+
+type                :   nonArrayType | arrayType
+                    ;
+
+arrayType           :   nonArrayType (LBRAC RBRAC)+
                     ;
 
 nonArrayType        :   userType
                     |   primitiveType
                     ;
 
-userType            :   Identifier;
+userType            :   Identifier
+                    ;
 
 primitiveType       :   Boolean |   Integer |   String;
 
-methodDeclaration   :   typeWithVoid Identifier parameterField (LBRACE methodBody RBRACE);
+methodDeclaration   :   typeWithVoid Identifier parameterField LBRACE methodBody* RBRACE;
 
 typeWithVoid        :   type |  Void;
 
@@ -31,7 +44,7 @@ parameterField      :   (LPAREN (parameterDeclaration (COMMA parameterDeclaratio
 
 parameterDeclaration:   type Identifier;
 
-methodBody          :   statement*;
+methodBody          :   statement;
 
 statement           :   block
                     |   conditionStatement
@@ -42,7 +55,7 @@ statement           :   block
                     |   SEMI
                     ;
 
-block               :   LBRACE  statement* RBRACE
+block               :   LBRACE statement* RBRACE
                     ;
 
 conditionStatement  :   If LPAREN expression RPAREN statement elseIfStatement* elseStatement?
@@ -64,23 +77,30 @@ forStatement        :   normalForStatement
 whileStatement      :   While LPAREN expression RPAREN  statement
                     ;
 
-normalForStatement  :   For LPAREN init=expression SEMI cond=expression SEMI step=expression RPAREN statement
+normalForStatement  :   For LPAREN (init=expression)? SEMI (cond=expression)? SEMI (step=expression)? RPAREN statement
                     ;
 
 jumpStatement       :   Break SEMI
                     |   Continue SEMI
                     |   Return expression? SEMI;
 
-classDeclaration    :   Class Identifier (LBRACE classBody RBRACE)
+classDeclaration    :   Class Identifier LBRACE classBodyMember* RBRACE
                     ;
 
-classBody           :   classConstructorDeclaration
-                    |   classMemberFunctionDeclaration = methodDeclaration
-                    |   variableDeclaration
+classBodyMember     :   variableDeclaration
+                    |   classConstructorDeclaration
+                    |   classMemberFunctionDeclaration
+                    ;
+
+classMemberFunctionDeclaration
+                    :   methodDeclaration
                     ;
 
 classConstructorDeclaration
-                    :   Identifier parameterField LBRACE statement RBRACE
+                    :   Identifier parameterField LBRACE constructorBody RBRACE
+                    ;
+
+constructorBody     :   statement*
                     ;
 
 expressionList      :   expression (COMMA expression)*
@@ -120,13 +140,14 @@ expression          :   expression op   =   (INC | DEC)                         
 constant            :   BoolConst
                     |   NullConst
                     |   IntegerConst
+                    |   StringConst
                     ;
 
 creator             :   nonArrayCreator
                     |   arrayCreator
                     ;
 
-nonArrayCreator     :   nonArrayType LPAREN expressionList RPAREN
+nonArrayCreator     :   nonArrayType (LPAREN expressionList RPAREN)?
                     ;
 
 arrayCreator        :   nonArrayType arrayCreatorUnit+
