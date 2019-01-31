@@ -1,4 +1,5 @@
 // Generated from MxStar.g4 by ANTLR 4.7.2
+package kstarxin.parser;
 import org.antlr.v4.runtime.tree.ParseTreeVisitor;
 
 /**
@@ -159,6 +160,27 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitJumpStatement(MxStarParser.JumpStatementContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code BreakJump}
+	 * labeled alternative in {@link MxStarParser#jumpType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitBreakJump(MxStarParser.BreakJumpContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ContinueJump}
+	 * labeled alternative in {@link MxStarParser#jumpType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitContinueJump(MxStarParser.ContinueJumpContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code ReturnJump}
+	 * labeled alternative in {@link MxStarParser#jumpType}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitReturnJump(MxStarParser.ReturnJumpContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#classDeclaration}.
 	 * @param ctx the parse tree

@@ -1,0 +1,6 @@
+*.class
+*.jar
+*.interp
+*.token
+*.txt
+*.out
