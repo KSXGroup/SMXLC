@@ -25,5 +25,6 @@ public class Compiler{
         ProgramNode prog = builder.build();
         ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
         printer.display();
+        prog.getCurrentSymbolTable().dumpSymbolTable("",System.out);
     }
  }

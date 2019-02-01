@@ -6,7 +6,7 @@ public class MxType {
     private boolean isPrimitiveType;
     private int dimension;
     public static enum TypeEnum {
-        BOOL, INT, STRING, NULL, METHOD, CLASS, NOT_DECIDED
+        BOOL, INT, STRING,VOID, NULL, METHOD, CLASS, NOT_DECIDED
     }
     public static String enumToString(TypeEnum _typeEnum){
         switch(_typeEnum){
@@ -16,6 +16,8 @@ public class MxType {
                 return "bool";
             case INT:
                 return "int";
+            case VOID:
+                return "void";
             case NULL:
                 return "null";
             case CLASS:
@@ -33,6 +35,8 @@ public class MxType {
                 return TypeEnum.INT;
             case "string":
                 return TypeEnum.STRING;
+            case "void":
+                return TypeEnum.VOID;
             case "null":
                 return TypeEnum.NULL;
             default:
@@ -67,7 +71,7 @@ public class MxType {
         name = _name;
         type = stringToEnum(_name);
         dimension = _dim;
-        if (type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.NOT_DECIDED) isPrimitiveType = false;
+        if (type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.VOID || type == TypeEnum.NOT_DECIDED) isPrimitiveType = false;
         else isPrimitiveType = true;
     }
 
@@ -76,7 +80,7 @@ public class MxType {
         name = _name;
         type = _type;
         dimension = 0;
-        if(type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.NOT_DECIDED) isPrimitiveType = false;
+        if (type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.VOID || type == TypeEnum.NOT_DECIDED)  isPrimitiveType = false;
         else isPrimitiveType = true;
     }
 
@@ -84,7 +88,7 @@ public class MxType {
         name = _name;
         type = _type;
         dimension = _dim;
-        if(type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.NOT_DECIDED) isPrimitiveType = false;
+        if (type == TypeEnum.METHOD || type == TypeEnum.CLASS || type == TypeEnum.VOID || type == TypeEnum.NOT_DECIDED)  isPrimitiveType = false;
         else isPrimitiveType = true;
     }
 
@@ -94,6 +98,14 @@ public class MxType {
 
     public boolean isPrimitiveType() {
         return isPrimitiveType;
+    }
+
+    public String getEnumString(){
+        return type.toString();
+    }
+
+    public int getDimension(){
+        return dimension;
     }
 
     public String toString(){

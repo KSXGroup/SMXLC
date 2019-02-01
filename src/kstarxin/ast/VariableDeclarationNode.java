@@ -23,8 +23,8 @@ public class VariableDeclarationNode extends DeclarationNode {
         return decls;
     }
 
-    public MxType getType(){
-        return type.getType();
+    public TypeNode getTypeNode(){
+        return type;
     }
 
     @Override

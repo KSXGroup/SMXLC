@@ -34,6 +34,7 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     public Void visit(ProgramNode node) {
         out.println("[Start Print Program]");
         node.getVariableDeclarations().forEach(this::visit);
+        node.getMethodDeclarations().forEach(this::visit);
         return null;
     }
 
@@ -44,9 +45,23 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(VariableDeclarationNode node){
-        String t = node.getType().toString();
-        printLine("[VarDecl: " + t + " type]");
+        String t = node.getTypeNode().getType().toString();
+        String enumt = node.getTypeNode().getType().getEnumString();
+        Integer dim = node.getTypeNode().getType().getDimension();
+        printLine("[VarDecl: " + t + ":" + enumt + " dim = " + dim.toString() + " type]");
         node.getDeclaratorList().forEach(this::visit);
+        return null;
+    }
+
+    @Override
+    public Void visit(MethodDeclarationNode node){
+        printLine("[Method"+node.getIdentifier() + "with return type:" +node.getReturnType().toString() + ":" + node.getReturnType().getEnumString() + "]");
+        addIdent();
+        LinkedList<Node> lst = node.getStatementList();
+        for(Node n : lst){
+            visit((VariableDeclarationNode) n);
+        }
+        subIndent();
         return null;
     }
 
@@ -62,6 +77,28 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     @Override
     public Void visit(VariableDeclaratorNode node) {
         printLine(node.getIdentifier());
+        return null;
+    }
+
+
+
+    @Override
+    public Void visit(ParameterDeclarationNode node){
+        return null;
+    }
+
+    @Override
+    public Void visit(LoopNode node) {
+        return null;
+    }
+
+    @Override
+    public Void visit(ConditionNode node) {
+        return null;
+    }
+
+    @Override
+    public Void visit(ExpressionNode node) {
         return null;
     }
 }
