@@ -14,6 +14,10 @@ public class ParameterDeclarationNode extends Node {
         id = _id;
     }
 
+    public TypeNode getTypeNode(){
+        return type;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

@@ -17,6 +17,10 @@ public class TypeNode extends Node{
         return  type;
     }
 
+    public void setType(MxType _type){
+        type = _type;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return null;

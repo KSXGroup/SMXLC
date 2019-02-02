@@ -35,6 +35,7 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
         out.println("[Start Print Program]");
         node.getVariableDeclarations().forEach(this::visit);
         node.getMethodDeclarations().forEach(this::visit);
+        node.getClassDeclarations().forEach(this::visit);
         return null;
     }
 
@@ -55,21 +56,21 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(MethodDeclarationNode node){
-        printLine("[Method"+node.getIdentifier() + "with return type:" +node.getReturnType().toString() + ":" + node.getReturnType().getEnumString() + "]");
-        addIdent();
-        LinkedList<Node> lst = node.getStatementList();
-        for(Node n : lst){
-            visit((VariableDeclarationNode) n);
-        }
-        subIndent();
+        printLine("[Method "+node.getIdentifier() + " with returnType:" +node.getReturnType().toString() + ":" + node.getReturnType().getEnumString() + "]");
+        visit(node.getBlock());
         return null;
     }
 
     @Override
     public Void visit(ClassDeclarationNode node){
-        printLine("[Class:]");
+        printLine("[Class:" + node.getName() + "]");
         addIdent();
-        //TODO
+        printLine("[Constructor(s)]");
+        node.getConstructorList().forEach(this::visit);
+        printLine("[MemberVariables]");
+        node.getMemberVariableList().forEach(this::visit);
+        printLine("[MemberMethods]");
+        node.getMemberMethodList().forEach(this::visit);
         subIndent();
         return null;
     }
@@ -80,7 +81,20 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
         return null;
     }
 
-
+    @Override
+    public Void visit(BlockNode node) {
+        addIdent();
+        printLine("[Block]");
+        for(Node n : node.getStatementList()){
+            if(n instanceof VariableDeclarationNode) visit((VariableDeclarationNode) n);
+            else if(n instanceof BlockNode) visit((BlockNode)n);
+            else if(n instanceof LoopNode) visit((LoopNode) n);
+            else if(n instanceof ConditionNode) visit((ConditionNode) n);
+            else if(n instanceof ExpressionNode) visit((ExpressionNode)n);
+        }
+        subIndent();
+        return null;
+    }
 
     @Override
     public Void visit(ParameterDeclarationNode node){
@@ -99,6 +113,11 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(ExpressionNode node) {
+        return null;
+    }
+
+    @Override
+    public Void visit(JumpNode node) {
         return null;
     }
 }

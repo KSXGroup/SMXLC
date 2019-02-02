@@ -10,16 +10,16 @@ import java.util.LinkedList;
 
 public class MethodDeclarationNode extends DeclarationNode {
     private ArrayList<ParameterDeclarationNode> paraList;
-    private LinkedList<Node> statementList;
+    private BlockNode block;
     private TypeNode retType;
     private String id;
 
-    public MethodDeclarationNode(TypeNode _type, String _id, ArrayList _paraList, LinkedList _statementList ,SymbolTable stb, Location loc){
+    public MethodDeclarationNode(TypeNode _type, String _id, ArrayList _paraList, BlockNode _block, SymbolTable stb, Location loc){
         super(stb, loc);
         retType = _type;
         id = _id;
         paraList = _paraList;
-        statementList = _statementList;
+        block = _block;
     }
 
     public String getIdentifier(){
@@ -38,8 +38,8 @@ public class MethodDeclarationNode extends DeclarationNode {
         return paraList;
     }
 
-    public LinkedList getStatementList(){
-        return statementList;
+    public BlockNode getBlock(){
+        return block;
     }
 
     @Override

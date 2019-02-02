@@ -95,12 +95,6 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitParameterDeclaration(MxStarParser.ParameterDeclarationContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link MxStarParser#methodBody}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitMethodBody(MxStarParser.MethodBodyContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link MxStarParser#statement}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -205,12 +199,6 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitClassConstructorDeclaration(MxStarParser.ClassConstructorDeclarationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link MxStarParser#constructorBody}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitConstructorBody(MxStarParser.ConstructorBodyContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link MxStarParser#expressionList}.
 	 * @param ctx the parse tree

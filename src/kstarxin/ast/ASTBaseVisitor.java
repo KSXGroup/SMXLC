@@ -4,6 +4,7 @@ import  kstarxin.ast.*;
 abstract public interface ASTBaseVisitor<T> {
     public T visit(ProgramNode node);
     public T visit(DeclarationNode node);
+    public T visit(BlockNode node);
     public T visit(VariableDeclarationNode node);
     public T visit(VariableDeclaratorNode node);
     public T visit(ClassDeclarationNode node);
@@ -12,4 +13,5 @@ abstract public interface ASTBaseVisitor<T> {
     public T visit(ConditionNode node);
     public T visit(LoopNode node);
     public T visit(ExpressionNode node);
+    public T visit(JumpNode node);
 }

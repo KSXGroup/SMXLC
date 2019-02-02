@@ -28,18 +28,19 @@ public class SymbolTable {
         currentScopeClassTable      = new HashMap<String, Symbol>(other.currentScopeClassTable);
     }
 
-    public void addVariable(MxType type, String id) throws CompileException{
-        if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, new Symbol(id, type));
+    public void addVariable(MxType type, String id, Location defLoc) throws CompileException{
+        if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, new Symbol(id, type, defLoc));
         else throw new CompileException("redeclaration of " + id);
     }
 
-    public void addMethod(MxType retType, String id) throws CompileException{
-        if(!currentScopeMethodTable.containsKey(id)) currentScopeMethodTable.put(id, new Symbol(id, retType));
+    public void addMethod(MxType retType, String id, Location defLoc) throws CompileException{
+        if(!currentScopeMethodTable.containsKey(id)) currentScopeMethodTable.put(id, new Symbol(id, retType, defLoc));
         else throw new CompileException("redeclaration of method " + id);
     }
 
-    public void addClass(String id) throws CompileException{
-
+    public void addClass(String id, Location defLoc) throws CompileException{
+        if(!currentScopeClassTable.containsKey(id)) currentScopeClassTable.put(id, new Symbol(id,new MxType(MxType.TypeEnum.CLASS), defLoc));
+        else throw new CompileException("reclaration of class " + id);
     }
 
     public void addChildSymbolTable(SymbolTable stb){
@@ -74,16 +75,19 @@ public class SymbolTable {
         out.println("[Variables]");
         String name = null;
         MxType type = null;
+        Location loc = null;
         for(String key : currentScopeVariableTable.keySet()){
             name = currentScopeVariableTable.get(key).getIdentifier();
             type = currentScopeVariableTable.get(key).getType();
-            out.println(indent + name  + ":" + "[" +type.toString()+":"+ type.getEnumString() + "]");
+            loc = currentScopeVariableTable.get(key).getLocation();
+            out.println(indent + name  + ":" + "[" +type.toString()+":"+ type.getEnumString() +" dim = " +type.getDimension()+" Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber()+"]");
         }
         out.println("[Methods]");
         for(String key : currentScopeMethodTable.keySet()){
             name = currentScopeMethodTable.get(key).getIdentifier();
             type = currentScopeMethodTable.get(key).getType();
-            out.println(indent + name + ":[retType: " + type.toString()+":"+ type.getEnumString() + "]");
+            loc = currentScopeMethodTable.get(key).getLocation();
+            out.println(indent + name + ":[retType: " + type.toString()+":"+ type.getEnumString()+" dim = " +type.getDimension()+ " Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber() + "]");
         }
         for(SymbolTable stb : childScopeSymbolTable) stb.dumpSymbolTable(indent + "\t", out);
     }

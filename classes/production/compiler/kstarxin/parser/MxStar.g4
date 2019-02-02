@@ -38,15 +38,17 @@ userType            :   Identifier
 
 primitiveType       :   Boolean |   Integer |   String;
 
-methodDeclaration   :   typeWithVoid Identifier parameterField LBRACE methodBody* RBRACE;
+methodDeclaration   :   typeWithVoid Identifier parameterField block
+                    ;
 
-typeWithVoid        :   type |  Void;
+typeWithVoid        :   type |  Void
+                    ;
 
-parameterField      :   (LPAREN (parameterDeclaration (COMMA parameterDeclaration)*)? RPAREN);
+parameterField      :   (LPAREN (parameterDeclaration (COMMA parameterDeclaration)*)? RPAREN)
+                    ;
 
-parameterDeclaration:   type Identifier;
-
-methodBody          :   statement;
+parameterDeclaration:   type Identifier
+                    ;
 
 statement           :   block
                     |   conditionStatement
@@ -103,10 +105,7 @@ classMemberFunctionDeclaration
                     ;
 
 classConstructorDeclaration
-                    :   Identifier parameterField LBRACE constructorBody RBRACE
-                    ;
-
-constructorBody     :   statement*
+                    :   Identifier parameterField block
                     ;
 
 expressionList      :   expression (COMMA expression)*

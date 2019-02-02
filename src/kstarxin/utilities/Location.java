@@ -9,4 +9,12 @@ public class Location {
         LineNumber = ctx.start.getLine();
         ColumnNumber = ctx.start.getCharPositionInLine();
     }
+
+    public int getLineNumber(){
+        return LineNumber;
+    }
+
+    public int getColumnNumber(){
+        return ColumnNumber;
+    }
 }

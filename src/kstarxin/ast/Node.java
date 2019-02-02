@@ -21,5 +21,9 @@ public abstract class Node {
         currentSymbolTable = stb;
     }
 
+    public Location getLocation(){
+        return currentLocation;
+    }
+
     public abstract <T> T accept(ASTBaseVisitor<T> visitor);
 }

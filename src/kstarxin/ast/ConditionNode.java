@@ -1,4 +1,11 @@
 package kstarxin.ast;
 
-public class ConditionNode {
+public abstract class ConditionNode extends Node{
+    public  ConditionNode(){
+        super(null, null);
+    }
+    @Override
+    public <T> T accept(ASTBaseVisitor<T> visitor) {
+        return null;
+    }
 }
