@@ -4,10 +4,12 @@ import kstarxin.utilities.Location;
 import kstarxin.utilities.MxType;
 import kstarxin.utilities.SymbolTable;
 
-public abstract class ExpressionNode extends Node{
+public class ExpressionNode extends Node{
     private MxType type;
-    public ExpressionNode(SymbolTable stb, Location loc){
+    private boolean isLeftValue;
+    public ExpressionNode(boolean _isLeftValue, SymbolTable stb, Location loc){
         super(stb, loc);
+        isLeftValue = _isLeftValue;
     }
 
     public MxType getType(){
@@ -16,5 +18,10 @@ public abstract class ExpressionNode extends Node{
 
     public void setType(MxType _type){
         type = _type;
+    }
+
+    @Override
+    public <T> T accept(ASTBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

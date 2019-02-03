@@ -175,6 +175,10 @@ public class MxType {
         return dimension;
     }
 
+    public ArrayList<MxType> getParameterTypeList(){
+        return paraTypeList;
+    }
+
     public String toString(){
         return name;
     }

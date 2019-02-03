@@ -108,6 +108,7 @@ classConstructorDeclaration
                     :   Identifier parameterField block
                     ;
 
+
 expressionList      :   expression (COMMA expression)*
                     ;
 
@@ -133,18 +134,16 @@ expression          :   expression op   =   (INC | DEC)                         
                     |   lhs = expression    op  =   BITOR             rhs = expression      #BinaryExpression
                     |   lhs = expression    op  =   AND               rhs = expression      #BinaryExpression
                     |   lhs = expression    op  =   OR                rhs = expression      #BinaryExpression
-
                     |   <assoc=right>       lhs =  expression ASSIGN  rhs = expression      #BinaryExpression
-
-                    |   Identifier                                                          #IdentifierExpression
                     |   constant                                                            #ConstantExpression
                     |   This                                                                #ThisExpression
+                    |   Identifier                                                          #IdentifierExpression
                     |   LPAREN  expression  RPAREN                                          #ParenthesisExpression
                     ;
 
-constant            :   BoolConst
+constant            :   IntegerConst
                     |   NullConst
-                    |   IntegerConst
+                    |   BoolConst
                     |   StringConst
                     ;
 

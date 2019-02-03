@@ -1,7 +1,9 @@
 package kstarxin.ast;
 
-import java.io.PrintStream;
-import java.util.LinkedList;
+import kstarxin.utilities.MxType;
+
+import java.io.*;
+import java.util.*;
 
 public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     ProgramNode ast;
@@ -26,8 +28,20 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
         out.println(idt + s);
     }
 
+    public void printNoIdt(String s){
+        out.print(s);
+    }
+    public void print(String s){
+        out.print(idt + s);
+    }
+
     public void display(){
         visit(ast);
+    }
+
+    @Override
+    public Void visit(Node node) {
+        return node.accept(this);
     }
 
     @Override
@@ -41,7 +55,12 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(DeclarationNode node){
-        return null;
+        return node.accept(this);
+    }
+
+    @Override
+    public Void visit(StatementNode node) {
+        return node.accept(this);
     }
 
     @Override
@@ -57,6 +76,16 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     @Override
     public Void visit(MethodDeclarationNode node){
         printLine("[Method "+node.getIdentifier() + " with returnType:" +node.getReturnType().toString() + ":" + node.getReturnType().getEnumString() + "]");
+        ArrayList<MxType> typeList = node.getReturnType().getParameterTypeList();
+        String paraTypeString = "";
+        if(typeList.size() > 0) {
+            paraTypeString = typeList.get(0).toString() + " : "  + typeList.get(0).getEnumString();
+            int i = 0;
+            for (i = 1; i < typeList.size(); ++i) {
+                paraTypeString += ", " + typeList.get(i).toString() + " : " + typeList.get(i).getEnumString();
+            }
+        }
+        printLine("[Method Para:"+paraTypeString+"]");
         visit(node.getBlock());
         return null;
     }
@@ -85,13 +114,7 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     public Void visit(BlockNode node) {
         addIdent();
         printLine("[Block]");
-        for(Node n : node.getStatementList()){
-            if(n instanceof VariableDeclarationNode) visit((VariableDeclarationNode) n);
-            else if(n instanceof BlockNode) visit((BlockNode)n);
-            else if(n instanceof LoopNode) visit((LoopNode) n);
-            else if(n instanceof ConditionNode) visit((ConditionNode) n);
-            else if(n instanceof ExpressionNode) visit((ExpressionNode)n);
-        }
+        node.getStatementList().forEach(this::visit);
         subIndent();
         return null;
     }
@@ -107,17 +130,55 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
     }
 
     @Override
+    public Void visit(JumpNode node) {
+        return null;
+    }
+
+
+    @Override
     public Void visit(ConditionNode node) {
+        printLine("[Condition:]");
+        print("[Cond]");
+        ExpressionNode cond = node.getCond();
+        if(cond != null) visit(node.getCond());
+        else printNoIdt("NULL");
+        printNoIdt("\n");
+        printLine("[Body]");
+        visit(node.getBody());
+        printLine("[Else]");
+        ConditionNode elseNode = node.getElse();
+        if(elseNode != null)visit(node.getElse());
+        else printLine("NULL");
         return null;
     }
 
     @Override
     public Void visit(ExpressionNode node) {
+        return node.accept(this);
+    }
+
+    @Override
+    public Void visit(IntegerConstantNode node) {
+        Integer tmp = node.getValue();
+        printNoIdt("[Value: " + tmp.toString() + "]");
         return null;
     }
 
     @Override
-    public Void visit(JumpNode node) {
+    public Void visit(BooleanConstantNode node) {
+        Boolean tmp = node.getValue();
+        printNoIdt("[Value: " + tmp.toString() + "]");
+        return null;
+    }
+
+    @Override
+    public Void visit(NullConstantNode node) {
+        return null;
+    }
+
+    @Override
+    public Void visit(StringConstantNode node) {
+        printNoIdt("[Value: " + node.getValue() + "]");
         return null;
     }
 }

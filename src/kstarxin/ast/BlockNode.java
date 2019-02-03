@@ -6,7 +6,7 @@ import kstarxin.utilities.SymbolTable;
 
 import java.util.LinkedList;
 
-public class BlockNode extends Node {
+public class BlockNode extends StatementNode {
     LinkedList<Node> statements;
     BlockNode(SymbolTable stb, Location loc){
         super(stb ,loc);

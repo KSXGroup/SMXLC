@@ -2,38 +2,42 @@ package kstarxin.ast;
 import kstarxin.parser.*;
 import kstarxin.utilities.*;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
+import java.sql.Statement;
 import java.util.*;
 
 //TODO:Add if loop jump
-public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
+public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     private SymbolTable currentSymbolTable;
     private MxStarParser.ProgramContext concreteSyntaxTree;
     private String scopePrefix;
     private String scopeName;
-    private int inloop;
-    private boolean inmeth;
+    private boolean inMethodDecl; //for return
+    private boolean inConstructor;
     private int loopCount;
+    private int conditionCount;
 
-    public ASTBuilderVisitor(MxStarParser.ProgramContext cst){
-        concreteSyntaxTree = cst;
-        inmeth = false;
-        loopCount = 0;
-        inloop = 0;
-        scopePrefix = "";
-        scopeName = "global";
-        currentSymbolTable = new SymbolTable(scopePrefix + scopeName);
-    }
-
-    private void enterScope(){
+    private void enterScope() {
         scopePrefix += "_";
     }
 
-    private void exitScope(){
+    private void exitScope() {
         scopePrefix = scopePrefix.substring(1);
     }
 
-    public ProgramNode build(){
+    public ASTBuilderVisitor(MxStarParser.ProgramContext cst) {
+        concreteSyntaxTree = cst;
+        scopePrefix = "";
+        scopeName = "global";
+        inMethodDecl = false;
+        inConstructor = false;
+        loopCount = 0;
+        conditionCount = 0;
+        currentSymbolTable = new SymbolTable(scopePrefix + scopeName);
+    }
+
+    public ProgramNode build() {
         return (ProgramNode) visitProgram(concreteSyntaxTree);
     }
 
@@ -41,16 +45,16 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
     public Node visitProgram(MxStarParser.ProgramContext ctx) {
         ProgramNode prog = new ProgramNode(currentSymbolTable, new Location(ctx));
         Node child;
-        for(MxStarParser.DeclarationContext c : ctx.declaration()){
-            if(c != null) {
+        for (MxStarParser.DeclarationContext c : ctx.declaration()) {
+            if (c != null) {
                 child = visit(c);
                 if (child instanceof VariableDeclarationNode) {
                     prog.addVariableDeclaration((VariableDeclarationNode) child);
                 } else if (child instanceof MethodDeclarationNode) {
                     prog.addMethodDeclaration((MethodDeclarationNode) child);
-                } else if (child instanceof ClassDeclarationNode){
+                } else if (child instanceof ClassDeclarationNode) {
                     prog.addClassDeclarationNode((ClassDeclarationNode) child);
-                } else if(child == null) break;
+                } else if (child == null) break;
                 else throw new CompileException("Unknown Program Section");
             }
         }
@@ -60,15 +64,15 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
 
     //Process variable declaration directly
     @Override
-    public Node visitDeclaration(MxStarParser.DeclarationContext ctx){
-        MxStarParser.VariableDeclarationContext vard    = ctx.variableDeclaration();
-        MxStarParser.MethodDeclarationContext   methd   = ctx.methodDeclaration();
-        MxStarParser.ClassDeclarationContext    classd  = ctx.classDeclaration();
-        if(vard != null){
+    public Node visitDeclaration(MxStarParser.DeclarationContext ctx) {
+        MxStarParser.VariableDeclarationContext vard = ctx.variableDeclaration();
+        MxStarParser.MethodDeclarationContext methd = ctx.methodDeclaration();
+        MxStarParser.ClassDeclarationContext classd = ctx.classDeclaration();
+        if (vard != null) {
             return visit(vard);
-        } else if(methd != null){
+        } else if (methd != null) {
             return visit(methd);
-        } else if(classd!= null){
+        } else if (classd != null) {
             return visit(classd);
         }
         return null;
@@ -98,8 +102,9 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
     }
 
     @Override
-    public Node visitMethodDeclaration(MxStarParser.MethodDeclarationContext ctx) throws CompileException{
+    public Node visitMethodDeclaration(MxStarParser.MethodDeclarationContext ctx) throws CompileException {
         String methName = ctx.Identifier().getText();
+        inMethodDecl = true;
         String parentScopeName = scopeName;
         scopeName = scopeName + "_METHOD_" + methName;
         MethodDeclarationNode methnode = null;
@@ -121,13 +126,14 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         methnode = new MethodDeclarationNode(retTypeNode, methName, pf.getParameterList(), block, currentSymbolTable, loc);
         scopeName = parentScopeName;
         currentSymbolTable = parentTable;
+        inMethodDecl = false;
         return methnode;
     }
 
     @Override
     public Node visitTypeWithVoid(MxStarParser.TypeWithVoidContext ctx) {
         MxStarParser.TypeContext tctx = ctx.type();
-        if(ctx.type() != null) return visit(tctx);
+        if (ctx.type() != null) return visit(tctx);
         else return new TypeNode(new MxType("void"), currentSymbolTable, new Location(ctx));
     }
 
@@ -141,18 +147,17 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         String varType = null;
         Location typeLoc = new Location(ctx);
 
-        if(nonArrTctx != null){
+        if (nonArrTctx != null) {
             ptype = nonArrTctx.primitiveType();
             utype = nonArrTctx.userType();
-        }
-        else{
+        } else {
             dim = arrTctx.LBRAC().size();
             ptype = arrTctx.nonArrayType().primitiveType();
             utype = arrTctx.nonArrayType().userType();
         }
-        if(ptype != null) varType = ptype.getText();
+        if (ptype != null) varType = ptype.getText();
         else varType = utype.getText();
-        return new TypeNode(new MxType(varType, dim), currentSymbolTable,typeLoc);
+        return new TypeNode(new MxType(varType, dim), currentSymbolTable, typeLoc);
     }
 
     @Override
@@ -166,14 +171,14 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         currentSymbolTable.addClass(id, loc);
         currentSymbolTable = classSymbolTable;
         ClassDeclarationNode classNode = new ClassDeclarationNode(id, classSymbolTable, loc);
-        for(MxStarParser.ClassBodyMemberContext m : ctx.classBodyMember()){
+        for (MxStarParser.ClassBodyMemberContext m : ctx.classBodyMember()) {
             MxStarParser.VariableDeclarationContext vard = m.variableDeclaration();
             MxStarParser.ClassConstructorDeclarationContext consd = m.classConstructorDeclaration();
             MxStarParser.ClassMemberFunctionDeclarationContext methd = m.classMemberFunctionDeclaration();
 
-            if(vard != null) classNode.addVariable((VariableDeclarationNode) visit(vard));
-            else if(consd != null) classNode.addConstructor((MethodDeclarationNode) visit(consd));
-            else if(methd != null) classNode.addMethod((MethodDeclarationNode) visit(methd));
+            if (vard != null) classNode.addVariable((VariableDeclarationNode) visit(vard));
+            else if (consd != null) classNode.addConstructor((MethodDeclarationNode) visit(consd));
+            else if (methd != null) classNode.addMethod((MethodDeclarationNode) visit(methd));
         }
 
         parentTable.addChildSymbolTable(currentSymbolTable);
@@ -189,7 +194,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         ArrayList<ParameterDeclarationNode> paraDeclList = new ArrayList<>();
         ArrayList<MxType> paraTypeList = new ArrayList<>();
         ParameterDeclarationNode n = null;
-        for(MxStarParser.ParameterDeclarationContext ictx : paraDeclctx){
+        for (MxStarParser.ParameterDeclarationContext ictx : paraDeclctx) {
             n = (ParameterDeclarationNode) visit(ictx);
             paraTypeList.add(n.getTypeNode().getType());
         }
@@ -207,6 +212,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
 
     @Override
     public Node visitClassConstructorDeclaration(MxStarParser.ClassConstructorDeclarationContext ctx) {
+        inConstructor = true;
         MethodDeclarationNode cons = null;
         String name = ctx.Identifier().getText();
         String parentScopeName = scopeName;
@@ -224,6 +230,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         cons = new MethodDeclarationNode(consTypeNode, name, para.getParameterList(), block, currentSymbolTable, loc);
         currentSymbolTable = classTable;
         scopeName = parentScopeName;
+        inConstructor = false;
         return cons;
     }
 
@@ -235,7 +242,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
         Location loc = new Location(ctx);
         BlockNode block = new BlockNode(newScopeTable, loc);
         currentSymbolTable = newScopeTable;
-        for(MxStarParser.StatementContext stm :  ctx.statement()) block.addStatement(visit(stm));
+        for (MxStarParser.StatementContext stm : ctx.statement()) {
+            Node tmp = visit(stm);
+            if (tmp != null) block.addStatement(tmp);
+        }
         parentTable.addChildSymbolTable(currentSymbolTable);
         currentSymbolTable = parentTable;
         exitScope();
@@ -244,11 +254,64 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node>{
 
     @Override
     public Node visitConditionStatement(MxStarParser.ConditionStatementContext ctx) {
-        return null;
+        conditionCount++;
+        Integer cnt = conditionCount;
+        String parentScopeName = scopeName;
+        scopeName += "_IF_" + cnt.toString();
+        ExpressionNode cond = (ExpressionNode) visit(ctx.expression());
+        Node then = visit(ctx.statement());
+        ConditionNode curr = null, ret = null, tmp = null;
+        curr = new ConditionNode(cond, then , null, currentSymbolTable, new Location(ctx));
+        ret = curr;
+        for (MxStarParser.ElseIfStatementContext stm : ctx.elseIfStatement()) {
+            tmp = (ConditionNode) visit(stm);
+            curr.setElse(tmp);
+            curr = tmp;
+        }
+        curr.setElse((ConditionNode) visit(ctx.elseStatement()));
+        scopeName = parentScopeName;
+        return ret;
+    }
+
+    @Override
+    public Node visitElseIfStatement(MxStarParser.ElseIfStatementContext ctx) {
+        conditionCount++;
+        Integer cnt = conditionCount;
+        String parentScopeName = scopeName;
+        scopeName += "_ELSEIF_" + cnt.toString();
+        ExpressionNode cond = (ExpressionNode) visit(ctx.expression());
+        Node then = visit(ctx.statement());
+        scopeName = parentScopeName;
+        return new ConditionNode(cond, then, null, currentSymbolTable, new Location(ctx));
+    }
+
+    @Override
+    public Node visitElseStatement(MxStarParser.ElseStatementContext ctx) {
+        conditionCount++;
+        Integer cnt = conditionCount;
+        String parentScopeName = scopeName;
+        scopeName += "_ELSE_" + cnt.toString();
+        Node then = visit(ctx.statement());
+        scopeName = parentScopeName;
+        return new ConditionNode(null, then, null, currentSymbolTable, new Location(ctx));
+    }
+
+    @Override
+    public Node visitConstantExpression(MxStarParser.ConstantExpressionContext ctx) {
+        return visit(ctx.constant());
     }
 
     @Override
     public Node visitConstant(MxStarParser.ConstantContext ctx) {
-        return super.visitConstant(ctx);
+        Location loc = new Location(ctx);
+        TerminalNode boolconst = ctx.BoolConst();
+        TerminalNode intconst = ctx.IntegerConst();
+        TerminalNode stringconst = ctx.StringConst();
+        TerminalNode nullconst = ctx.NullConst();
+        if (boolconst != null) return new BooleanConstantNode(boolconst.getText(), currentSymbolTable, loc);
+        else if (intconst != null) return new IntegerConstantNode(intconst.getText(), currentSymbolTable, loc);
+        else if (stringconst != null) return new StringConstantNode(stringconst.getText(), currentSymbolTable, loc);
+        else if (nullconst != null) return new NullConstantNode(currentSymbolTable, loc);
+        else throw new CompileException("Unknown Const Type");
     }
 }

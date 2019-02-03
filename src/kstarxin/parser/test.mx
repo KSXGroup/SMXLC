@@ -1,0 +1,5 @@
+int main(){
+	if(shit){
+	}else if(false){
+	}else{;}
+}

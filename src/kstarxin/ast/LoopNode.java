@@ -3,7 +3,7 @@ package kstarxin.ast;
 import kstarxin.utilities.Location;
 import kstarxin.utilities.SymbolTable;
 
-public class LoopNode extends Node {
+public class LoopNode extends StatementNode{
     LoopNode(SymbolTable stb, Location loc){
         super(stb,loc);
     }
