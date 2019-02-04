@@ -26,47 +26,27 @@ public class SymbolTable {
         currentScopeVariableTable   = new HashMap<String, Symbol>(other.currentScopeVariableTable);
         currentScopeMethodTable     = new HashMap<String, Symbol>(other.currentScopeMethodTable);
         currentScopeClassTable      = new HashMap<String, Symbol>(other.currentScopeClassTable);
+        childScopeSymbolTable = new LinkedList<>();
     }
 
     public void addVariable(MxType type, String id, Location defLoc) throws CompileException{
-        if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, new Symbol(id, type, defLoc));
+        if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, new Symbol(id, type, name, defLoc));
+        else if(currentScopeVariableTable.get(id).getScopeName() != name) currentScopeVariableTable.replace(id, new Symbol(id, type, name, defLoc));
         else throw new CompileException("redeclaration of " + id);
     }
 
-    public void addMethod(MxType retType, String id, Location defLoc) throws CompileException{
-        if(!currentScopeMethodTable.containsKey(id)) currentScopeMethodTable.put(id, new Symbol(id, retType, defLoc));
+    public void addMethod(MxType retType, String id,Location defLoc) throws CompileException{
+        if(!currentScopeMethodTable.containsKey(id)) currentScopeMethodTable.put(id, new Symbol(id, retType, name, defLoc));
         else throw new CompileException("redeclaration of method " + id);
     }
 
     public void addClass(String id, Location defLoc) throws CompileException{
-        if(!currentScopeClassTable.containsKey(id)) currentScopeClassTable.put(id, new Symbol(id,new MxType(MxType.TypeEnum.CLASS), defLoc));
+        if(!currentScopeClassTable.containsKey(id)) currentScopeClassTable.put(id, new Symbol(id,new MxType(MxType.TypeEnum.CLASS), name, defLoc));
         else throw new CompileException("reclaration of class " + id);
     }
 
     public void addChildSymbolTable(SymbolTable stb){
         childScopeSymbolTable.add(stb);
-    }
-
-    public void pushDown(){
-        if(childScopeSymbolTable.size() == 0) return;
-        else{
-            Map childTable = null;
-            for(SymbolTable child : childScopeSymbolTable){
-                for(String key : currentScopeVariableTable.keySet()){
-                    childTable = child.getVariableTable();
-                    if(!childTable.containsKey(key)) childTable.put(key, currentScopeVariableTable.get(key));
-                }
-                for(String key : currentScopeMethodTable.keySet()){
-                    childTable = child.getMethodTable();
-                    if(!childTable.containsKey(key)) childTable.put(key, currentScopeMethodTable.get(key));
-                }
-                for(String key : currentScopeClassTable.keySet()){
-                    childTable = child.getClassTable();
-                    if(!childTable.containsKey(key)) childTable.put(key, currentScopeClassTable.get(key));
-                }
-                child.pushDown();
-            }
-        }
     }
 
     public void dumpSymbolTable(String indent, PrintStream out){
@@ -97,6 +77,10 @@ public class SymbolTable {
     }
     public Symbol search(String id){
         return null;
+    }
+
+    public void setName(String _name){
+        name = _name;
     }
 
     private Map getVariableTable(){

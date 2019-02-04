@@ -15,6 +15,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     private String scopeName;
     private boolean inMethodDecl; //for return
     private boolean inConstructor;
+    private boolean inLoop;
     private int loopCount;
     private int conditionCount;
 
@@ -29,9 +30,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     public ASTBuilderVisitor(MxStarParser.ProgramContext cst) {
         concreteSyntaxTree = cst;
         scopePrefix = "";
-        scopeName = "global";
+        scopeName = "GLOBAL";
         inMethodDecl = false;
         inConstructor = false;
+        inLoop = false;
         loopCount = 0;
         conditionCount = 0;
         currentSymbolTable = new SymbolTable(scopePrefix + scopeName);
@@ -58,7 +60,6 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
                 else throw new CompileException("Unknown Program Section");
             }
         }
-        prog.getCurrentSymbolTable().pushDown(); //Do Some type update
         return prog;
     }
 
@@ -167,7 +168,8 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         String parentScopeName = scopeName;
         Location loc = new Location(ctx);
         scopeName = scopeName + "_CLASS_" + id;
-        SymbolTable classSymbolTable = new SymbolTable(scopePrefix + scopeName), parentTable = currentSymbolTable;
+        SymbolTable classSymbolTable = new SymbolTable(currentSymbolTable), parentTable = currentSymbolTable;
+        classSymbolTable.setName(scopePrefix + scopeName);
         currentSymbolTable.addClass(id, loc);
         currentSymbolTable = classSymbolTable;
         ClassDeclarationNode classNode = new ClassDeclarationNode(id, classSymbolTable, loc);
@@ -237,7 +239,8 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     @Override
     public Node visitBlock(MxStarParser.BlockContext ctx) {
         enterScope();
-        SymbolTable newScopeTable = new SymbolTable(scopePrefix + scopeName);
+        SymbolTable newScopeTable = new SymbolTable(currentSymbolTable);
+        newScopeTable.setName(scopePrefix + scopeName);
         SymbolTable parentTable = currentSymbolTable;
         Location loc = new Location(ctx);
         BlockNode block = new BlockNode(newScopeTable, loc);
@@ -268,7 +271,8 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             curr.setElse(tmp);
             curr = tmp;
         }
-        curr.setElse((ConditionNode) visit(ctx.elseStatement()));
+        if(ctx.elseStatement() != null) curr.setElse((ConditionNode) visit(ctx.elseStatement()));
+        else curr.setElse(null);
         scopeName = parentScopeName;
         return ret;
     }
@@ -314,4 +318,58 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         else if (nullconst != null) return new NullConstantNode(currentSymbolTable, loc);
         else throw new CompileException("Unknown Const Type");
     }
+
+    @Override
+    public Node visitLoopStatement(MxStarParser.LoopStatementContext ctx) {
+        inLoop = true;
+        loopCount += 1;
+        Integer tmp  = loopCount;
+        String parentScopeName = scopeName;
+        scopeName += "_LOOP_" + tmp.toString();
+        MxStarParser.WhileStatementContext whileStm = ctx.whileStatement();
+        MxStarParser.ForStatementContext forStm = ctx.forStatement();
+        Node ret = null;
+        ExpressionNode tinit = null;
+        ExpressionNode tcond = null;
+        ExpressionNode tstep = null;
+        Node tbody = null;
+
+        if(whileStm != null){
+            tcond = (ExpressionNode) visit(whileStm.expression());
+            tbody = visit(whileStm.statement());
+            ret =  new LoopNode(null, tcond, null, tbody, currentSymbolTable, new Location(whileStm));
+        }
+        else if(forStm != null){
+            if(forStm.normalForStatement().init != null)tinit = (ExpressionNode) visit(forStm.normalForStatement().init);
+            if(forStm.normalForStatement().cond != null)tcond = (ExpressionNode) visit(forStm.normalForStatement().cond);
+            if(forStm.normalForStatement().step != null)tstep = (ExpressionNode) visit(forStm.normalForStatement().step);
+            tbody = visit(forStm.normalForStatement().statement());
+            ret = new LoopNode(tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
+        }
+        else throw new CompileException("Unknown loop");
+        scopeName = parentScopeName;
+        inLoop = false;
+        return  ret;
+    }
+
+    @Override
+    public Node visitBreakJump(MxStarParser.BreakJumpContext ctx) {
+        if(!inLoop) throw new CompileException("break not in loop");
+        else return new BreakNode(currentSymbolTable, new Location(ctx));
+    }
+
+    @Override
+    public Node visitContinueJump(MxStarParser.ContinueJumpContext ctx) {
+        if(!inLoop) throw new CompileException("continue not in loop");
+        else return new ContinueNode(currentSymbolTable, new Location(ctx));
+    }
+
+    @Override
+    public Node visitReturnJump(MxStarParser.ReturnJumpContext ctx) {
+        if(!inConstructor && !inMethodDecl) throw new CompileException("invalid return");
+        else if(inConstructor &&  ctx.expression() != null) throw new CompileException("nothing shold be returned in constructor!");
+        else{}
+        return null;
+    }
+
 }

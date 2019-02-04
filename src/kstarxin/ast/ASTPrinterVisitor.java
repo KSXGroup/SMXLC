@@ -126,6 +126,19 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(LoopNode node) {
+        printLine("[Loop]:");
+        print("[Init]");
+        ExpressionNode tmp = node.getInitializer();
+        if(tmp != null) visit(tmp);
+        else printNoIdt("NULL");
+        tmp = node.getCondition();
+        print("[Cond]");
+        if(tmp != null) visit(tmp);
+        else printNoIdt("NULL");
+        print("[Step]");
+        tmp = node.getStep();
+        if(tmp != null) visit(tmp);
+        else printNoIdt("NULL") ;
         return null;
     }
 
@@ -134,17 +147,16 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
         return null;
     }
 
-
     @Override
     public Void visit(ConditionNode node) {
-        printLine("[Condition:]");
+        printLine("[Condition]:");
         print("[Cond]");
         ExpressionNode cond = node.getCond();
         if(cond != null) visit(node.getCond());
         else printNoIdt("NULL");
         printNoIdt("\n");
         printLine("[Body]");
-        visit(node.getBody());
+        if(node.getBody() != null)visit(node.getBody());
         printLine("[Else]");
         ConditionNode elseNode = node.getElse();
         if(elseNode != null)visit(node.getElse());

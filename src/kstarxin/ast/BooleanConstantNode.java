@@ -12,8 +12,8 @@ public class BooleanConstantNode extends ExpressionNode{
 
     public BooleanConstantNode(String _value, SymbolTable stb, Location loc){
         super(false, stb, loc);
-        if(_value == "true") value = true;
-        else if(_value == "false")value = false;
+        if(_value.contentEquals( "true")) value = true;
+        else if(_value.contentEquals( "false"))value = false;
         else value = false;
     }
 
