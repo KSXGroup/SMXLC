@@ -1,5 +1,6 @@
 package kstarxin.ast;
 
+import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.MxType;
 
 import java.io.*;
@@ -106,14 +107,18 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(VariableDeclaratorNode node) {
-        printLine(node.getIdentifier());
+        print(node.getIdentifier());
+        if(node.getInitializer() != null) visit(node.getInitializer());
+        else printNoIdt("[NOT INIT]");
+        printNoIdt("\n");
         return null;
     }
 
     @Override
     public Void visit(BlockNode node) {
         addIdent();
-        printLine("[Block]");
+        printLine("\n[Block]");
+        printNoIdt(idt);
         node.getStatementList().forEach(this::visit);
         subIndent();
         return null;
@@ -126,25 +131,29 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(LoopNode node) {
+        addIdent();
         printLine("[Loop]:");
         print("[Init]");
         ExpressionNode tmp = node.getInitializer();
         if(tmp != null) visit(tmp);
         else printNoIdt("NULL");
         tmp = node.getCondition();
-        print("[Cond]");
+        printNoIdt("[Cond]");
         if(tmp != null) visit(tmp);
         else printNoIdt("NULL");
-        print("[Step]");
+        printNoIdt("[Step]");
         tmp = node.getStep();
         if(tmp != null) visit(tmp);
         else printNoIdt("NULL") ;
+        printNoIdt("\n");
+        visit(node.getBody());
+        subIndent();
         return null;
     }
 
     @Override
     public Void visit(JumpNode node) {
-        return null;
+        return node.accept(this);
     }
 
     @Override
@@ -185,12 +194,217 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(NullConstantNode node) {
+        printNoIdt("[ValueNull]");
         return null;
     }
 
     @Override
     public Void visit(StringConstantNode node) {
         printNoIdt("[Value: " + node.getValue() + "]");
+        return null;
+    }
+
+    @Override
+    public Void visit(BreakNode node) {
+        printLine("[Break]");
+        return null;
+    }
+
+    @Override
+    public Void visit(ContinueNode node) {
+        printLine("[Continue]");
+        return null;
+    }
+
+    @Override
+    public Void visit(ReturnNode node) {
+        printLine("[Return]");
+        if(node.getReturnValue() != null) visit(node.getReturnValue());
+        return null;
+    }
+
+    @Override
+    public Void visit(BinaryExpressionNode node){
+        int op = node.getOp();
+        String sop = null;
+        switch (op) {
+            case MxStarParser.MUL:
+                sop = "MUL";
+                break;
+            case MxStarParser.DIV:
+                sop = "DIV";
+                break;
+            case MxStarParser.MOD:
+                sop = "MOD";
+                break;
+            case MxStarParser.ADD:
+                sop = "ADD";
+                break;
+            case MxStarParser.SUB:
+                sop = "SUB";
+                break;
+            case MxStarParser.SFTL:
+                sop = "SHIFT LEFT";
+                break;
+            case MxStarParser.SFTR:
+                sop = "SHIFT RIGTH";
+                break;
+            case MxStarParser.GT:
+                sop = "GREATOR THAN";
+                break;
+            case MxStarParser.LT:
+                sop = "LESS THAN";
+                break;
+            case MxStarParser.GE:
+                sop = "GREATOR EQUAL";
+                break;
+            case MxStarParser.EQ:
+                sop = "EQUAL";
+                break;
+            case MxStarParser.NEQ:
+                sop = "NOT EQUAL";
+                break;
+            case MxStarParser.BITAND:
+                sop = "BITAND";
+                break;
+            case MxStarParser.BITXOR:
+                sop = "BITXOR";
+                break;
+            case MxStarParser.BITOR:
+                sop = "BITOR";
+                break;
+            case MxStarParser.AND:
+                sop = "AND";
+                break;
+            case MxStarParser.OR:
+                sop = "OR";
+                break;
+            case MxStarParser.ASSIGN:
+                sop = "ASSIGN";
+                break;
+        }
+        visit(node.getLeft());
+        printNoIdt("<"+sop+">");
+        visit(node.getRight());
+        return null;
+    }
+
+    @Override
+    public Void visit(UnaryExpressionNode node) {
+        int op = node.getOp();
+        String sop = null;
+        switch (op){
+            case MxStarParser.INC:
+                sop = "SELF-INCREASE";
+                break;
+            case MxStarParser.DEC:
+                sop = "SELF-DECREASE";
+                break;
+            case MxStarParser.ADD:
+                sop = "POSITIVE";
+                break;
+            case MxStarParser.SUB:
+                sop = "NEGATIVE";
+                break;
+            case MxStarParser.NOT:
+                sop = "NOT";
+                break;
+            case MxStarParser.BITNOT:
+                sop = "BITNOT";
+                break;
+        }
+        printNoIdt("<"+sop+">");
+        visit(node.getRight());
+        return null;
+    }
+
+    @Override
+    public Void visit(DotMemberNode node){
+        visit(node.getExpression());
+        printNoIdt("[DOT]");
+        printNoIdt(node.getMember());
+        return null;
+    }
+
+    @Override
+    public Void visit(IndexAccessNode node){
+        printNoIdt("[ArrayName:]");
+        visit(node.getExpression());
+        printNoIdt("[Index:]");
+        visit(node.getIndex());
+        return null;
+    }
+
+    @Override
+    public Void visit(IdentifierNode node){
+        printNoIdt("[id:"+node.getIdentifier()+"]");
+        return null;
+    }
+
+    @Override
+    public Void visit(NewCreatorNode node){
+        printNoIdt("[NEW " + node.type.toString()  + "]" );
+        if(node.isArrayCreator()){
+            ArrayList<ExpressionNode> lst = node.getSizeExpressionList();
+            for(ExpressionNode n : lst){
+                printNoIdt("[");
+                visit(n);
+                printNoIdt("]");
+            }
+        }
+        else{
+            if(node.getParameterList().size() != 0){
+                printNoIdt("(");
+                for(ExpressionNode n : node.getParameterList()){
+                    visit(n);
+                    printNoIdt(",");
+                }
+                printNoIdt(")");
+            }
+        }
+        return null;
+    }
+
+    @Override
+    public Void visit(SuffixIncreaseDecreaseNode node){
+        int op = node.getOp();
+        String sop = null;
+        switch (op){
+            case MxStarParser.INC:
+                sop = "SELF-INCREASE";
+                break;
+            case MxStarParser.DEC:
+                sop = "SELF-DECREASE";
+                break;
+        }
+        visit(node.getExpression());
+        printNoIdt("["+sop + "]");
+        return null;
+    }
+
+    @Override
+    public Void visit(ThisNode node){
+        printNoIdt("[This]");
+        return null;
+    }
+
+    @Override
+    public Void visit(MethodCallNode node) {
+        printNoIdt("[Call]");
+        printNoIdt(node.getMethodName());
+        printNoIdt("(");
+        node.getParameterExpressionList().forEach(this::visit);
+        printNoIdt(")\n");
+        return null;
+    }
+
+    @Override
+    public Void visit(DotMemberMethodCallNode node) {
+        printNoIdt("[Dot][Call]");
+        printNoIdt(node.getMemberMethodName());
+        printNoIdt("(");
+        node.getParameterExpressionList().forEach(this::visit);
+        printNoIdt(")");
         return null;
     }
 }

@@ -1,12 +1,14 @@
 package kstarxin.ast;
 
 import kstarxin.utilities.Location;
+import kstarxin.utilities.MxType;
 import kstarxin.utilities.SymbolTable;
 
 public class IntegerConstantNode extends ExpressionNode{
     private int value;
     public IntegerConstantNode(String _value, SymbolTable stb, Location loc){
         super(false, stb, loc);
+        super.setType(new MxType("int"));
         value = Integer.parseInt(_value);
     }
 

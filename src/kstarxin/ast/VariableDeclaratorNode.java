@@ -18,6 +18,10 @@ public class VariableDeclaratorNode extends Node {
         return id;
     }
 
+    public ExpressionNode getInitializer(){
+        return  initializer;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

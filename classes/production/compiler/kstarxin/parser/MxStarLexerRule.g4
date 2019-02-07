@@ -1,19 +1,39 @@
 lexer grammar MxStarLexerRule;
 
-Boolean     :   'bool';
-Integer     :   'int';
-String 	    :   'string';
-Void        :   'void';
-If          :   'if';
-Else        :   'else';
-For         :   'for';
-While       :   'while';
-Break       :   'break';
-Continue    :   'continue';
-Return      :   'return';
-New         :   'new';
-Class       :   'class';
-This        :   'this';
+Boolean     :   'bool'
+            ;
+Integer     :   'int'
+            ;
+String 	    :   'string'
+            ;
+Void        :   'void'
+            ;
+If          :   'if'
+            ;
+Else        :   'else'
+            ;
+For         :   'for'
+            ;
+While       :   'while'
+            ;
+Break       :   'break'
+            ;
+Continue    :   'continue'
+            ;
+Return      :   'return'
+            ;
+New         :   'new'
+            ;
+Class       :   'class'
+            ;
+This        :   'this'
+            ;
+NullConst   :   'null'
+            ;
+
+BoolConst   :   'true'
+            |   'false'
+            ;
 
 
 CommentLine :   '//'.*?'\n'     ->skip;
@@ -25,10 +45,6 @@ WhiteSpace  :   [ \t\n\r]+      ->skip;
 NewLine     :   '\r'?'\n'       ->skip;
 
 Identifier  :   [a-zA-Z][0-9a-zA-Z_]*;
-
-BoolConst   :   'true' | 'false';
-
-NullConst   :   'null';
 
 fragment    EscapeCharacter	:   '\\'["abfnrtv0\\'];
 fragment    StringCharacter	:   ~["\\] | EscapeCharacter;

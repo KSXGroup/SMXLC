@@ -29,6 +29,13 @@ public class SymbolTable {
         childScopeSymbolTable = new LinkedList<>();
     }
 
+    public void addVariable(Symbol s){
+        String id = s.getIdentifier();
+        if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, s);
+        else if(currentScopeVariableTable.get(id).getScopeName() != name) currentScopeVariableTable.replace(id, s);
+        else throw new CompileException("redeclaration of " + id);
+    }
+
     public void addVariable(MxType type, String id, Location defLoc) throws CompileException{
         if(!currentScopeVariableTable.containsKey(id)) currentScopeVariableTable.put(id, new Symbol(id, type, name, defLoc));
         else if(currentScopeVariableTable.get(id).getScopeName() != name) currentScopeVariableTable.replace(id, new Symbol(id, type, name, defLoc));
@@ -40,8 +47,14 @@ public class SymbolTable {
         else throw new CompileException("redeclaration of method " + id);
     }
 
-    public void addClass(String id, Location defLoc) throws CompileException{
-        if(!currentScopeClassTable.containsKey(id)) currentScopeClassTable.put(id, new Symbol(id,new MxType(MxType.TypeEnum.CLASS), name, defLoc));
+    public void addBuiltInMethod(MxType retType, String id,Location defLoc){
+        Symbol sym = new Symbol(id, retType, name, defLoc);
+        sym.setBuiltIn();
+        currentScopeMethodTable.put(id, sym);
+    }
+
+    public void addClass(String id, SymbolTable memTable, Location defLoc) throws CompileException{
+        if(!currentScopeClassTable.containsKey(id)) currentScopeClassTable.put(id, new Symbol(id,new MxType(MxType.TypeEnum.CLASS), name, memTable, defLoc));
         else throw new CompileException("reclaration of class " + id);
     }
 
@@ -52,7 +65,7 @@ public class SymbolTable {
     public void dumpSymbolTable(String indent, PrintStream out){
         out.print("\n");
         out.println("[Scope: "+name+"]");
-        out.println("[Variables]");
+        out.println("[Variable(s)]");
         String name = null;
         MxType type = null;
         Location loc = null;
@@ -62,21 +75,34 @@ public class SymbolTable {
             loc = currentScopeVariableTable.get(key).getLocation();
             out.println(indent + name  + ":" + "[" +type.toString()+":"+ type.getEnumString() +" dim = " +type.getDimension()+" Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber()+"]");
         }
-        out.println("[Methods]");
+        out.println("[Method(s)]");
         for(String key : currentScopeMethodTable.keySet()){
             name = currentScopeMethodTable.get(key).getIdentifier();
             type = currentScopeMethodTable.get(key).getType();
             loc = currentScopeMethodTable.get(key).getLocation();
             out.println(indent + name + ":[retType: " + type.toString()+":"+ type.getEnumString()+" dim = " +type.getDimension()+ " Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber() + "]");
         }
+        out.println("[Class(es)]");
+        for(String key : currentScopeClassTable.keySet()){
+            Symbol s =  currentScopeClassTable.get(key);
+            name = s.getIdentifier();
+            type = s.getType();
+            loc = s.getLocation();
+            out.println(indent + "[class:" + name+"]"+ " Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber() + "]");
+        }
         for(SymbolTable stb : childScopeSymbolTable) stb.dumpSymbolTable(indent + "\t", out);
     }
 
-    public Symbol search(Token id){
-        return null;
+    public boolean containsVariable(String id){
+        return currentScopeVariableTable.containsKey(id);
     }
-    public Symbol search(String id){
-        return null;
+
+    public Symbol getVariable(String id){
+        return currentScopeVariableTable.get(id);
+    }
+
+    public Symbol getClass(String id){
+        return currentScopeClassTable.get(id);
     }
 
     public void setName(String _name){

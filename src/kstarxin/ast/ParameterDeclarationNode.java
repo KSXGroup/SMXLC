@@ -18,6 +18,10 @@ public class ParameterDeclarationNode extends Node {
         return type;
     }
 
+    public String getIdentifier(){
+        return id;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

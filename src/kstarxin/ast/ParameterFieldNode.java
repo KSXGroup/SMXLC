@@ -17,11 +17,11 @@ public class ParameterFieldNode extends Node {
         paraTypeList = _paraTypeList;
     }
 
-    public ArrayList getParameterList(){
+    public ArrayList<ParameterDeclarationNode> getParameterList(){
         return paraDeclList;
     }
 
-    public ArrayList getParameterTypeList(){
+    public ArrayList<MxType> getParameterTypeList(){
         return paraTypeList;
     }
 

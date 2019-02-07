@@ -29,6 +29,10 @@ public class LoopNode extends StatementNode{
         return step;
     }
 
+    public Node getBody(){
+        return body;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

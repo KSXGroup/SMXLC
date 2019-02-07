@@ -101,6 +101,12 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitStatement(MxStarParser.StatementContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link MxStarParser#expressionStatement}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitExpressionStatement(MxStarParser.ExpressionStatementContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link MxStarParser#block}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -212,6 +218,13 @@ public interface MxStarVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitThisExpression(MxStarParser.ThisExpressionContext ctx);
+	/**
+	 * Visit a parse tree produced by the {@code DotMemberMethodCall}
+	 * labeled alternative in {@link MxStarParser#expression}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitDotMemberMethodCall(MxStarParser.DotMemberMethodCallContext ctx);
 	/**
 	 * Visit a parse tree produced by the {@code BinaryExpression}
 	 * labeled alternative in {@link MxStarParser#expression}.

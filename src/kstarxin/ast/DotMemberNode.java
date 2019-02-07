@@ -3,21 +3,21 @@ package kstarxin.ast;
 import kstarxin.utilities.Location;
 import kstarxin.utilities.SymbolTable;
 
-public class IndexAccessNode extends ExpressionNode{
+public class DotMemberNode extends ExpressionNode{
     ExpressionNode expr;
-    ExpressionNode index;
-    public IndexAccessNode(ExpressionNode _expr, ExpressionNode _index, SymbolTable stb, Location loc){
+    String member;
+    public DotMemberNode(ExpressionNode _expr, String _member, SymbolTable stb, Location loc){
         super(true, stb, loc);
         expr = _expr;
-        index = _index;
+        member = _member;
     }
 
     public ExpressionNode getExpression() {
         return expr;
     }
 
-    public ExpressionNode getIndex() {
-        return index;
+    public String getMember() {
+        return member;
     }
 
     @Override

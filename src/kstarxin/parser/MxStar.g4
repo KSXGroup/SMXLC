@@ -55,8 +55,11 @@ statement           :   block
                     |   loopStatement
                     |   jumpStatement
                     |   variableDeclaration
-                    |   expression SEMI
+                    |   expressionStatement
                     |   SEMI
+                    ;
+
+expressionStatement :   expression SEMI
                     ;
 
 block               :   LBRACE statement* RBRACE
@@ -113,8 +116,9 @@ expressionList      :   expression (COMMA expression)*
                     ;
 
 expression          :   expression op   =   (INC | DEC)                                     #SuffixIncDec
+                    |   Identifier LPAREN expressionList? RPAREN                            #MethodCall
+                    |   expression DOT Identifier LPAREN expressionList? RPAREN             #DotMemberMethodCall
                     |   expression DOT Identifier                                           #DotMember
-                    |   expression LPAREN expressionList? RPAREN                            #MethodCall
                     |   expression LBRAC expression RBRAC                                   #IndexAccess
 
                     |   <assoc=right>   op  =   (INC | DEC)     expression                  #UnaryExpression
@@ -134,7 +138,7 @@ expression          :   expression op   =   (INC | DEC)                         
                     |   lhs = expression    op  =   BITOR             rhs = expression      #BinaryExpression
                     |   lhs = expression    op  =   AND               rhs = expression      #BinaryExpression
                     |   lhs = expression    op  =   OR                rhs = expression      #BinaryExpression
-                    |   <assoc=right>       lhs =  expression ASSIGN  rhs = expression      #BinaryExpression
+                    |   <assoc=right>       lhs = expression op = ASSIGN  rhs = expression  #BinaryExpression
                     |   constant                                                            #ConstantExpression
                     |   This                                                                #ThisExpression
                     |   Identifier                                                          #IdentifierExpression

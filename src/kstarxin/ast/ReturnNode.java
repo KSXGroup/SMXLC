@@ -10,6 +10,10 @@ public class ReturnNode extends JumpNode {
         ret = _ret;
     }
 
+    public ExpressionNode getReturnValue(){
+        return ret;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);
