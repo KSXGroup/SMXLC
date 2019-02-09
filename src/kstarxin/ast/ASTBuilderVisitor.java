@@ -6,14 +6,21 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 //TODO:MAKER ERROR REPORTER USER-FRIENDLY
+//TODO:TYPE CHECK
 public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
+    public static final String globalScopeName = "GLOBAL";
+    public static final String buitinPrefix = "_BUILTIN_";
+    public static final String constructorPrefix = "_CONSTRUCTOR_";
+
     private SymbolTable currentSymbolTable;
+    private SymbolTable classMemberTable;
     private MxStarParser.ProgramContext concreteSyntaxTree;
     private LinkedList<Symbol> parameterBuffer;
     private String scopePrefix;
     private String scopeName;
     private boolean inMethodDecl; //for return
     private boolean inConstructor;
+    private boolean inClass;
     private int inLoop;
     private int loopCount;
     private int conditionCount;
@@ -62,7 +69,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     }
 
     private void initializeBuiltInMemberMethod(){
-        SymbolTable stringStb = new SymbolTable("BUILTIN_string");
+        SymbolTable stringStb = new SymbolTable(buitinPrefix+"string");
 
         MxType t= new MxType("int");
         ArrayList<MxType> para = new ArrayList<>();
@@ -91,25 +98,23 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         t.setMethod();
         stringStb.addBuiltInMethod(t, "ord",new Location(concreteSyntaxTree));
 
-        currentSymbolTable.addClass("string", stringStb, new Location(concreteSyntaxTree));
-        currentSymbolTable.addChildSymbolTable(stringStb);
+        currentSymbolTable.addClass(buitinPrefix+"string", stringStb, new Location(concreteSyntaxTree));
 
-        SymbolTable arrayStb = new SymbolTable("BUILTIN_array");
+        SymbolTable arrayStb = new SymbolTable(buitinPrefix+"array");
         t= new MxType("int");
         para = new ArrayList<>();
         t.setParaTypeList(para);
         t.setMethod();
         arrayStb.addBuiltInMethod(t, "size",new Location(concreteSyntaxTree));
 
-        currentSymbolTable.addClass("array", arrayStb, new Location(concreteSyntaxTree));
-        currentSymbolTable.addChildSymbolTable(arrayStb);
+        currentSymbolTable.addClass(buitinPrefix+"array", arrayStb, new Location(concreteSyntaxTree));
     }
 
     public ASTBuilderVisitor(MxStarParser.ProgramContext cst) {
         parameterBuffer = new LinkedList<Symbol>();
         concreteSyntaxTree = cst;
         scopePrefix = "";
-        scopeName = "GLOBAL";
+        scopeName = globalScopeName;
         inMethodDecl = false;
         inConstructor = false;
         inLoop = 0;
@@ -167,9 +172,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         TypeNode type = (TypeNode) visit(ctx.type());
         vardList = ctx.variableDeclarationList().variableDeclarator();
         Location loc = null;
-
         VariableDeclarationNode vardecl = new VariableDeclarationNode(type, currentSymbolTable, new Location(ctx));
-
         for (MxStarParser.VariableDeclaratorContext declarator : vardList) {
             String varId = declarator.Identifier().getText();
             ExpressionNode init;
@@ -178,8 +181,8 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             loc = new Location(declarator);
             vardecl.addDeclarator(new VariableDeclaratorNode(varId, init, currentSymbolTable, loc));
             currentSymbolTable.addVariable(type.getType(), varId, loc);
+            if(inClass & !inMethodDecl & !inConstructor) classMemberTable.addVariable(type.getType(), varId, loc);
         }
-
         return vardecl;
     }
 
@@ -192,27 +195,23 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         scopeName = scopeName + "_METHOD_" + methName;
         MethodDeclarationNode methnode = null;
         TypeNode retTypeNode = null;
-        Location loc = null;
+        Location loc = new Location(ctx);
         BlockNode block = null;
         ParameterFieldNode pf = (ParameterFieldNode) visit(ctx.parameterField());
-
         for(ParameterDeclarationNode n : pf.getParameterList()){
-            parameterBuffer.add(new Symbol(n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
+            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE,n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
         }
-
         retTypeNode = (TypeNode) visit(ctx.typeWithVoid());
-        block = (BlockNode) visit(ctx.block());
-        methodTable = block.getCurrentSymbolTable();
-
-        for(ParameterDeclarationNode n : pf.getParameterList()){
-            n.setCurrentSymbolTable(methodTable);
-        }
-
         MxType funcDefType = new MxType(retTypeNode.getType().toString(), retTypeNode.getType().getDimension(), pf.getParameterTypeList());
         funcDefType.setMethod();
         retTypeNode.setType(funcDefType);
-        loc = new Location(ctx);
         currentSymbolTable.addMethod(funcDefType, methName, loc);
+        if(inClass) classMemberTable.addMethod(funcDefType, methName, loc);
+        block = (BlockNode) visit(ctx.block());
+        methodTable = block.getCurrentSymbolTable();
+        for(ParameterDeclarationNode n : pf.getParameterList()){
+            n.setCurrentSymbolTable(methodTable);
+        }
         methnode = new MethodDeclarationNode(retTypeNode, methName, pf.getParameterList(), block, methodTable, loc);
         scopeName = parentScopeName;
         inMethodDecl = false;
@@ -252,7 +251,9 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     @Override
     public Node visitClassDeclaration(MxStarParser.ClassDeclarationContext ctx) {
         enterScope();
+        inClass = true;
         String id = ctx.Identifier().getText();
+        classMemberTable = new SymbolTable(id);
         String parentScopeName = scopeName;
         LinkedList<MxStarParser.ClassConstructorDeclarationContext> consl = new LinkedList<MxStarParser.ClassConstructorDeclarationContext>();
         LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext> methl = new LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext>();
@@ -260,7 +261,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         scopeName = scopeName + "_CLASS_" + id;
         SymbolTable classSymbolTable = new SymbolTable(currentSymbolTable), parentTable = currentSymbolTable;
         classSymbolTable.setName(scopePrefix + scopeName);
-        currentSymbolTable.addClass(id,classSymbolTable, loc);
+        currentSymbolTable.addClass(id,classMemberTable, loc);
         currentSymbolTable = classSymbolTable;
         ClassDeclarationNode classNode = new ClassDeclarationNode(id, classSymbolTable, loc);
         for (MxStarParser.ClassBodyMemberContext m : ctx.classBodyMember()) {
@@ -284,6 +285,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         parentTable.addChildSymbolTable(currentSymbolTable);
         currentSymbolTable = parentTable;
         scopeName = parentScopeName;
+        inClass = false;
         exitScope();
         return classNode;
     }
@@ -307,8 +309,6 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         TypeNode type = (TypeNode) visit(ctx.type());
         Location loc = new Location(ctx);
         String id = ctx.Identifier().getText();
-        //System.err.print("add " + id);
-        //currentSymbolTable.addVariable(type.getType(), id, loc);
         return new ParameterDeclarationNode(type, id, null, loc);
     }
 
@@ -316,19 +316,27 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     public Node visitClassConstructorDeclaration(MxStarParser.ClassConstructorDeclarationContext ctx) {
         inConstructor = true;
         MethodDeclarationNode cons = null;
+        Location loc = new Location(ctx);
         String name = ctx.Identifier().getText();
         String parentScopeName = scopeName;
-        scopeName = scopeName + "_CLASSCONS_" + name;
+        scopeName = scopeName + constructorPrefix + name;
         SymbolTable classTable = currentSymbolTable;
-        MxType consRetType = new MxType(name);
-        Location loc = new Location(ctx);
-        BlockNode block = (BlockNode) visit(ctx.block());
-        currentSymbolTable = block.getCurrentSymbolTable();
-        TypeNode consTypeNode = new TypeNode(consRetType, currentSymbolTable, loc);
         ParameterFieldNode para = (ParameterFieldNode) visit(ctx.parameterField());
+        for(ParameterDeclarationNode n : para.getParameterList()){
+            parameterBuffer.add(new Symbol(Symbol.SymbolType.METHOD, n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
+        }
+        MxType consRetType = new MxType(name);
         consRetType.setMethod();
         consRetType.setParaTypeList(para.getParameterTypeList());
         classTable.addMethod(consRetType, name, loc);
+        BlockNode block = (BlockNode) visit(ctx.block());
+        currentSymbolTable = block.getCurrentSymbolTable();
+        for(ParameterDeclarationNode n : para.getParameterList()){
+            n.setCurrentSymbolTable(currentSymbolTable);
+        }
+        TypeNode consTypeNode = new TypeNode(consRetType, classTable, loc);
+        classTable.addMethod(consRetType, constructorPrefix + name, loc);
+        classMemberTable.addMethod(consRetType,constructorPrefix + name,loc);
         cons = new MethodDeclarationNode(consTypeNode, name, para.getParameterList(), block, currentSymbolTable, loc);
         currentSymbolTable = classTable;
         scopeName = parentScopeName;
@@ -363,9 +371,22 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         conditionCount++;
         Integer cnt = conditionCount;
         String parentScopeName = scopeName;
+        SymbolTable nstb = null,parentTable = null;
+        boolean newStbFlag = false;
+        Node then = null;
         scopeName += "_IF_" + cnt.toString();
         ExpressionNode cond = (ExpressionNode) visit(ctx.expression());
-        Node then = visit(ctx.statement());
+        if(ctx.statement().block() != null) then = visit(ctx.statement());
+        else{
+            newStbFlag = true;
+            nstb = new SymbolTable(currentSymbolTable);
+            nstb.setName(scopePrefix+ scopeName);
+            parentTable = currentSymbolTable;
+            currentSymbolTable = nstb;
+            then = visit(ctx.statement());
+            parentTable.addChildSymbolTable(currentSymbolTable);
+            currentSymbolTable = parentTable;
+        }
         ConditionNode curr = null, ret = null, tmp = null;
         curr = new ConditionNode(cond, then , null, currentSymbolTable, new Location(ctx));
         ret = curr;
@@ -385,9 +406,20 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         conditionCount++;
         Integer cnt = conditionCount;
         String parentScopeName = scopeName;
+        SymbolTable nstb = null, parentTable = null;
+        Node then = null;
         scopeName += "_ELSEIF_" + cnt.toString();
         ExpressionNode cond = (ExpressionNode) visit(ctx.expression());
-        Node then = visit(ctx.statement());
+        if(ctx.statement().block() != null) then = visit(ctx.statement());
+        else{
+            nstb = new SymbolTable(currentSymbolTable);
+            nstb.setName(scopePrefix + scopeName);
+            parentTable = currentSymbolTable;
+            currentSymbolTable = nstb;
+            then = visit(ctx.statement());
+            parentTable.addChildSymbolTable(currentSymbolTable);
+            currentSymbolTable = parentTable;
+        }
         scopeName = parentScopeName;
         return new ConditionNode(cond, then, null, currentSymbolTable, new Location(ctx));
     }
@@ -398,7 +430,18 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         Integer cnt = conditionCount;
         String parentScopeName = scopeName;
         scopeName += "_ELSE_" + cnt.toString();
-        Node then = visit(ctx.statement());
+        Node then = null;
+        SymbolTable nstb = null, parentTable = null;
+        if(ctx.statement().block() != null) then = visit(ctx.statement());
+        else{
+            nstb = new SymbolTable(currentSymbolTable);
+            nstb.setName(scopePrefix + scopeName);
+            parentTable = currentSymbolTable;
+            currentSymbolTable = nstb;
+            then = visit(ctx.statement());
+            parentTable.addChildSymbolTable(currentSymbolTable);
+            currentSymbolTable = parentTable;
+        }
         scopeName = parentScopeName;
         return new ConditionNode(null, then, null, currentSymbolTable, new Location(ctx));
     }
@@ -412,6 +455,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         scopeName += "_LOOP_" + tmp.toString();
         MxStarParser.WhileStatementContext whileStm = ctx.whileStatement();
         MxStarParser.ForStatementContext forStm = ctx.forStatement();
+        SymbolTable parentTable = null, nstb = null;
         Node ret = null;
         ExpressionNode tinit = null;
         ExpressionNode tcond = null;
@@ -420,14 +464,32 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
 
         if(whileStm != null){
             tcond = (ExpressionNode) visit(whileStm.expression());
-            tbody = visit(whileStm.statement());
+            if(whileStm.statement().block() != null) tbody = visit(whileStm.statement());
+            else{
+                nstb = new SymbolTable(currentSymbolTable);
+                nstb.setName(scopePrefix + scopeName);
+                parentTable = currentSymbolTable;
+                currentSymbolTable = nstb;
+                tbody = visit(whileStm.statement());
+                parentTable.addChildSymbolTable(currentSymbolTable);
+                currentSymbolTable = parentTable;
+            }
             ret =  new LoopNode(null, tcond, null, tbody, currentSymbolTable, new Location(whileStm));
         }
         else if(forStm != null){
             if(forStm.normalForStatement().init != null)tinit = (ExpressionNode) visit(forStm.normalForStatement().init);
             if(forStm.normalForStatement().cond != null)tcond = (ExpressionNode) visit(forStm.normalForStatement().cond);
             if(forStm.normalForStatement().step != null)tstep = (ExpressionNode) visit(forStm.normalForStatement().step);
-            tbody = visit(forStm.normalForStatement().statement());
+            if(forStm.normalForStatement().statement().block() != null) tbody = visit(forStm.normalForStatement().statement());
+            else{
+                nstb = new SymbolTable(currentSymbolTable);
+                nstb.setName(scopePrefix + scopeName);
+                parentTable = currentSymbolTable;
+                currentSymbolTable = nstb;
+                tbody = visit(forStm.normalForStatement().statement());
+                parentTable.addChildSymbolTable(currentSymbolTable);
+                currentSymbolTable = parentTable;
+            }
             ret = new LoopNode(tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
         }
         else throw new CompileException("Unknown loop");
@@ -486,7 +548,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     @Override
     public Node visitIdentifierExpression(MxStarParser.IdentifierExpressionContext ctx) {
         String id = ctx.getText();
-        if(!currentSymbolTable.containsVariable(id)) throw new CompileException(id + " is not declared in this scope" + ctx.getStart().getLine());
+        if(!currentSymbolTable.contains(id)) throw new CompileException(id + " is not declared in this scope" + ctx.getStart().getLine());
         else return new IdentifierNode(id, currentSymbolTable, new Location(ctx));
     }
 

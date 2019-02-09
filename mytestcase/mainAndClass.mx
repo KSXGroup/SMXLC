@@ -1,0 +1,75 @@
+int MAIN = 1;
+int main(int main){
+	Class Main = new Class(main);
+	return CLASS(main);
+}
+
+int CLASS(int Class){
+	return Class;
+}
+
+Class Main(Class Main){
+	Class main = new Class(MAIN);
+	return Main.main(main).Main;
+}
+
+class Class{
+	Class Main;
+	Class(int Class){
+		return;
+	}
+	Class main(Class main){
+		return Main;
+	}
+}
+
+
+/*!! metadata:
+=== comment ===
+517030910425-kstarxin-simple-scope-and-forward-reference-test
+=== is_public ===
+True
+=== assert ===
+success_compile
+=== timeout ===
+0
+=== input ===
+
+=== phase ===
+semantic pretest
+=== output ===
+
+=== exitcode ===
+0
+
+!!*/
+
+
+
+//Here is the corresponding cpp code, compile succeeded with some warnings within cpp98 standard
+//I reversed the order of declarations to test your forward-reference
+/*
+int MAIN = 1;
+class Class{
+	public:
+		Class* Main;
+		Class(int Class){
+			return;
+		}
+		Class* main(Class* main){
+			return Main;
+		}
+};
+Class* Main(Class* Main){
+	Class* main = new Class(MAIN);
+	return Main->main(main)->Main;
+}
+int main(int main){
+	Class* Main = new Class(main);
+	return CLASS(main);
+}
+
+int CLASS(int Class){
+	return Class;
+}
+*/

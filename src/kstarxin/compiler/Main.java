@@ -1,6 +1,4 @@
 package kstarxin.compiler;
-import java.io.*;
-
 
 public class Main{
     public static void main(String [] arg){
