@@ -21,6 +21,18 @@ abstract  public class ExpressionNode extends Node {
         type = _type;
     }
 
+    public void setLeftValue() {
+        isLeftValue = true;
+    }
+
+    public void setRightValue(){
+        isLeftValue = false;
+    }
+
+    public boolean isLeftValue(){
+        return isLeftValue;
+    }
+
     @Override
     abstract public <T> T accept(ASTBaseVisitor<T> visitor);
 }

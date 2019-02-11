@@ -60,6 +60,20 @@ public class SymbolTable {
     }
 
     public void pushDown(){
+        // Check type
+        for(Symbol s : currentScopeTable.values()){
+            if(s.getSymbolType().equals(Symbol.SymbolType.VARIABLE) || s.getSymbolType().equals(Symbol.SymbolType.METHOD)) {
+                MxType t = s.getType();
+                String id = t.toString();
+                if (t.getEnumType().equals(MxType.TypeEnum.NOT_DECIDED)) {
+                    Integer line = s.getLocation().getLineNumber(), column = s.getLocation().getColumnNumber();
+                    if (!currentScopeTable.containsKey(id))
+                        throw new CompileException("type " + id + " is not declared in this scope");
+                    else if (!currentScopeTable.get(id).isClass()) throw new CompileException(id + " can not be used as type " + line.toString() + ":" +column.toString());
+                    else t.setType(MxType.TypeEnum.CLASS);
+                }
+            }
+        }
         if(childScopeSymbolTable.size() == 0) return;
         for(SymbolTable cstb : childScopeSymbolTable){
             for(String key : currentScopeTable.keySet()) {
@@ -93,7 +107,7 @@ public class SymbolTable {
                     break;
                 case CLASS:
                     out.println("[Class]");
-                    currentScopeTable.get(key).getMemberTable().dumpSymbolTable("", System.err);
+                   // currentScopeTable.get(key).getMemberTable().dumpSymbolTable("", System.err);
                     out.println(indent + "[class:" + name+"]"+ " Define at: " + loc.getLineNumber() +":"+ loc.getColumnNumber() + "]");
                     break;
             }
@@ -106,8 +120,16 @@ public class SymbolTable {
         name = _name;
     }
 
+    public String getName(){
+        return  name;
+    }
+
     public boolean contains(String id){
         return currentScopeTable.containsKey(id);
+    }
+
+    public Symbol get(String id){
+        return currentScopeTable.get(id);
     }
 
 }

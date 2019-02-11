@@ -7,8 +7,6 @@ public class MxType {
     private String name;
     private TypeEnum type;
     private int dimension;
-    private boolean isMethod;
-    private boolean isClass;
     private boolean isPrimitiveType;
     private ArrayList<MxType> paraTypeList;
     public static enum TypeEnum {
@@ -145,26 +143,12 @@ public class MxType {
         paraTypeList = _paraTypeList;
     }
 
-    public void setMethod(){
-        isMethod = true;
-        isClass = false;
-    }
-
-    public void setClass(){
-        isClass = true;
-        isMethod = false;
-    }
-
-    public boolean isMethod(){
-        return isMethod;
-    }
-
-    public boolean isClass(){
-        return isClass;
-    }
-
     public boolean isPrimitiveType() {
         return isPrimitiveType;
+    }
+
+    public TypeEnum getEnumType(){
+        return type;
     }
 
     public String getEnumString(){
@@ -181,5 +165,10 @@ public class MxType {
 
     public String toString(){
         return name;
+    }
+
+    public boolean equals(MxType other){
+        if(other.name.equals(name) && other.dimension == dimension && other.type.equals(type)) return true;
+        else return false;
     }
 }

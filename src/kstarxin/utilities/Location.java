@@ -17,4 +17,14 @@ public class Location {
     public int getColumnNumber(){
         return ColumnNumber;
     }
+
+    public String getLineNumberString(){
+        Integer l = LineNumber;
+        return l.toString();
+    }
+
+    public String getColumnNumberString(){
+        Integer c = ColumnNumber;
+        return c.toString();
+    }
 }

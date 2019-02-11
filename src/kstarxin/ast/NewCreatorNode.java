@@ -45,6 +45,14 @@ public class NewCreatorNode extends ExpressionNode{
         return sizeExprList;
     }
 
+    public int getDimension(){
+        return dim;
+    }
+
+    public MxType getCreatorType(){
+        return type;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

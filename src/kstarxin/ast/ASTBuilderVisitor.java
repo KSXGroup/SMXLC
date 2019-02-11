@@ -9,8 +9,9 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 //TODO:TYPE CHECK
 public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     public static final String globalScopeName = "GLOBAL";
-    public static final String buitinPrefix = "_BUILTIN_";
     public static final String constructorPrefix = "_CONSTRUCTOR_";
+    public static final String builtinStringClassName = "_STRING_";
+    public static final String builtinArrayClassName = "_ARRAY_";
 
     private SymbolTable currentSymbolTable;
     private SymbolTable classMemberTable;
@@ -38,43 +39,37 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         ArrayList<MxType> para = new ArrayList<>();
         para.add(new MxType("string"));
         t.setParaTypeList(para);
-        t.setMethod();
         currentSymbolTable.addBuiltInMethod(t,"print", new Location(concreteSyntaxTree));
 
         t= new MxType("void");
         para = new ArrayList<>();
         para.add(new MxType("string"));
         t.setParaTypeList(para);
-        t.setMethod();
         currentSymbolTable.addBuiltInMethod(t,"println", new Location(concreteSyntaxTree));
 
         t = new MxType("string");
         para = new ArrayList<>();
         t.setParaTypeList(para);
-        t.setMethod();
         currentSymbolTable.addBuiltInMethod(t,"getString", new Location(concreteSyntaxTree));
 
         t = new MxType("int");
         para = new ArrayList<>();
         t.setParaTypeList(para);
-        t.setMethod();
         currentSymbolTable.addBuiltInMethod(t,"getInt", new Location(concreteSyntaxTree));
 
         t= new MxType("string");
         para = new ArrayList<>();
         para.add(new MxType("int"));
         t.setParaTypeList(para);
-        t.setMethod();
         currentSymbolTable.addBuiltInMethod(t,"toString", new Location(concreteSyntaxTree));
     }
 
     private void initializeBuiltInMemberMethod(){
-        SymbolTable stringStb = new SymbolTable(buitinPrefix+"string");
+        SymbolTable stringStb = new SymbolTable(builtinStringClassName);
 
         MxType t= new MxType("int");
         ArrayList<MxType> para = new ArrayList<>();
         t.setParaTypeList(para);
-        t.setMethod();
         stringStb.addBuiltInMethod(t, "length",new Location(concreteSyntaxTree));
 
         t= new MxType("string");
@@ -82,32 +77,28 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         para.add(new MxType("int"));
         para.add(new MxType("int"));
         t.setParaTypeList(para);
-        t.setMethod();
         stringStb.addBuiltInMethod(t, "substring",new Location(concreteSyntaxTree));
 
         t= new MxType("int");
         para = new ArrayList<>();
         t.setParaTypeList(para);
-        t.setMethod();
         stringStb.addBuiltInMethod(t, "parseInt",new Location(concreteSyntaxTree));
 
         t= new MxType("int");
         para = new ArrayList<>();
         para.add(new MxType("int"));
         t.setParaTypeList(para);
-        t.setMethod();
         stringStb.addBuiltInMethod(t, "ord",new Location(concreteSyntaxTree));
 
-        currentSymbolTable.addClass(buitinPrefix+"string", stringStb, new Location(concreteSyntaxTree));
+        currentSymbolTable.addClass(builtinStringClassName, stringStb, new Location(concreteSyntaxTree));
 
-        SymbolTable arrayStb = new SymbolTable(buitinPrefix+"array");
+        SymbolTable arrayStb = new SymbolTable(builtinArrayClassName);
         t= new MxType("int");
         para = new ArrayList<>();
         t.setParaTypeList(para);
-        t.setMethod();
         arrayStb.addBuiltInMethod(t, "size",new Location(concreteSyntaxTree));
 
-        currentSymbolTable.addClass(buitinPrefix+"array", arrayStb, new Location(concreteSyntaxTree));
+        currentSymbolTable.addClass(builtinArrayClassName, arrayStb, new Location(concreteSyntaxTree));
     }
 
     public ASTBuilderVisitor(MxStarParser.ProgramContext cst) {
@@ -126,7 +117,9 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     }
 
     public ProgramNode build() {
-        return (ProgramNode) visitProgram(concreteSyntaxTree);
+        ProgramNode ret =  (ProgramNode) visitProgram(concreteSyntaxTree);
+        ret.getCurrentSymbolTable().pushDown();
+        return ret;
     }
 
     @Override
@@ -203,7 +196,6 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         }
         retTypeNode = (TypeNode) visit(ctx.typeWithVoid());
         MxType funcDefType = new MxType(retTypeNode.getType().toString(), retTypeNode.getType().getDimension(), pf.getParameterTypeList());
-        funcDefType.setMethod();
         retTypeNode.setType(funcDefType);
         currentSymbolTable.addMethod(funcDefType, methName, loc);
         if(inClass) classMemberTable.addMethod(funcDefType, methName, loc);
@@ -259,11 +251,11 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext> methl = new LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext>();
         Location loc = new Location(ctx);
         scopeName = scopeName + "_CLASS_" + id;
+        currentSymbolTable.addClass(id,classMemberTable, loc);
         SymbolTable classSymbolTable = new SymbolTable(currentSymbolTable), parentTable = currentSymbolTable;
         classSymbolTable.setName(scopePrefix + scopeName);
-        currentSymbolTable.addClass(id,classMemberTable, loc);
         currentSymbolTable = classSymbolTable;
-        ClassDeclarationNode classNode = new ClassDeclarationNode(id, classSymbolTable, loc);
+        ClassDeclarationNode classNode = new ClassDeclarationNode(id, currentSymbolTable, loc);
         for (MxStarParser.ClassBodyMemberContext m : ctx.classBodyMember()) {
             MxStarParser.VariableDeclarationContext vard = m.variableDeclaration();
             MxStarParser.ClassConstructorDeclarationContext consd = m.classConstructorDeclaration();
@@ -323,12 +315,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         SymbolTable classTable = currentSymbolTable;
         ParameterFieldNode para = (ParameterFieldNode) visit(ctx.parameterField());
         for(ParameterDeclarationNode n : para.getParameterList()){
-            parameterBuffer.add(new Symbol(Symbol.SymbolType.METHOD, n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
+            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE, n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
         }
         MxType consRetType = new MxType(name);
-        consRetType.setMethod();
         consRetType.setParaTypeList(para.getParameterTypeList());
-        classTable.addMethod(consRetType, name, loc);
         BlockNode block = (BlockNode) visit(ctx.block());
         currentSymbolTable = block.getCurrentSymbolTable();
         for(ParameterDeclarationNode n : para.getParameterList()){
@@ -474,7 +464,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
                 parentTable.addChildSymbolTable(currentSymbolTable);
                 currentSymbolTable = parentTable;
             }
-            ret =  new LoopNode(null, tcond, null, tbody, currentSymbolTable, new Location(whileStm));
+            ret =  new LoopNode(false,null, tcond, null, tbody, currentSymbolTable, new Location(whileStm));
         }
         else if(forStm != null){
             if(forStm.normalForStatement().init != null)tinit = (ExpressionNode) visit(forStm.normalForStatement().init);
@@ -490,7 +480,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
                 parentTable.addChildSymbolTable(currentSymbolTable);
                 currentSymbolTable = parentTable;
             }
-            ret = new LoopNode(tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
+            ret = new LoopNode(true, tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
         }
         else throw new CompileException("Unknown loop");
         scopeName = parentScopeName;
@@ -603,6 +593,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
 
     @Override
     public Node visitNewCreator(MxStarParser.NewCreatorContext ctx) {
+        //TODO let int a = new int() illegal
         MxStarParser.ArrayCreatorContext  arrc = ctx.creator().arrayCreator();
         MxStarParser.NonArrayCreatorContext narrc = ctx.creator().nonArrayCreator();
         MxStarParser.UserTypeContext uType = null;

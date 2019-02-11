@@ -146,7 +146,8 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
         if(tmp != null) visit(tmp);
         else printNoIdt("NULL") ;
         printNoIdt("\n");
-        visit(node.getBody());
+        Node tmp1 = node.getBody();
+        if(tmp1 != null)visit(tmp1);
         printLine("[Loop]>:");
         subIndent();
         return null;

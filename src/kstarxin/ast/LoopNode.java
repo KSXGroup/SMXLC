@@ -8,9 +8,11 @@ public class LoopNode extends StatementNode{
     private ExpressionNode cond = null;
     private ExpressionNode step = null;
     private Node body = null;
+    private boolean isForLoop = false;
 
-    LoopNode(ExpressionNode _init, ExpressionNode _cond, ExpressionNode _step,Node _body ,SymbolTable stb, Location loc){
+    LoopNode(boolean _isForLoop, ExpressionNode _init, ExpressionNode _cond, ExpressionNode _step,Node _body ,SymbolTable stb, Location loc){
         super(stb,loc);
+        isForLoop = _isForLoop;
         init = _init;
         cond = _cond;
         step = _step;
@@ -31,6 +33,10 @@ public class LoopNode extends StatementNode{
 
     public Node getBody(){
         return body;
+    }
+
+    public boolean isForLoop(){
+        return isForLoop;
     }
 
     @Override

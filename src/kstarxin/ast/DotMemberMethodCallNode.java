@@ -16,6 +16,10 @@ public class DotMemberMethodCallNode extends ExpressionNode{
         paraList = _paraList;
     }
 
+    public ExpressionNode getExpression(){
+        return expr;
+    }
+
     public String getMemberMethodName() {
         return memberMethodName;
     }

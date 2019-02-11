@@ -51,6 +51,18 @@ public class Symbol {
         return memberTable;
     }
 
+    public boolean isClass(){
+        return st.equals(SymbolType.CLASS) ? true : false;
+    }
+
+    public boolean isMethod(){
+        return st.equals(SymbolType.METHOD) ? true : false;
+    }
+
+    public boolean isVariable(){
+        return st.equals(SymbolType.VARIABLE) ? true : false;
+    }
+
     public boolean isBuiltIn(){
         return isBuiltIn;
     }

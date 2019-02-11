@@ -155,7 +155,7 @@ creator             :   nonArrayCreator
                     |   arrayCreator
                     ;
 
-nonArrayCreator     :   nonArrayType (LPAREN expressionList RPAREN)?
+nonArrayCreator     :   nonArrayType (LPAREN expressionList? RPAREN)?
                     ;
 
 arrayCreator        :   nonArrayType arrayCreatorUnit+
