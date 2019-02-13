@@ -1,6 +1,0 @@
-int main(){
-	int b = 0;
-	int[][] a = new int[10][10];
-	b = a.size();
-	b = a[1].size();
-}

@@ -1,7 +1,7 @@
 package kstarxin.ast;
 
 import kstarxin.parser.MxStarParser;
-import kstarxin.utilities.CompileException;
+import kstarxin.utilities.MxException.CompileException;
 import kstarxin.utilities.MxType;
 import kstarxin.utilities.SymbolTable;
 import kstarxin.utilities.Symbol;

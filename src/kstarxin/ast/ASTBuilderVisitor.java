@@ -2,7 +2,7 @@ package kstarxin.ast;
 import java.util.*;
 import kstarxin.parser.*;
 import kstarxin.utilities.*;
-import org.antlr.v4.runtime.tree.ParseTree;
+import kstarxin.utilities.MxException.CompileException;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 //TODO:MAKER ERROR REPORTER USER-FRIENDLY

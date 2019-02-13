@@ -5,6 +5,12 @@ import org.antlr.v4.runtime.ParserRuleContext;
 public class Location {
     private final int LineNumber;
     private final int ColumnNumber;
+
+    public Location(int x, int y){
+        LineNumber = x;
+        ColumnNumber = y;
+    }
+
     public Location(ParserRuleContext ctx){
         LineNumber = ctx.start.getLine();
         ColumnNumber = ctx.start.getCharPositionInLine();
