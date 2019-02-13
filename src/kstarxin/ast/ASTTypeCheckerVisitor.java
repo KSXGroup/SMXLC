@@ -45,7 +45,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
 
     private boolean isStringType(MxType t){
         if(t.getEnumType().equals(MxType.TypeEnum.STRING) && t.getDimension() == 0) return true;
-        else return true;
+        else return false;
     }
 
     private boolean canHaveLogicOperation(MxType a, MxType b){
@@ -70,7 +70,14 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         return false;
     }
 
+    private void checkMain(){
+        Symbol mainSymbol = ast.getCurrentSymbolTable().get("main");
+        if(mainSymbol == null || !mainSymbol.isMethod()) throw new CompileException("main method not found!");
+        if(!isIntegerType(mainSymbol.getType())) throw new CompileException("main method should return int!");
+    }
+
     public void checkType(){
+        checkMain();
         visit(ast);
     }
 
@@ -137,6 +144,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         methodReturned = false;
         currentMethodName = node.getIdentifier();
         currentMethodReturnType = node.getReturnType();
+
         if(node.getCurrentSymbolTable().getName().indexOf(ASTBuilderVisitor.constructorPrefix) != -1 && inClass){
             inClassConstructor = true;
             if(!currentMethodName.equals(currentClassName)) {
@@ -145,9 +153,11 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
             if(!node.getReturnType().toString().equals(currentClassName) || node.getReturnType().getDimension() != 0){
                 throw new CompileException("Class constructor should not have return value");
             }
-        }
+        } else if(currentMethodName.equals(currentClassName)) throw new CompileException("Constructor should not have return value", node.getLocation());
         visit(node.getBlock());
-        if(!methodReturned && !node.getReturnType().getEnumType().equals(MxType.TypeEnum.VOID)) throw new CompileException("Method not returned");
+        //TODO: make not return a warning
+        /*if (!methodReturned && !node.getReturnType().getEnumType().equals(MxType.TypeEnum.VOID) && !inClassConstructor)
+            throw new CompileException("Method not returned", node.getLocation());*/
         inMethod = false;
         methodReturned = false;
         currentMethodName = "";
@@ -166,8 +176,10 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         ExpressionNode cond = node.getCond();
         Node body = node.getBody();
         ConditionNode celse = node.getElse();
-        visit(cond);
-        if(!isBooleanType(cond.getType())) throw new CompileException("cond should be bool!");
+        if(cond != null) {
+            visit(cond);
+            if (!isBooleanType(cond.getType())) throw new CompileException("cond should be bool!");
+        }
         if(body != null) visit(body);
         if(celse != null) visit(celse);
         return null;
@@ -182,7 +194,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         if(step != null) visit(step);
         if(cond != null) visit(cond);
         else if(!node.isForLoop()) throw new CompileException("while loop should have cond!");
-        if(!isBooleanType(cond.getType())) throw new CompileException("cond should be boolean!");
+        if(cond != null && !isBooleanType(cond.getType())) throw new CompileException("cond should be boolean!");
         if(body != null) visit(body);
         inLoop--;
         return null;
@@ -213,8 +225,16 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
     @Override
     public Void visit(ReturnNode node) {
         if(!(inMethod || inClassConstructor)) throw new CompileException("Invalid return!");
-        else if(inMethod) if(!currentMethodReturnType.equals(node.getReturnValue().getType())) throw new CompileException("Return type not match");
-        else methodReturned = true;
+        else if(inMethod && !inClassConstructor){
+            if(!currentMethodReturnType.getEnumType().equals(MxType.TypeEnum.VOID)) {
+                visit(node.getReturnValue());
+                if (!currentMethodReturnType.equals(node.getReturnValue().getType()))
+                    throw new CompileException("Return type not match", node.getLocation());
+            }else if(node.getReturnValue() != null) throw new CompileException("nothing should be returned in void method");
+            methodReturned = true;
+        }else if(inClassConstructor){
+            if(node.getReturnValue() != null) throw new CompileException("nothing should be returned in class constructor");
+        }
         return null;
     }
 
@@ -227,18 +247,22 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
     public Void visit(SuffixIncreaseDecreaseNode node) {
         ExpressionNode expr = node.getExpression();
         visit(expr);
+        if(!expr.isLeftValue()) throw new CompileException("left value necessary when suffix inc/dec");
         if(!isIntegerType(expr.getType())) throw new CompileException("Invalid use of suffix inc/dec");
-        expr.setType(new MxType(MxType.TypeEnum.INT));
+        node.setType(new MxType(MxType.TypeEnum.INT));
         node.setRightValue();
         return null;
     }
 
     @Override
     public Void visit(IndexAccessNode node) {
-        MxType exprt = node.getExpression().getType(), idxt = node.getIndex().getType(), nt = node.getType();
+        MxType exprt = null, idxt = null;
         visit(node.getIndex());
+        idxt =  node.getIndex().getType();
         if(!isIntegerType(idxt)) throw new CompileException("Invalid index!");
-        if(exprt.getDimension() == 0) throw new CompileException("No index access to non-array type");
+        visit(node.getExpression());
+        exprt = node.getExpression().getType();
+        if(exprt.getDimension() == 0) throw new CompileException("No index access to non-array type", node.getLocation());
         node.setType(new MxType(exprt.getEnumType(), exprt.toString(), exprt.getDimension() - 1));
         node.setLeftValue();
         return null;
@@ -288,7 +312,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         ArrayList<ExpressionNode> paraList = node.getParameterExpressionList();
         ExpressionNode para = null;
         if(s == null) throw new CompileException("Method " + id + " is not declaraed");
-        if(!s.isMethod()) throw new CompileException(id + " can not be used as method");
+        if(!s.isMethod()) throw new CompileException(id + " can not be used as method", node.getLocation());
         ret = s.getType();
         if(ret.getParameterTypeList().size() != paraList.size()) throw new CompileException("Method call" + id + " parameter number not match!");
         else{
@@ -305,10 +329,10 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(IdentifierNode node) {
-        String id = node.getIdentifier();
+       /* String id = node.getIdentifier();
         Symbol s = node.getCurrentSymbolTable().get(id);
         if(!s.isVariable()) throw new CompileException(id + " can not be used as a variable");
-        node.setType(node.getCurrentSymbolTable().get(id).getType());
+        node.setType(node.getCurrentSymbolTable().get(id).getType());*/
         node.setLeftValue();
         return null;
     }
@@ -320,11 +344,15 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         String memId = node.getMember();
         String classId = node.getMember();
         ExpressionNode expr = node.getExpression();
-        MxType t = expr.getType();
+        SymbolTable classMemberTable = null;
+        MxType t = null;
         visit(expr);
-        Symbol s = node.getCurrentSymbolTable().get(t.toString());
-        if(s == null) throw new CompileException(t.toString() + " has no member " + memId);
-        else node.setType(new MxType(s.getType().getEnumType(), s.getType().toString(), s.getType().getDimension()));
+        t = expr.getType();
+        Symbol classSymbol = node.getCurrentSymbolTable().get(t.toString());
+        classMemberTable = classSymbol.getMemberTable();
+        Symbol memberSymbol = classMemberTable.get(memId);
+        if(memberSymbol == null) throw new CompileException(t.toString() + " has no member " + memId);
+        else node.setType(new MxType(memberSymbol.getType().getEnumType(), memberSymbol.getType().toString(), memberSymbol.getType().getDimension()));
         node.setLeftValue();
         return null;
     }
@@ -345,7 +373,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
             case MxStarParser.BITAND:
             case MxStarParser.BITOR:
             case MxStarParser.BITXOR:
-                if(!isIntegerType(lhs.getType()) || !isIntegerType(rhs.getType())) throw new CompileException("Type can not " + op.toString());
+                if(!isIntegerType(lhs.getType()) || !isIntegerType(rhs.getType())) throw new CompileException("Type can not " + op.toString(), node.getLocation());
                 node.setType(new MxType(MxType.TypeEnum.INT));
                 break;
             case MxStarParser.ADD:
@@ -353,20 +381,24 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
             case MxStarParser.LT:
             case MxStarParser.GE:
             case MxStarParser.LE:
-                if(!canBeAdded(lhs.getType(), rhs.getType())) throw new CompileException("Type can not " + op.toString());
-                if(isStringType(lhs.getType())) node.setType(new MxType(MxType.TypeEnum.STRING));
-                else if(isIntegerType(lhs.getType())) node.setType(new MxType(MxType.TypeEnum.INT));
+                if(!canBeAdded(lhs.getType(), rhs.getType())) throw new CompileException("Type can not " + op.toString(), node.getLocation());
+                if(op == MxStarParser.ADD) {
+                    if (isStringType(lhs.getType())) node.setType(new MxType(MxType.TypeEnum.STRING));
+                    else if (isIntegerType(lhs.getType())) node.setType(new MxType(MxType.TypeEnum.INT));
+                }else{
+                    node.setType(new MxType(MxType.TypeEnum.BOOL));
+                }
                 break;
             case MxStarParser.AND:
             case MxStarParser.OR:
-                if(!isBooleanType(lhs.getType()) || !isBooleanType(rhs.getType())) throw new CompileException("Type can not " + op.toString());
+                if(!isBooleanType(lhs.getType()) || !isBooleanType(rhs.getType())) throw new CompileException("Type can not " + op.toString(), node.getLocation());
                 node.setType(new MxType(MxType.TypeEnum.BOOL));
                 break;
             case MxStarParser.ASSIGN:
                 if(!lhs.isLeftValue()) throw new CompileException("Can not assign to non-left value");
                 else if(rhs.getType().getEnumType().equals(MxType.TypeEnum.NULL)) {
                     if(!canAssignedNull(lhs.getType())) throw new CompileException("Can not assign null to type " + lhs.getType().toString());
-                }else if (!lhs.getType().equals(rhs.getType())) throw new CompileException("Type not equal when assign");
+                }else if (!lhs.getType().equals(rhs.getType())) throw new CompileException("Type not equal when assign", node.getLocation());
                 else node.setType(new MxType(lhs.getType().getEnumType(), lhs.toString(), lhs.getType().getDimension()));
                 break;
             case MxStarParser.EQ:
@@ -387,8 +419,9 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
     public Void visit(UnaryExpressionNode node) {
         int op = node.getOp();
         ExpressionNode expr = node.getRight();
-        MxType t = expr.getType();
+        MxType t = null;
         visit(expr);
+        t = expr.getType();
         switch (op){
             case MxStarParser.INC:
             case MxStarParser.DEC:
@@ -422,6 +455,11 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
     @Override
     public Void visit(NewCreatorNode node) {
         MxType t = node.getCreatorType();
+        if(!t.isPrimitiveType()){
+            Symbol ts = node.getCurrentSymbolTable().get(t.toString());
+            if(ts != null && ts.isClass()) t.setType(MxType.TypeEnum.CLASS);
+            else throw new CompileException("can not create type " + t.toString(), node.getLocation());
+        }
         if(node.isArrayCreator()){
             for(ExpressionNode n : node.getSizeExpressionList()){
                 visit(n);
@@ -441,8 +479,8 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
                 else{
                     SymbolTable memberTable = s.getMemberTable();
                     Symbol constructor = memberTable.get(ASTBuilderVisitor.constructorPrefix + t.toString());
-                    if(constructor == null) throw new CompileException("Class " + t.toString() + " has no constructor");
-                    else{
+                    if(constructor == null && node.getParameterList().size() > 0) throw new CompileException("Class " + t.toString() + " has no constructor", node.getLocation());
+                    else if(constructor != null){
                         t.setType(MxType.TypeEnum.CLASS);
                         ArrayList<MxType> paraTypeLst = constructor.getType().getParameterTypeList();
                         ArrayList<ExpressionNode> paraExpLst = node.getParameterList();

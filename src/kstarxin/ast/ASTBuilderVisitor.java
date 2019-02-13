@@ -261,17 +261,25 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             MxStarParser.ClassConstructorDeclarationContext consd = m.classConstructorDeclaration();
             MxStarParser.ClassMemberFunctionDeclarationContext methd = m.classMemberFunctionDeclaration();
 
-            if (vard != null) classNode.addVariable((VariableDeclarationNode) visit(vard));
-            else if (consd != null) consl.add(consd);
-            else if (methd != null) methl.add(methd);
+            if (vard != null){
+                classNode.addVariable((VariableDeclarationNode) visit(vard));
+            }
+            else if (consd != null){
+                consl.add(consd);
+            }
+            else if (methd != null){
+                methl.add(methd);
+            }
         }
 
-        for(MxStarParser.ClassConstructorDeclarationContext ictx : consl){
-            classNode.addConstructor((MethodDeclarationNode) visit(ictx));
-        }
 
         for(MxStarParser.ClassMemberFunctionDeclarationContext ictx : methl){
             classNode.addMethod((MethodDeclarationNode) visit(ictx));
+        }
+
+
+        for(MxStarParser.ClassConstructorDeclarationContext ictx : consl){
+            classNode.addConstructor((MethodDeclarationNode) visit(ictx));
         }
 
         parentTable.addChildSymbolTable(currentSymbolTable);
@@ -538,8 +546,15 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     @Override
     public Node visitIdentifierExpression(MxStarParser.IdentifierExpressionContext ctx) {
         String id = ctx.getText();
-        if(!currentSymbolTable.contains(id)) throw new CompileException(id + " is not declared in this scope" + ctx.getStart().getLine());
-        else return new IdentifierNode(id, currentSymbolTable, new Location(ctx));
+        ExpressionNode ret = null;
+        Symbol varSymbol = currentSymbolTable.get(id);
+        ret = new IdentifierNode(id, currentSymbolTable, new Location(ctx));
+        if(varSymbol == null) throw new CompileException(id + " is not declared in this scope" + ctx.getStart().getLine());
+        else{
+            ret = new IdentifierNode(id, currentSymbolTable, new Location(ctx));
+            ret.setType(varSymbol.getType());
+        }
+        return ret;
     }
 
     @Override
@@ -593,7 +608,6 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
 
     @Override
     public Node visitNewCreator(MxStarParser.NewCreatorContext ctx) {
-        //TODO let int a = new int() illegal
         MxStarParser.ArrayCreatorContext  arrc = ctx.creator().arrayCreator();
         MxStarParser.NonArrayCreatorContext narrc = ctx.creator().nonArrayCreator();
         MxStarParser.UserTypeContext uType = null;
@@ -612,15 +626,15 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             return new NewCreatorNode(new MxType(arrc.nonArrayType().getText()), dim, sizeList, currentSymbolTable, new Location(ctx));
         }
         else if(narrc != null){
+            String types = narrc.nonArrayType().getText();
+            if((types.equals("int") || types.equals("bool")) && narrc.LPAREN() != null) throw new CompileException("Int/bool have no constructor");
             ArrayList<ExpressionNode> para = new ArrayList<>();
             if(narrc.expressionList() != null) {
                 for (MxStarParser.ExpressionContext ictx : narrc.expressionList().expression())
                     para.add((ExpressionNode) visit(ictx));
             }
             return new NewCreatorNode(new MxType(narrc.nonArrayType().getText()), para,currentSymbolTable, new Location(ctx));
-        }else {
-            throw new CompileException("Invalid new creator");
-        }
+        }else throw new CompileException("Invalid new creator");
     }
 
     @Override

@@ -117,9 +117,9 @@ expressionList      :   expression (COMMA expression)*
 
 expression          :   expression op   =   (INC | DEC)                                     #SuffixIncDec
                     |   Identifier LPAREN expressionList? RPAREN                            #MethodCall
+                    |   expression LBRAC expression RBRAC                                   #IndexAccess
                     |   expression DOT Identifier LPAREN expressionList? RPAREN             #DotMemberMethodCall
                     |   expression DOT Identifier                                           #DotMember
-                    |   expression LBRAC expression RBRAC                                   #IndexAccess
 
                     |   <assoc=right>   op  =   (INC | DEC)     expression                  #UnaryExpression
                     |   <assoc=right>   op  =   (ADD | SUB)     expression                  #UnaryExpression
@@ -151,8 +151,8 @@ constant            :   IntegerConst
                     |   StringConst
                     ;
 
-creator             :   nonArrayCreator
-                    |   arrayCreator
+creator             :   arrayCreator
+                    |   nonArrayCreator
                     ;
 
 nonArrayCreator     :   nonArrayType (LPAREN expressionList? RPAREN)?

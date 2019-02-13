@@ -2495,54 +2495,54 @@ public class MxStarParser extends Parser {
 						break;
 					case 14:
 						{
-						_localctx = new DotMemberMethodCallContext(new ExpressionContext(_parentctx, _parentState));
+						_localctx = new IndexAccessContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
 						setState(331);
 						if (!(precpred(_ctx, 24))) throw new FailedPredicateException(this, "precpred(_ctx, 24)");
 						setState(332);
-						match(DOT);
+						match(LBRAC);
 						setState(333);
-						match(Identifier);
+						expression(0);
 						setState(334);
-						match(LPAREN);
-						setState(336);
-						_errHandler.sync(this);
-						_la = _input.LA(1);
-						if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << New) | (1L << This) | (1L << NullConst) | (1L << BoolConst) | (1L << Identifier) | (1L << StringConst) | (1L << IntegerConst) | (1L << ADD) | (1L << SUB) | (1L << NOT) | (1L << BITNOT) | (1L << INC) | (1L << DEC) | (1L << LPAREN))) != 0)) {
-							{
-							setState(335);
-							expressionList();
-							}
-						}
-
-						setState(338);
-						match(RPAREN);
+						match(RBRAC);
 						}
 						break;
 					case 15:
 						{
-						_localctx = new DotMemberContext(new ExpressionContext(_parentctx, _parentState));
+						_localctx = new DotMemberMethodCallContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(339);
+						setState(336);
 						if (!(precpred(_ctx, 23))) throw new FailedPredicateException(this, "precpred(_ctx, 23)");
-						setState(340);
+						setState(337);
 						match(DOT);
-						setState(341);
+						setState(338);
 						match(Identifier);
+						setState(339);
+						match(LPAREN);
+						setState(341);
+						_errHandler.sync(this);
+						_la = _input.LA(1);
+						if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << New) | (1L << This) | (1L << NullConst) | (1L << BoolConst) | (1L << Identifier) | (1L << StringConst) | (1L << IntegerConst) | (1L << ADD) | (1L << SUB) | (1L << NOT) | (1L << BITNOT) | (1L << INC) | (1L << DEC) | (1L << LPAREN))) != 0)) {
+							{
+							setState(340);
+							expressionList();
+							}
+						}
+
+						setState(343);
+						match(RPAREN);
 						}
 						break;
 					case 16:
 						{
-						_localctx = new IndexAccessContext(new ExpressionContext(_parentctx, _parentState));
+						_localctx = new DotMemberContext(new ExpressionContext(_parentctx, _parentState));
 						pushNewRecursionContext(_localctx, _startState, RULE_expression);
-						setState(342);
-						if (!(precpred(_ctx, 22))) throw new FailedPredicateException(this, "precpred(_ctx, 22)");
-						setState(343);
-						match(LBRAC);
 						setState(344);
-						expression(0);
+						if (!(precpred(_ctx, 22))) throw new FailedPredicateException(this, "precpred(_ctx, 22)");
 						setState(345);
-						match(RBRAC);
+						match(DOT);
+						setState(346);
+						match(Identifier);
 						}
 						break;
 					}
@@ -2612,11 +2612,11 @@ public class MxStarParser extends Parser {
 	}
 
 	public static class CreatorContext extends ParserRuleContext {
-		public NonArrayCreatorContext nonArrayCreator() {
-			return getRuleContext(NonArrayCreatorContext.class,0);
-		}
 		public ArrayCreatorContext arrayCreator() {
 			return getRuleContext(ArrayCreatorContext.class,0);
+		}
+		public NonArrayCreatorContext nonArrayCreator() {
+			return getRuleContext(NonArrayCreatorContext.class,0);
 		}
 		public CreatorContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -2640,14 +2640,14 @@ public class MxStarParser extends Parser {
 				enterOuterAlt(_localctx, 1);
 				{
 				setState(354);
-				nonArrayCreator();
+				arrayCreator();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
 				setState(355);
-				arrayCreator();
+				nonArrayCreator();
 				}
 				break;
 			}
@@ -2910,7 +2910,7 @@ public class MxStarParser extends Parser {
 		" \7 \u0109\n \f \16 \u010c\13 \3!\3!\3!\3!\5!\u0112\n!\3!\3!\3!\3!\3!"+
 		"\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u0126\n!\3!\3!\3!\3!\3!\3!"+
 		"\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!"+
-		"\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u0153\n!\3!\3!\3!\3!\3!"+
+		"\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\3!\5!\u0158\n!"+
 		"\3!\3!\3!\3!\7!\u015e\n!\f!\16!\u0161\13!\3\"\3\"\3#\3#\5#\u0167\n#\3"+
 		"$\3$\3$\5$\u016c\n$\3$\5$\u016f\n$\3%\3%\6%\u0173\n%\r%\16%\u0174\3&\3"+
 		"&\5&\u0179\n&\3&\3&\3&\2\3@\'\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 "+
@@ -2999,19 +2999,19 @@ public class MxStarParser extends Parser {
 		"\7)\2\2\u0141\u015e\5@!\13\u0142\u0143\f\t\2\2\u0143\u0144\7,\2\2\u0144"+
 		"\u015e\5@!\n\u0145\u0146\f\b\2\2\u0146\u0147\7-\2\2\u0147\u015e\5@!\t"+
 		"\u0148\u0149\f\7\2\2\u0149\u014a\7.\2\2\u014a\u015e\5@!\7\u014b\u014c"+
-		"\f\34\2\2\u014c\u015e\t\3\2\2\u014d\u014e\f\32\2\2\u014e\u014f\7\61\2"+
-		"\2\u014f\u0150\7\27\2\2\u0150\u0152\7\66\2\2\u0151\u0153\5> \2\u0152\u0151"+
-		"\3\2\2\2\u0152\u0153\3\2\2\2\u0153\u0154\3\2\2\2\u0154\u015e\7\67\2\2"+
-		"\u0155\u0156\f\31\2\2\u0156\u0157\7\61\2\2\u0157\u015e\7\27\2\2\u0158"+
-		"\u0159\f\30\2\2\u0159\u015a\7\64\2\2\u015a\u015b\5@!\2\u015b\u015c\7\65"+
-		"\2\2\u015c\u015e\3\2\2\2\u015d\u0127\3\2\2\2\u015d\u012a\3\2\2\2\u015d"+
+		"\f\34\2\2\u014c\u015e\t\3\2\2\u014d\u014e\f\32\2\2\u014e\u014f\7\64\2"+
+		"\2\u014f\u0150\5@!\2\u0150\u0151\7\65\2\2\u0151\u015e\3\2\2\2\u0152\u0153"+
+		"\f\31\2\2\u0153\u0154\7\61\2\2\u0154\u0155\7\27\2\2\u0155\u0157\7\66\2"+
+		"\2\u0156\u0158\5> \2\u0157\u0156\3\2\2\2\u0157\u0158\3\2\2\2\u0158\u0159"+
+		"\3\2\2\2\u0159\u015e\7\67\2\2\u015a\u015b\f\30\2\2\u015b\u015c\7\61\2"+
+		"\2\u015c\u015e\7\27\2\2\u015d\u0127\3\2\2\2\u015d\u012a\3\2\2\2\u015d"+
 		"\u012d\3\2\2\2\u015d\u0130\3\2\2\2\u015d\u0133\3\2\2\2\u015d\u0136\3\2"+
 		"\2\2\u015d\u0139\3\2\2\2\u015d\u013c\3\2\2\2\u015d\u013f\3\2\2\2\u015d"+
 		"\u0142\3\2\2\2\u015d\u0145\3\2\2\2\u015d\u0148\3\2\2\2\u015d\u014b\3\2"+
-		"\2\2\u015d\u014d\3\2\2\2\u015d\u0155\3\2\2\2\u015d\u0158\3\2\2\2\u015e"+
+		"\2\2\u015d\u014d\3\2\2\2\u015d\u0152\3\2\2\2\u015d\u015a\3\2\2\2\u015e"+
 		"\u0161\3\2\2\2\u015f\u015d\3\2\2\2\u015f\u0160\3\2\2\2\u0160A\3\2\2\2"+
 		"\u0161\u015f\3\2\2\2\u0162\u0163\t\n\2\2\u0163C\3\2\2\2\u0164\u0167\5"+
-		"F$\2\u0165\u0167\5H%\2\u0166\u0164\3\2\2\2\u0166\u0165\3\2\2\2\u0167E"+
+		"H%\2\u0165\u0167\5F$\2\u0166\u0164\3\2\2\2\u0166\u0165\3\2\2\2\u0167E"+
 		"\3\2\2\2\u0168\u016e\5\20\t\2\u0169\u016b\7\66\2\2\u016a\u016c\5> \2\u016b"+
 		"\u016a\3\2\2\2\u016b\u016c\3\2\2\2\u016c\u016d\3\2\2\2\u016d\u016f\7\67"+
 		"\2\2\u016e\u0169\3\2\2\2\u016e\u016f\3\2\2\2\u016fG\3\2\2\2\u0170\u0172"+
@@ -3020,7 +3020,7 @@ public class MxStarParser extends Parser {
 		"\u0177\u0179\5@!\2\u0178\u0177\3\2\2\2\u0178\u0179\3\2\2\2\u0179\u017a"+
 		"\3\2\2\2\u017a\u017b\7\65\2\2\u017bK\3\2\2\2$OXaekovz\u0087\u008f\u0092"+
 		"\u00a0\u00a9\u00b6\u00ba\u00c8\u00d5\u00d9\u00dd\u00ea\u00ed\u00f5\u00fd"+
-		"\u010a\u0111\u0125\u0152\u015d\u015f\u0166\u016b\u016e\u0174\u0178";
+		"\u010a\u0111\u0125\u0157\u015d\u015f\u0166\u016b\u016e\u0174\u0178";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

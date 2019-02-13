@@ -23,6 +23,8 @@ public class Compiler{
     public void compileStart(){
         ASTBuilderVisitor builder = new ASTBuilderVisitor(parser.program());
         ProgramNode prog = builder.build();
+        ASTTypeCheckerVisitor typeChecker = new ASTTypeCheckerVisitor(prog);
+        typeChecker.checkType();
         ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
         printer.display();
         prog.getCurrentSymbolTable().dumpSymbolTable("",System.out);

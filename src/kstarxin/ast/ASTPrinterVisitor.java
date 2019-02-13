@@ -404,6 +404,7 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(DotMemberMethodCallNode node) {
+        visit(node.getExpression());
         printNoIdt("[Dot][Call]");
         printNoIdt(node.getMemberMethodName());
         printNoIdt("(");
