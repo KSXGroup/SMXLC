@@ -27,4 +27,10 @@ public class Location {
         Integer c = ColumnNumber;
         return c.toString();
     }
+
+    public boolean before(Location other){
+        if(LineNumber > other.LineNumber) return false;
+        else if(LineNumber == other.LineNumber && ColumnNumber > other.ColumnNumber) return false;
+        return true;
+    }
 }

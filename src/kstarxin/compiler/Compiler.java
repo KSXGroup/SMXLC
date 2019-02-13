@@ -3,6 +3,7 @@ package kstarxin.compiler;
 import java.io.*;
 import kstarxin.parser.*;
 import kstarxin.ast.*;
+import kstarxin.utilities.CompileException;
 import org.antlr.v4.runtime.*;
 
 public class Compiler{
@@ -17,6 +18,8 @@ public class Compiler{
             parser = new MxStarParser(token);
         } catch (IOException e){
             System.out.println(e);
+        } catch (Exception e){
+            throw new CompileException("Parse error");
         }
     }
 
