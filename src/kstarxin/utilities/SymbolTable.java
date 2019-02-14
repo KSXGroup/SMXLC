@@ -1,6 +1,6 @@
 package kstarxin.utilities;
 
-import kstarxin.utilities.MxException.CompileException;
+import kstarxin.utilities.MxException.*;
 
 import java.io.PrintStream;
 import java.util.HashMap;
@@ -8,6 +8,7 @@ import java.util.LinkedList;
 import java.util.Map;
 
 public class SymbolTable {
+    private MxErrorProcessor errorProcessor;
     private String name = "";
     private Map<String, Symbol> currentScopeTable;
     private SymbolTable enclosingTable;
@@ -16,7 +17,8 @@ public class SymbolTable {
 
     private LinkedList<SymbolTable> childScopeTable;
 
-    public SymbolTable(String _name){
+    public SymbolTable(String _name, MxErrorProcessor _errorProcessor){
+        errorProcessor = _errorProcessor;
         currentScopeTable  = new HashMap<String, Symbol>();
         childScopeTable = new LinkedList<SymbolTable>();
         enclosingTable     = null;
@@ -26,6 +28,7 @@ public class SymbolTable {
     }
 
     public SymbolTable(SymbolTable other){
+        errorProcessor = other.errorProcessor;
         currentScopeTable   = new HashMap<String, Symbol>();
         childScopeTable = new LinkedList<SymbolTable>();
         enclosingTable = other;
@@ -38,17 +41,26 @@ public class SymbolTable {
     public void addVariable(Symbol s){
         String id = s.getIdentifier();
         if(!currentScopeTable.containsKey(id)) currentScopeTable.put(id, s);
-        else throw new CompileException("redeclaration of " + id);
+        else {
+            errorProcessor.add(new MxSemanticCheckError("redeclaration of " + id, s.getLocation()));
+            return;
+        }
     }
 
     public void addVariable(MxType type, String id, Location defLoc) {
         if(!currentScopeTable.containsKey(id)) currentScopeTable.put(id, new Symbol(Symbol.SymbolType.VARIABLE, id, type, name, defLoc));
-        else throw new CompileException("redeclaration of " + id);
+        else{
+            errorProcessor.add(new MxSemanticCheckError("redeclaration of " + id , defLoc));
+            return;
+        }
     }
 
     public void addMethod(MxType retType, String id,Location defLoc) {
         if(!currentScopeTable.containsKey(id)) currentScopeTable.put(id, new Symbol(Symbol.SymbolType.METHOD, id, retType, name, defLoc));
-        else throw new CompileException("redeclaration of method " + id);
+        else{
+            errorProcessor.add(new MxSemanticCheckError("redeclaration of method " + id, defLoc));
+            return;
+        }
     }
 
     public void addBuiltInMethod(MxType retType, String id,Location defLoc){
@@ -59,7 +71,10 @@ public class SymbolTable {
 
     public void addClass(String id, SymbolTable memTable, Location defLoc){
         if(!currentScopeTable.containsKey(id)) currentScopeTable.put(id, new Symbol(Symbol.SymbolType.CLASS, id ,new MxType(MxType.TypeEnum.CLASS), name, memTable, defLoc));
-        else throw new CompileException("reclaration of class " + id);
+        else{
+            errorProcessor.add(new MxSemanticCheckError("reclaration of class " + id, defLoc));
+            return;
+        }
     }
 
     public void addChildSymbolTable(SymbolTable stb){
@@ -74,8 +89,14 @@ public class SymbolTable {
                 String id = t.toString();
                 if (t.getEnumType().equals(MxType.TypeEnum.NOT_DECIDED)) {
                     Symbol defs = get(t.toString(), s.getLocation());
-                    if(defs == null) throw new CompileException("Type " + t.toString() + " is not defined");
-                    else if(!defs.isClass()) throw new CompileException(t.toString() + " can not be be used as type");
+                    if(defs == null) {
+                        errorProcessor.add(new MxSemanticCheckError("type " + t.toString() + " is not defined", s.getLocation()));
+                        return;
+                    }
+                    else if(!defs.isClass()) {
+                        errorProcessor.add(new MxSemanticCheckError(t.toString() + " can not be be used as type", s.getLocation()));
+                        return;
+                    }
                     else t.setType(MxType.TypeEnum.CLASS);
                 }
             }

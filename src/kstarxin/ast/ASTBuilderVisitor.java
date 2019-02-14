@@ -2,7 +2,8 @@ package kstarxin.ast;
 import java.util.*;
 import kstarxin.parser.*;
 import kstarxin.utilities.*;
-import kstarxin.utilities.MxException.CompileException;
+import kstarxin.utilities.MxException.*;
+import kstarxin.utilities.MxException.ParserErrorListener;
 import org.antlr.v4.runtime.tree.TerminalNode;
 
 //TODO:MAKER ERROR REPORTER USER-FRIENDLY
@@ -13,6 +14,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     public static final String builtinStringClassName = "_STRING_";
     public static final String builtinArrayClassName = "_ARRAY_";
 
+    private MxErrorProcessor errorProcessor;
     private SymbolTable currentSymbolTable;
     private SymbolTable classMemberTable;
     private MxStarParser.ProgramContext concreteSyntaxTree;
@@ -65,7 +67,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
     }
 
     private void initializeBuiltInMemberMethod(){
-        SymbolTable stringStb = new SymbolTable(builtinStringClassName);
+        SymbolTable stringStb = new SymbolTable(builtinStringClassName, errorProcessor);
 
         MxType t= new MxType("int");
         ArrayList<MxType> para = new ArrayList<>();
@@ -92,7 +94,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
 
         currentSymbolTable.addClass(builtinStringClassName, stringStb, new Location(concreteSyntaxTree));
 
-        SymbolTable arrayStb = new SymbolTable(builtinArrayClassName);
+        SymbolTable arrayStb = new SymbolTable(builtinArrayClassName, errorProcessor);
         t= new MxType("int");
         para = new ArrayList<>();
         t.setParaTypeList(para);
@@ -101,8 +103,9 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         currentSymbolTable.addClass(builtinArrayClassName, arrayStb, new Location(concreteSyntaxTree));
     }
 
-    public ASTBuilderVisitor(MxStarParser.ProgramContext cst) {
+    public ASTBuilderVisitor(MxStarParser.ProgramContext cst, MxErrorProcessor _errorProcessor) {
         parameterBuffer = new LinkedList<Symbol>();
+        errorProcessor  = _errorProcessor;
         concreteSyntaxTree = cst;
         scopePrefix = "";
         scopeName = globalScopeName;
@@ -111,7 +114,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         inLoop = 0;
         loopCount = 0;
         conditionCount = 0;
-        currentSymbolTable = new SymbolTable(scopePrefix + scopeName);
+        currentSymbolTable = new SymbolTable(scopePrefix + scopeName, errorProcessor);
         currentSymbolTable.setGlobal();
         initializeBuiltinMethods();
         initializeBuiltInMemberMethod();
@@ -137,7 +140,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
                 } else if (child instanceof ClassDeclarationNode) {
                     prog.addClassDeclarationNode((ClassDeclarationNode) child);
                 } else if(child == null){continue;} //SEMI
-                else throw new CompileException("Unknown Program Section");
+                else{
+                    errorProcessor.add(new MxSemanticCheckError("unknown program section", new Location(ctx)));
+                    return null;
+                }
             }
         }
         return prog;
@@ -246,7 +252,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         enterScope();
         inClass = true;
         String id = ctx.Identifier().getText();
-        classMemberTable = new SymbolTable(id);
+        classMemberTable = new SymbolTable(id, errorProcessor);
         classMemberTable.setClassTable();
         String parentScopeName = scopeName;
         LinkedList<MxStarParser.ClassConstructorDeclarationContext> consl = new LinkedList<MxStarParser.ClassConstructorDeclarationContext>();
@@ -486,7 +492,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             }
             ret = new LoopNode(true, tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
         }
-        else throw new CompileException("Unknown loop");
+        else errorProcessor.add(new MxSemanticCheckError("unknown loop", new Location(ctx)));
         scopeName = parentScopeName;
         inLoop--;
         return  ret;
@@ -494,20 +500,32 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
 
     @Override
     public Node visitBreakJump(MxStarParser.BreakJumpContext ctx) {
-        if(inLoop == 0) throw new CompileException("break not in loop");
+        if(inLoop == 0){
+            errorProcessor.add(new MxSemanticCheckError("break not in loop", new Location(ctx)));
+            return null;
+        }
         else return new BreakNode(currentSymbolTable, new Location(ctx));
     }
 
     @Override
     public Node visitContinueJump(MxStarParser.ContinueJumpContext ctx) {
-        if(inLoop == 0) throw new CompileException("continue not in loop");
+        if(inLoop == 0){
+            errorProcessor.add(new MxSemanticCheckError("continue not in loop", new Location(ctx)));
+            return null;
+        }
         else return new ContinueNode(currentSymbolTable, new Location(ctx));
     }
 
     @Override
     public Node visitReturnJump(MxStarParser.ReturnJumpContext ctx) {
-        if(!inConstructor && !inMethodDecl) throw new CompileException("invalid return");
-        else if(inConstructor &&  ctx.expression() != null) throw new CompileException("nothing shold be returned in constructor!");
+        if(!inConstructor && !inMethodDecl) {
+            errorProcessor.add(new MxSemanticCheckError("invalid return", new Location(ctx)));
+            return null;
+        }
+        else if(inConstructor &&  ctx.expression() != null){
+            errorProcessor.add(new MxSemanticCheckError("nothing shold be returned in constructor!", new Location(ctx)));
+            return null;
+        }
         else{
             ExpressionNode ret = null;
             if(ctx.expression() != null) ret = (ExpressionNode) visit(ctx.expression());
@@ -536,7 +554,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         else if (intconst != null) return new IntegerConstantNode(intconst.getText(), currentSymbolTable, loc);
         else if (stringconst != null) return new StringConstantNode(stringconst.getText(), currentSymbolTable, loc);
         else if (nullconst != null) return new NullConstantNode(currentSymbolTable, loc);
-        else throw new CompileException("Unknown Const Type");
+        else{
+            errorProcessor.add(new MxSemanticCheckError("Unknown Const Type", new Location(ctx)));
+            return null;
+        }
     }
 
     @Override
@@ -546,7 +567,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         Location loc = new Location(ctx);
         Symbol varSymbol = currentSymbolTable.get(id, loc);
         ret = new IdentifierNode(id, currentSymbolTable, new Location(ctx));
-        if(varSymbol == null) throw new CompileException(id + " is not declared in this scope", new Location(ctx));
+        if(varSymbol == null){
+            errorProcessor.add(new MxSemanticCheckError(id + " is not declared in this scope", new Location(ctx)));
+            return null;
+        }
         else{
             ret = new IdentifierNode(id, currentSymbolTable, loc);
             ret.setType(varSymbol.getType());
@@ -616,7 +640,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             for(MxStarParser.ArrayCreatorUnitContext ictx : arrc.arrayCreatorUnit()){
                 if(ictx.expression() != null){
                     if(!flag) sizeList.add((ExpressionNode) visit(ictx.expression()));
-                    else throw new CompileException("Juggled array declaration error.");
+                    else{
+                        errorProcessor.add(new MxSemanticCheckError("Juggled array declaration error.", new Location(ctx)));
+                        return null;
+                    }
                 }
                 else flag = true;
             }
@@ -624,14 +651,20 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         }
         else if(narrc != null){
             String types = narrc.nonArrayType().getText();
-            if((types.equals("int") || types.equals("bool")) && narrc.LPAREN() != null) throw new CompileException("Int/bool have no constructor");
+            if((types.equals("int") || types.equals("bool")) && narrc.LPAREN() != null){
+                errorProcessor.add(new MxSemanticCheckError("int/bool have no constructor", new Location(ctx)));
+                return null;
+            }
             ArrayList<ExpressionNode> para = new ArrayList<>();
             if(narrc.expressionList() != null) {
                 for (MxStarParser.ExpressionContext ictx : narrc.expressionList().expression())
                     para.add((ExpressionNode) visit(ictx));
             }
             return new NewCreatorNode(new MxType(narrc.nonArrayType().getText()), para,currentSymbolTable, new Location(ctx));
-        }else throw new CompileException("Invalid new creator");
+        }else {
+            errorProcessor.add(new MxSemanticCheckError("Invalid new creator", new Location(ctx)));
+            return null;
+        }
     }
 
     @Override

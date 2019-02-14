@@ -1,7 +1,7 @@
 package kstarxin.utilities.MxException;
 
-public class MxIOException extends CompileException {
+public class MxIOException extends MxCompileException {
     public MxIOException(){
-        super("IO Exception, please check the file");
+        super("");
     }
 }

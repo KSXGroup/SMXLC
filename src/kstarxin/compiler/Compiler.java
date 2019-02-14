@@ -9,35 +9,65 @@ import org.antlr.v4.runtime.*;
 public class Compiler {
     private MxStarParser parser;
     private String fileName;
+    private MxErrorProcessor errorProcessor;
     public Compiler(String f) {
         fileName = f;
         try {
             FileInputStream in = new FileInputStream(f);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(in));
+            ParserErrorListener pel = ParserErrorListener.INSTANCE;
             CharStream ipt = CharStreams.fromStream(in);
             MxStarLexer lexer = new MxStarLexer(ipt);
             CommonTokenStream token = new CommonTokenStream(lexer);
             parser = new MxStarParser(token);
             parser.removeErrorListeners();
-            parser.addErrorListener(ParserErrorListener.INSTANCE);
+            parser.addErrorListener(pel);
+            errorProcessor = new MxErrorProcessor(fileName, System.out,pel);
         } catch (FileNotFoundException e) {
-            throw new FileNotFound(f);
+            errorProcessor.add(new FileNotFound(f));
         } catch (IOException e) {
-            throw new MxIOException();
+            errorProcessor.add(new MxIOException());
         }
     }
 
     public void compileStart() {
-        ASTBuilderVisitor builder = null;
-        try {
-            builder = new ASTBuilderVisitor(parser.program());
-        } catch (Exception e) {
-            throw new CompileException("Parser error" + e.toString());
+        if(errorProcessor.size() > 0) {
+            errorProcessor.printError();
+            throw new MxCompileException("compilation terminated");
         }
-        ProgramNode prog = builder.build();
-        ASTTypeCheckerVisitor typeChecker = new ASTTypeCheckerVisitor(prog);
-        typeChecker.checkType();
-        ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
-        printer.display();
-        prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
+
+        ASTBuilderVisitor builder = null;
+
+        builder = new ASTBuilderVisitor(parser.program(), errorProcessor);
+        if (errorProcessor.size() > 0) {
+            errorProcessor.printErrorWithReference();
+            throw new MxCompileException("compilation terminated");
+        }
+
+        ProgramNode prog = null;
+
+        try {
+            prog = builder.build();
+        }catch (Exception e){}
+        if (errorProcessor.size() > 0) {
+            errorProcessor.printErrorWithReference();
+            throw new MxCompileException("compilation terminated");
+        }
+
+        ASTTypeCheckerVisitor typeChecker = null;
+
+        try {
+            typeChecker = new ASTTypeCheckerVisitor(prog, errorProcessor);
+            typeChecker.checkType();
+        }catch (Exception e){}
+        if(errorProcessor.size() > 0){
+            errorProcessor.printErrorWithReference();
+            throw new MxCompileException("compilation terminated");
+        }
+
+
+        //ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
+        //printer.display();
+        //prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
     }
 }
