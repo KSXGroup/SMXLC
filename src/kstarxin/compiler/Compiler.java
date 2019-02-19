@@ -12,17 +12,17 @@ public class Compiler {
     private MxErrorProcessor errorProcessor;
     public Compiler(String f) {
         fileName = f;
+        ParserErrorListener pel = ParserErrorListener.INSTANCE;
+        errorProcessor = new MxErrorProcessor(fileName, System.out,pel);
         try {
             FileInputStream in = new FileInputStream(f);
             BufferedReader reader = new BufferedReader(new InputStreamReader(in));
-            ParserErrorListener pel = ParserErrorListener.INSTANCE;
             CharStream ipt = CharStreams.fromStream(in);
             MxStarLexer lexer = new MxStarLexer(ipt);
             CommonTokenStream token = new CommonTokenStream(lexer);
             parser = new MxStarParser(token);
             parser.removeErrorListeners();
             parser.addErrorListener(pel);
-            errorProcessor = new MxErrorProcessor(fileName, System.out,pel);
         } catch (FileNotFoundException e) {
             errorProcessor.add(new FileNotFound(f));
         } catch (IOException e) {
@@ -49,6 +49,7 @@ public class Compiler {
         try {
             prog = builder.build();
         }catch (Exception e){}
+
         if (errorProcessor.size() > 0) {
             errorProcessor.printErrorWithReference();
             throw new MxCompileException("compilation terminated");

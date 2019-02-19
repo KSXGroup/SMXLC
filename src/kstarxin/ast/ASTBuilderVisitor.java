@@ -252,13 +252,13 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         enterScope();
         inClass = true;
         String id = ctx.Identifier().getText();
-        classMemberTable = new SymbolTable(id, errorProcessor);
-        classMemberTable.setClassTable();
         String parentScopeName = scopeName;
         LinkedList<MxStarParser.ClassConstructorDeclarationContext> consl = new LinkedList<MxStarParser.ClassConstructorDeclarationContext>();
         LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext> methl = new LinkedList<MxStarParser.ClassMemberFunctionDeclarationContext>();
         Location loc = new Location(ctx);
         scopeName = scopeName + "_CLASS_" + id;
+        classMemberTable = new SymbolTable(scopePrefix + scopeName, errorProcessor);
+        classMemberTable.setClassTable();
         currentSymbolTable.addClass(id,classMemberTable, loc);
         SymbolTable classSymbolTable = new SymbolTable(currentSymbolTable), parentTable = currentSymbolTable;
         classSymbolTable.setClassTable();

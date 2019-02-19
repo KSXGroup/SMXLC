@@ -173,4 +173,9 @@ public class MxType {
         if(!(type.equals(TypeEnum.BOOL) || type.equals(TypeEnum.INT) || type.equals(TypeEnum.STRING)) && other.getEnumType().equals(TypeEnum.NULL)) return true;
         return false;
     }
+
+    public MxType cloneWithoutParameter(){
+        return new MxType(type, name ,dimension);
+    }
+
 }

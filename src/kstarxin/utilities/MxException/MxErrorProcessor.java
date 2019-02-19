@@ -22,10 +22,16 @@ public class MxErrorProcessor {
         errorList = new LinkedList<MxCompileException>();
         lines = new ArrayList<String>();
         fileName = _fileName;
+        errorListener = _listener;
+        errorPrintStream = _errorPrintStream;
+        errorPrinter = new MxErrorPrinter(errorPrintStream);
+
         String tmpl;
         try {
             inputFile = new BufferedReader(new InputStreamReader(new FileInputStream(fileName)));
-        } catch (FileNotFoundException e){}//DO NOTHING
+        } catch (FileNotFoundException e){
+            return;
+        }//DO NOTHING
 
         while(true) {
             try {
@@ -37,15 +43,17 @@ public class MxErrorProcessor {
             }
         }
 
-        errorListener = _listener;
-        errorPrintStream = _errorPrintStream;
-        errorPrinter = new MxErrorPrinter(errorPrintStream);
     }
+
     public void printError(){
-        errorList.forEach(err-> errorPrinter.print(fileName, err));
+        errorList.forEach(err -> errorPrinter.print(fileName, err));
     }
 
     public void printErrorWithReference(){
+        for(MxCompileException e: errorListener.getParseError()){
+            String rf = getReference(e);
+            errorPrinter.printWithReference(fileName, e, rf);
+        }
        for(MxCompileException e: errorList){
            String rf = getReference(e);
            errorPrinter.printWithReference(fileName, e, rf);
@@ -57,7 +65,7 @@ public class MxErrorProcessor {
     }
 
     public int size(){
-        return errorList.size();
+        return errorList.size() + errorListener.getParseError().size();
     }
 
 }
