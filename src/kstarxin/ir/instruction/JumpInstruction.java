@@ -1,4 +1,7 @@
 package kstarxin.ir.instruction;
 
-public class JumpInstruction {
+public abstract class JumpInstruction extends Instruction {
+    public JumpInstruction(String _hintName){
+        super(_hintName);
+    }
 }

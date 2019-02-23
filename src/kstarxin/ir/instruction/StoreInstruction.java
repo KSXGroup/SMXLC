@@ -1,12 +1,12 @@
 package kstarxin.ir.instruction;
 
-import kstarxin.ir.operand.Operand;
+import kstarxin.ir.operand.*;
 
-public class StoreInstruction extends Instruction {
-    Operand dest;
-    Operand src;
-    Operand offset;
-    public StoreInstruction(Operand _dest, Operand _src, Operand _offset) {
+public class StoreInstruction extends Instruction{
+    public Operand src;
+    public Operand dest;
+    public Immediate offset;
+    public StoreInstruction(Operand _dest, Operand _src, Immediate _offset){
         super("store");
         dest    = _dest;
         src     = _src;
