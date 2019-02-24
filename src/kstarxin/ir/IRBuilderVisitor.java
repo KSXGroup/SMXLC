@@ -13,24 +13,26 @@ import java.util.*;
 
 
 public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
-    public static String cond = "_cond";
-    public static String step = "_step";
-    public static String body = "_body";
-    public static String after= "_after";
-    public static String ret  = "_return";
+    public static String cond       = "_cond";
+    public static String step       = "_step";
+    public static String body       = "_body";
+    public static String after      = "_after";
+    public static String ret        = "_return";
+    public static String ifTrue     = "_true";
+    public static String ifFalse    = "_false";
 
-    private IRProgram ir;
+    private IRProgram   ir;
     private ProgramNode ast;
-    private Method currentMethod;
-    private SuperBlock currentSuperBlock;
-    private BasicBlock currentBasicBlock;
-    private BasicBlock BasicBlockAfterCurrentLoop;
-    private BasicBlock CondBasicBlockOfCurrentLoop;
-    private BasicBlock StepBasicBlockOfCurrentLoop;
-    private BasicBlock BodyStartBasicBlockOfCurrentLoop;
-    private boolean inMethod;
-    private boolean inClass;
-    private int currentVariableOffset;
+    private Method      currentMethod;
+    private SuperBlock  currentSuperBlock;
+    private BasicBlock  currentBasicBlock;
+    private BasicBlock  BasicBlockAfterCurrentLoop;
+    private BasicBlock  CondBasicBlockOfCurrentLoop;
+    private BasicBlock  StepBasicBlockOfCurrentLoop;
+    private BasicBlock  BodyStartBasicBlockOfCurrentLoop;
+    private boolean     inMethod;
+    private boolean     inClass;
+    private int         currentVariableOffset;
 
     public IRBuilderVisitor(ProgramNode _ast){
         ast = _ast;
@@ -67,7 +69,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         ast.getMethodDeclarations().forEach(
                 decl ->  {
                     String mn = NameMangler.mangleName(decl);
-                    ir.addMethod(mn , new Method(mn), decl.getReturnType());
+                    ir.addMethod(mn , new Method(mn, false), decl.getReturnType());
             }
         );
         ast.getClassDeclarations().forEach(
@@ -75,13 +77,13 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     decl.getMemberMethodList().forEach(
                             mdecl -> {
                                 String mn = NameMangler.mangleName(mdecl);
-                                ir.addMethod(mn, new Method(mn), mdecl.getReturnType());
+                                ir.addMethod(mn, new Method(mn, true), mdecl.getReturnType());
                             }
                     );
                     decl.getConstructorList().forEach(
                             cdecl -> {
                                 String mn = NameMangler.mangleName(cdecl);
-                                ir.addMethod(mn, new Method(mn), cdecl.getReturnType());
+                                ir.addMethod(mn, new Method(mn, true), cdecl.getReturnType());
                             }
                     );
                 }
@@ -89,6 +91,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     }
 
     //resolve global variable and make program entrance
+    //TODO NEED REWTITE !
     private void makeEntranceMethod(){
         for(VariableDeclarationNode  n : ast.getVariableDeclarations()){
             //process global variable
@@ -96,7 +99,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             if(!t.isPrimitiveType()){
                 for(VariableDeclaratorNode decl: n.getDeclaratorList()){
                     StaticPointer sp = new StaticPointer(decl.getIdentifier(), Configure.PTR_SIZE);
-                    ExpressionNode init = decl.getInitializer();
+                    /*ExpressionNode init = decl.getInitializer();
                     if(init == null){
                         String className = t.toString();
                         SymbolTable classMemberTable = ast.getCurrentSymbolTable().getMember(className).getMemberTable();
@@ -110,7 +113,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     }
                     else{
                         //TODO(MAY NOT, BECAUSE THE MANUAL NOT SUPPORT THIS)
-                    }
+                    }*/
                 }
             }
             else if (t.isPrimitiveType() && !t.getEnumType().equals(MxType.TypeEnum.STRING)){
@@ -135,12 +138,12 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             else
                 n.getDeclaratorList().forEach(decl -> ir.addGlobalVariable(NameMangler.mangleName(decl), new StaticString(decl.getIdentifier(), ((StringConstantNode)decl.getInitializer()).getValue()), t));
         }
-        currentBasicBlock.insertEnd(new ReturnInstruction());
+        currentBasicBlock.insertEnd(new ReturnInstruction(null));
     }
 
     public IRProgram buildIR(){
         init();
-        currentMethod = new Method(NameMangler.initMethod);
+        currentMethod = new Method(NameMangler.initMethod ,false);
         BasicBlock startBB = new BasicBlock(currentMethod,null,null, null);
         currentMethod.setStartBlock(startBB);
         currentMethod.setEndBlock(startBB);
@@ -175,6 +178,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         inMethod = true;
         String mangledName = NameMangler.mangleName(node);
         currentMethod = ir.getMethod(mangledName);
+        node.getParameterList().forEach(para ->{
+            ir.addLocalVariable(NameMangler.mangleName(para), para.getTypeNode().getType());
+            currentMethod.addParameter(para);
+        });
         currentBasicBlock = new BasicBlock(currentMethod,null,null, NameMangler.mangleName(node));
         visit(node.getBlock());
         inMethod = false;
@@ -186,6 +193,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         inClass = true;
         currentVariableOffset = 0;
         node.getMemberVariableList().forEach(this::visit);
+        node.getMemberVariableList().forEach(this::visit);
+        node.getConstructorList().forEach(this::visit);
         inClass = false;
         return null;
     }
@@ -233,6 +242,43 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(ConditionNode node) {
+        String          mn          = NameMangler.mangleName(node);
+        ExpressionNode  astCond     = node.getCond();
+        Operand         cond        = null;
+        if(astCond != null) cond    = visit(astCond);
+        else{
+            visit(node.getBody());
+            return null;
+        }
+        if(cond instanceof Immediate){
+            if(((Immediate) cond).value == 0){
+                ConditionNode astElse = node.getElse();
+                if(astElse == null) return null;
+                else{
+                    visit(astElse);
+                    return null;
+                }
+            } else if(((Immediate) cond).value == 1){
+                visit(node.getBody());
+                return null;
+            }
+            else throw new RuntimeException("No such immediate in if!");
+        }
+        BasicBlock ifTrueBB     = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, mn + ifTrue);
+        BasicBlock ifFalseBB    = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, mn + ifFalse);
+        BasicBlock ifExitBB     = new BasicBlock(currentMethod, currentSuperBlock, ifFalseBB, mn + after);
+        ifExitBB.addPred(ifFalseBB);
+
+        currentBasicBlock.insertEnd(new CompareInstruction(cond, new Immediate(1)));
+        currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, ifTrueBB, ifFalseBB));
+
+        currentBasicBlock = ifTrueBB;
+        visit(node.getBody());
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(ifExitBB));
+        currentBasicBlock = ifFalseBB;
+        visit(node.getElse());
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(ifExitBB));
+        currentBasicBlock = ifExitBB;
         return null;
     }
 
@@ -334,50 +380,96 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(ContinueNode node) {
-        BasicBlock continueBB = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, null);
-        continueBB.insertEnd(new DirectJumpInstruction(CondBasicBlockOfCurrentLoop));
-        currentBasicBlock = continueBB;
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(StepBasicBlockOfCurrentLoop));
+        currentBasicBlock.addSucc(StepBasicBlockOfCurrentLoop);
+        currentBasicBlock = new BasicBlock(currentMethod, currentSuperBlock, null, null);
         return null;
     }
 
     @Override
     public Operand visit(BreakNode node) {
-        BasicBlock breakBB =  new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, null);
-        breakBB.insertEnd(new DirectJumpInstruction(BasicBlockAfterCurrentLoop));
-        currentBasicBlock = breakBB;
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(BasicBlockAfterCurrentLoop));
+        currentBasicBlock.addSucc(BasicBlockAfterCurrentLoop);
+        currentBasicBlock = new BasicBlock(currentMethod, currentSuperBlock, null, null);
         return null;
     }
 
     @Override
     public Operand visit(ReturnNode node) {
         Operand ret = visit(node.getReturnValue());
-        currentMethod.returnInsts.add(new LoadInstruction(currentMethod.returnTmpRegister, ret, new Immediate(0)));
+        ReturnInstruction retInst = new ReturnInstruction(ret);
+        currentBasicBlock.insertEnd(retInst);
+        currentMethod.returnInsts.add(retInst);
+        currentBasicBlock = new BasicBlock(currentMethod, currentSuperBlock, null, null);
         return null;
     }
 
     @Override
     public Operand visit(DotMemberNode node) {
-        return null;
+        ExpressionNode  astExpr     = node.getExpression();
+        Operand         expr        = visit(astExpr);
+        int             offset      = ir.getOffsetInClass(NameMangler.mangleName(node.getCurrentSymbolTable().get(node.getExpression().getType().toString(), node.getLocation()).getMemberTable().getMember(node.getMember())));
+        VirtualRegister loadReg     = currentMethod.allocateNewTmpRegister();
+        currentBasicBlock.insertEnd(new LoadInstruction(loadReg, expr, new Immediate(offset)));
+        return loadReg;
     }
 
     @Override
     public Operand visit(MethodCallNode node) {
-        return null;
+        String          mmn     = NameMangler.mangleName(node);
+        Method          callee  = ir.getMethod(mmn);
+        VirtualRegister retReg  = currentMethod.allocateNewTmpRegister();
+        CallInstruction call    = new CallInstruction(callee, retReg);
+        ArrayList<VirtualRegister> paras = new ArrayList<VirtualRegister>();
+        node.getParameterExpressionList().forEach(para -> call.addParameter(visit(para)));
+        currentBasicBlock.insertEnd(call);
+        return retReg;
     }
 
     @Override
     public Operand visit(DotMemberMethodCallNode node) {
-        return null;
+        ExpressionNode  astExpr         = node.getExpression();
+        Operand         classPointer    = visit(astExpr);
+        String          mn              = NameMangler.mangleName(node.getCurrentSymbolTable().get(astExpr.getType().toString(), astExpr.getLocation()).getMemberTable().getMember(node.getMemberMethodName()));
+        VirtualRegister returnReg       = currentMethod.allocateNewTmpRegister();
+        if(!(classPointer instanceof VirtualRegister)) throw new RuntimeException("the dotMemberCall shit!");
+        CallInstruction call            = new CallInstruction(ir.getMethod(mn), returnReg);
+        node.getParameterExpressionList().forEach(para -> call.addParameter(visit(para)));
+        call.setClassMemberCall((VirtualRegister) classPointer);
+        currentBasicBlock.insertEnd(call);
+        return returnReg;
     }
 
     @Override
     public Operand visit(ExpressionNode node) {
-        return null;
+        return node.accept(this);
     }
 
     @Override
     public Operand visit(UnaryExpressionNode node) {
-        return null;
+        Operand rhsValue = visit(node.getRight());
+        if(rhsValue instanceof Immediate){
+            int irhs = ((Immediate) rhsValue).value;
+            switch (node.getOp()){
+                case MxStarParser.INC:
+                    return new Immediate(irhs + 1);
+                case MxStarParser.DEC:
+                    return new Immediate(irhs - 1);
+                case MxStarParser.ADD:
+                    return new Immediate(irhs);
+                case MxStarParser.SUB:
+                    return new Immediate(-irhs);
+                case MxStarParser.NOT:
+                    return new Immediate(irhs == 1 ? 0 : 1);
+                case MxStarParser.BITNOT:
+                    return new Immediate(~irhs);
+                default:
+                    throw new RuntimeException("shit in unary expression generation");
+            }
+        } else if(rhsValue instanceof VirtualRegister){
+            currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(), rhsValue));
+            return rhsValue;
+        } else throw new RuntimeException("what shit type operand? in unary operand process");
     }
 
     @Override
@@ -392,7 +484,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(ThisNode node) {
-        return null;
+        return currentMethod.classThisPointer;
     }
 
     @Override
@@ -417,21 +509,27 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(BooleanConstantNode node) {
-        return null;
+        int val = node.getValue() == true ? 1 : 0;
+        return new Immediate(val);
     }
 
     @Override
     public Operand visit(NullConstantNode node) {
-        return null;
+        return new Immediate(0);
     }
 
     @Override
     public Operand visit(StringConstantNode node) {
-        return null;
+        return ir.addStringConstant(node.getValue());
     }
 
     @Override
     public Operand visit(IntegerConstantNode node) {
+        return new Immediate(node.getValue());
+    }
+
+    //for short-cut value evaluaiton
+    private Operand visitLogic(BinaryExpressionNode node){
         return null;
     }
 }

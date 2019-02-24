@@ -1,6 +1,7 @@
 package kstarxin.utilities;
 
 import kstarxin.ast.*;
+
 public class NameMangler {
         public static String globalPrefix = "@";
         public static String methodPrefix = "_Z";
@@ -28,6 +29,10 @@ public class NameMangler {
             return mangledName;
         }
 
+        public static String mangleName(MethodCallNode n){
+            return mangleName(n.getCurrentSymbolTable().get(n.getMethodName(), n.getLocation()));
+        }
+
         public static String mangleName(LoopNode n){
             return n.getCurrentSymbolTable().getName();
         }
@@ -41,7 +46,7 @@ public class NameMangler {
                 case METHOD:
                     if(symbolId.equals("main")) return globalPrefix + symbolId;
                     else{
-                        ret = methodPrefix + globalPrefix + symbolId;
+                        ret = globalPrefix  + methodPrefix + symbolId;
                         for(MxType t : s.getType().getParameterTypeList()){
                             if(t.isPrimitiveType()) ret += t.toString().charAt(0);
                             else ret += t.toString();
@@ -59,4 +64,12 @@ public class NameMangler {
             return null;
         }
 
+        public static String mangleName(ParameterDeclarationNode n) {
+            String scopeName = n.getCurrentSymbolTable().getName();
+            return scopeName + "_" + n.getIdentifier();
+        }
+
+        public static String mangleName(ConditionNode n){
+            return n.getCurrentSymbolTable().getName();
+        }
 }

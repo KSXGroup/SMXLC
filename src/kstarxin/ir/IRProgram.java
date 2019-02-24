@@ -7,6 +7,8 @@ import kstarxin.ir.superblock.*;
 import kstarxin.utilities.*;
 
 public class IRProgram {
+    private static String stringConstantPrefix = "_tmpString_";
+    private Integer stringConstantCounter;
     private Method initMethod;
     private Method entranceMethod;
     private HashMap<String, Method> methodMap;
@@ -17,12 +19,14 @@ public class IRProgram {
     private List<ConditionSuperBlock> conditionList;
 
     public IRProgram(){
-        entranceMethod      = null;
-        methodMap           = new HashMap<String, Method>();
-        typeMap             = new HashMap<String, MxType>();
-        globalVariableMap   = new HashMap<String, Label>();
-        loopList            = new LinkedList<LoopSuperBlock>();
-        conditionList       = new LinkedList<ConditionSuperBlock>();
+        stringConstantCounter   = 0;
+        entranceMethod          = null;
+        methodMap               = new HashMap<String, Method>();
+        typeMap                 = new HashMap<String, MxType>();
+        globalVariableMap       = new HashMap<String, Label>();
+        offsetInClass           = new HashMap<String, Integer>();
+        loopList                = new LinkedList<LoopSuperBlock>();
+        conditionList           = new LinkedList<ConditionSuperBlock>();
     }
 
     public void setInitMethod(Method _initMethod){
@@ -55,7 +59,18 @@ public class IRProgram {
         offsetInClass.put(mangledName, offset);
     }
 
+    public StaticString addStringConstant(String s){
+        String tmpHintName = stringConstantPrefix + stringConstantCounter.toString();
+        StaticString tmp = new StaticString(tmpHintName,s);
+        globalVariableMap.put(tmpHintName, tmp);
+        return tmp;
+    }
+
     public Method getMethod(String mangledName){
         return methodMap.get(mangledName);
+    }
+
+    public int getOffsetInClass(String mangledName){
+        return offsetInClass.get(mangledName);
     }
 }

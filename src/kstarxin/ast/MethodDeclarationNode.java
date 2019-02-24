@@ -34,7 +34,7 @@ public class MethodDeclarationNode extends DeclarationNode {
         return retType.getType();
     }
 
-    public ArrayList getParameterList(){
+    public ArrayList<ParameterDeclarationNode> getParameterList(){
         return paraList;
     }
 

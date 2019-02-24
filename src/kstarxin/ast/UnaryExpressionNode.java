@@ -12,7 +12,7 @@ public class UnaryExpressionNode extends ExpressionNode{
         expr = _expr;
     }
 
-    ExpressionNode getRight(){
+    public ExpressionNode getRight(){
         return expr;
     }
 
