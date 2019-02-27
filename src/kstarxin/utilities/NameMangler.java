@@ -3,9 +3,12 @@ package kstarxin.utilities;
 import kstarxin.ast.*;
 
 public class NameMangler {
-        public static String globalPrefix = "@";
-        public static String methodPrefix = "_Z";
-        public static String initMethod = "@_INIT_";
+        public static String globalPrefix   = "@";
+        public static String methodPrefix   = "_Z";
+        public static String initMethod     = "@_INIT_";
+        public static String strcmp         = "@_Zstrcmpss";
+        public static String strcat         = "@_Zstrcatss";
+        public static String malloc         = "@_Zmalloci";
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;

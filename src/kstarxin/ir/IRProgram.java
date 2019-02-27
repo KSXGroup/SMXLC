@@ -7,16 +7,21 @@ import kstarxin.ir.superblock.*;
 import kstarxin.utilities.*;
 
 public class IRProgram {
-    private static String stringConstantPrefix = "_tmpString_";
-    private Integer stringConstantCounter;
-    private Method initMethod;
-    private Method entranceMethod;
-    private HashMap<String, Method> methodMap;
-    private HashMap<String, MxType> typeMap;
-    private HashMap<String, Label> globalVariableMap;
-    private HashMap<String, Integer> offsetInClass;
-    private List<LoopSuperBlock> loopList;
-    private List<ConditionSuperBlock> conditionList;
+    private static String stringConstantPrefix      = "_tmpString_";
+    //private static String compareResultRegisterName = "_compareResult";
+
+    private Integer                     stringConstantCounter;
+    private Method                      initMethod;
+    private Method                      entranceMethod;
+    private HashMap<String, Method>     methodMap;
+    private HashMap<String, MxType>     typeMap;
+    private HashMap<String, Label>      globalVariableMap;
+    private HashMap<String, Integer>    offsetInClass;
+    private List<Method>                builtinMethodList;
+    private List<LoopSuperBlock>        loopList;
+    private List<ConditionSuperBlock>   conditionList;
+
+    public  VirtualRegister             compareResult;
 
     public IRProgram(){
         stringConstantCounter   = 0;
@@ -25,8 +30,10 @@ public class IRProgram {
         typeMap                 = new HashMap<String, MxType>();
         globalVariableMap       = new HashMap<String, Label>();
         offsetInClass           = new HashMap<String, Integer>();
+        builtinMethodList       = new LinkedList<Method>();
         loopList                = new LinkedList<LoopSuperBlock>();
         conditionList           = new LinkedList<ConditionSuperBlock>();
+        //compareResult           = new VirtualRegister(compareResultRegisterName, compareResultRegisterName);
     }
 
     public void setInitMethod(Method _initMethod){
@@ -55,6 +62,12 @@ public class IRProgram {
         typeMap.put(mangledName, retType);
     }
 
+    public void addBuiltinMethod(String mangledName, Method method, MxType retType){
+        method.setBuiltin();
+        methodMap.put(mangledName, method);
+        typeMap.put(mangledName, retType);
+    }
+
     public void setOffsetInClass(String mangledName, Integer offset){
         offsetInClass.put(mangledName, offset);
     }
@@ -72,5 +85,9 @@ public class IRProgram {
 
     public int getOffsetInClass(String mangledName){
         return offsetInClass.get(mangledName);
+    }
+
+    public Label getGlobalVariableVirtualRegister(String mn){
+        return globalVariableMap.get(mn);
     }
 }

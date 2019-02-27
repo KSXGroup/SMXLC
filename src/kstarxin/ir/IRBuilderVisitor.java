@@ -1,5 +1,7 @@
 package kstarxin.ir;
 
+import com.sun.org.apache.bcel.internal.generic.BALOAD;
+import com.sun.org.apache.bcel.internal.generic.IMPDEP1;
 import kstarxin.ast.*;
 import kstarxin.compiler.*;
 import kstarxin.ir.instruction.*;
@@ -23,6 +25,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     private IRProgram   ir;
     private ProgramNode ast;
+    private SymbolTable currentClassSymbolTable;
     private Method      currentMethod;
     private SuperBlock  currentSuperBlock;
     private BasicBlock  currentBasicBlock;
@@ -90,31 +93,39 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         );
     }
 
+    private void initBuiltin(){
+        ast.getCurrentSymbolTable().getOriginTable().values().forEach(
+                symbol -> {
+                    String mn = NameMangler.mangleName(symbol);
+                    if(symbol.isBuiltIn()) ir.addBuiltinMethod(mn , new Method(mn, false), symbol.getType());
+                }
+        );
+        //add strcat //add strcmp
+        ArrayList<MxType> paraStrcat = new ArrayList<MxType>();
+        paraStrcat.add(new MxType(MxType.TypeEnum.STRING));
+        paraStrcat.add(new MxType(MxType.TypeEnum.STRING));
+        MxType retOfstrcat = new MxType(MxType.TypeEnum.STRING, "string", paraStrcat);
+        MxType retOfstrcmp = new MxType(MxType.TypeEnum.INT, "int", paraStrcat);
+        ir.addBuiltinMethod(NameMangler.strcat, new Method(NameMangler.strcat, false), retOfstrcat);
+        ir.addBuiltinMethod(NameMangler.strcmp, new Method(NameMangler.strcmp, false), retOfstrcmp);
+        //add malloc
+        ArrayList<MxType> paraMalloc = new ArrayList<MxType>();
+        paraMalloc.add(new MxType(MxType.TypeEnum.INT));
+        MxType retOfMalloc = new MxType(MxType.TypeEnum.INT, "int", paraMalloc);
+        ir.addBuiltinMethod(NameMangler.malloc, new Method(NameMangler.malloc, false), retOfMalloc);
+    }
+
     //resolve global variable and make program entrance
-    //TODO NEED REWTITE !
     private void makeEntranceMethod(){
         for(VariableDeclarationNode  n : ast.getVariableDeclarations()){
             //process global variable
             MxType t = n.getTypeNode().getType();
             if(!t.isPrimitiveType()){
-                for(VariableDeclaratorNode decl: n.getDeclaratorList()){
-                    StaticPointer sp = new StaticPointer(decl.getIdentifier(), Configure.PTR_SIZE);
-                    /*ExpressionNode init = decl.getInitializer();
-                    if(init == null){
-                        String className = t.toString();
-                        SymbolTable classMemberTable = ast.getCurrentSymbolTable().getMember(className).getMemberTable();
-                        Symbol cons = classMemberTable.getMember(ASTBuilderVisitor.constructorPrefix + t.toString());
-                        if(cons != null){
-                            Method callee = ir.getMethod(NameMangler.mangleName(cons));
-                            CallInstruction call = new CallInstruction(callee);
-                            call.addParameter(sp);
-                            currentBasicBlock.insertEnd(call); //initialize the class type variable
-                        }
-                    }
-                    else{
-                        //TODO(MAY NOT, BECAUSE THE MANUAL NOT SUPPORT THIS)
-                    }*/
-                }
+                n.getDeclaratorList().forEach(decl -> {
+                    String mn = NameMangler.mangleName(decl);
+                    StaticPointer sp = new StaticPointer(mn , Configure.PTR_SIZE);
+                    ir.addGlobalVariable(mn, sp, t);
+                });
             }
             else if (t.isPrimitiveType() && !t.getEnumType().equals(MxType.TypeEnum.STRING)){
                 for (VariableDeclaratorNode decl : n.getDeclaratorList()) {
@@ -143,13 +154,15 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     public IRProgram buildIR(){
         init();
-        currentMethod = new Method(NameMangler.initMethod ,false);
-        BasicBlock startBB = new BasicBlock(currentMethod,null,null, null);
+        initBuiltin();
+        currentMethod       = new Method(NameMangler.initMethod ,false);
+        BasicBlock startBB  = new BasicBlock(currentMethod,null,null, null);
         currentMethod.setStartBlock(startBB);
         currentMethod.setEndBlock(startBB);
         currentBasicBlock = startBB;
         makeEntranceMethod();
-        ir.setInitMethod(currentMethod);
+        if(startBB.size() == 0) ir.setInitMethod(null);
+        else ir.setInitMethod(currentMethod);
         visit(ast);
         return ir;
     }
@@ -175,27 +188,36 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(MethodDeclarationNode node) {
-        inMethod = true;
-        String mangledName = NameMangler.mangleName(node);
-        currentMethod = ir.getMethod(mangledName);
+        inMethod                    = true;
+        String mangledName          = NameMangler.mangleName(node);
+        currentMethod               = ir.getMethod(mangledName);
+        currentBasicBlock           = new BasicBlock(currentMethod, null, null, mangledName);
+        currentMethod.startBlock    = currentBasicBlock;
+        currentMethod.endBlock      = new BasicBlock(currentMethod, null, null, mangledName + ret);
         node.getParameterList().forEach(para ->{
             ir.addLocalVariable(NameMangler.mangleName(para), para.getTypeNode().getType());
             currentMethod.addParameter(para);
         });
-        currentBasicBlock = new BasicBlock(currentMethod,null,null, NameMangler.mangleName(node));
         visit(node.getBlock());
-        inMethod = false;
+        currentBasicBlock.addSucc(currentMethod.endBlock);
+        currentBasicBlock   = null;
+        currentMethod       = null;
+        currentSuperBlock   = null;
+        inMethod            = false;
         return null;
     }
 
     @Override
     public Operand visit(ClassDeclarationNode node) {
-        inClass = true;
-        currentVariableOffset = 0;
+        inClass                 = true;
+        currentVariableOffset   = 0;
+        currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberVariableList().forEach(this::visit);
-        node.getMemberVariableList().forEach(this::visit);
+        node.getMemberMethodList().forEach(this::visit);
         node.getConstructorList().forEach(this::visit);
-        inClass = false;
+        inClass                 = false;
+        currentClassSymbolTable = null;
+        currentVariableOffset   = 0;
         return null;
     }
 
@@ -204,7 +226,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         MxType t = node.getTypeNode().getType();
         if(inMethod && !inClass) {
             for (VariableDeclaratorNode n : node.getDeclaratorList()) {
-                ExpressionNode init = n.getInitializer();
+                ExpressionNode init     = n.getInitializer();
                 Operand initir          = null;
                 String mn               = NameMangler.mangleName(n);
                 if (n != null) initir   = visit(init);
@@ -474,7 +496,63 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(BinaryExpressionNode node) {
-        return null;
+        int      op = node.getOp();
+        if(op == MxStarParser.AND || op == MxStarParser.OR) return processLogic(node);
+        Operand lhs = visit(node.getLeft());
+        Operand rhs = visit(node.getRight());
+        if(lhs instanceof Immediate && rhs instanceof Immediate){
+            int lval = ((Immediate) rhs).value;
+            int rval = ((Immediate) lhs).value;
+            switch (op){
+                case MxStarParser.MUL:
+                    return new Immediate(lval * rval);
+                case MxStarParser.DIV:
+                    return new Immediate(lval / rval);
+                case MxStarParser.MOD:
+                    return new Immediate(lval % rval);
+                case MxStarParser.ADD:
+                    return new Immediate(lval + rval);
+                case MxStarParser.SUB:
+                    return new Immediate(lval - rval);
+                case MxStarParser.SFTL:
+                    return new Immediate(lval << rval);
+                case MxStarParser.SFTR:
+                    return new Immediate(lval >> rval);
+                case MxStarParser.GT:
+                    return new Immediate(lval > rval ? 1 : 0);
+                case MxStarParser.LT:
+                    return new Immediate(lval < rval ? 1 : 0);
+                case MxStarParser.GE:
+                    return new Immediate(lval >= rval ? 1 : 0);
+                case MxStarParser.LE:
+                    return new Immediate(lval <= rval ? 1 : 0);
+                case MxStarParser.EQ:
+                    return new Immediate(lval == rval ? 1 : 0);
+                case MxStarParser.NEQ:
+                    return new Immediate(lval != rval ? 1 : 0);
+                case MxStarParser.BITAND:
+                    return new Immediate(lval & rval);
+                case MxStarParser.BITXOR:
+                    return new Immediate(lval ^ rval);
+                case MxStarParser.BITOR:
+                    return new Immediate(lval | rval);
+                default:
+                    throw new RuntimeException("what shit operand is this?????!");
+            }
+        }else if((lhs instanceof Memory || lhs instanceof Address)){
+            // TODO String comparasion, should add built in function first!;
+            return null;
+        } else{
+            VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
+            switch (op){
+                case MxStarParser.ASSIGN:
+                    currentBasicBlock.insertEnd(new MoveInstruction(lhs, rhs));
+                    return lhs;
+                default:
+                    currentBasicBlock.insertEnd(new BinaryArithmeticInstruction(op, tmpReg, lhs, rhs));
+                    return tmpReg;
+            }
+        }
     }
 
     @Override
@@ -489,17 +567,53 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(IndexAccessNode node) {
-        return null;
+        Operand         expr        = visit(node.getExpression());
+        VirtualRegister loadTarget  = currentMethod.allocateNewTmpRegister();
+        currentBasicBlock.insertEnd(new LoadInstruction(loadTarget, expr, new Immediate(0)));
+        return loadTarget;
     }
 
     @Override
     public Operand visit(SuffixIncreaseDecreaseNode node) {
-        return null;
+        Operand expr = visit(node.getExpression());
+        if(expr instanceof Immediate){
+            switch (node.getOp()){
+                case MxStarParser.INC:
+                    ((Immediate) expr).value++;
+                    return expr;
+                case MxStarParser.DEC:
+                    ((Immediate) expr).value--;
+                    return expr;
+                default:
+                    throw new RuntimeException("What shit suffix INC/DEC instruction is this??????");
+            }
+        } else {
+            switch (node.getOp()) {
+                case MxStarParser.INC:
+                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.INC, expr));
+                    break;
+                case MxStarParser.DEC:
+                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.DEC, expr));
+                    break;
+                default:
+                    throw new RuntimeException("What shit suffix INC/DEC instruction is this??????");
+            }
+            return expr;
+        }
     }
 
     @Override
     public Operand visit(IdentifierNode node) {
-        return null;
+        String nm = NameMangler.mangleName(node.getCurrentSymbolTable().get(node.getIdentifier(), node.getLocation()));
+        if(inClass && isClassMemberVariable(node)){
+            VirtualRegister classPtr = currentMethod.classThisPointer;
+            return new Memory(classPtr, new Immediate(ir.getOffsetInClass(nm)));
+        } else{
+            Operand ret = currentMethod.localVariables.get(nm);
+            if(ret == null) ret = ir.getGlobalVariableVirtualRegister(nm);
+            if(ret == null) throw new RuntimeException("there is no shit variable called " + node.getIdentifier() + " there must be something run in the symbol system!");
+            return ret;
+        }
     }
 
     @Override
@@ -528,8 +642,79 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         return new Immediate(node.getValue());
     }
 
-    //for short-cut value evaluaiton
-    private Operand visitLogic(BinaryExpressionNode node){
-        return null;
+
+    private boolean isClassMemberVariable(IdentifierNode node){
+        if(!inClass) return false;
+        else{
+            Symbol is = node.getCurrentSymbolTable().get(node.getIdentifier(), node.getLocation());
+            Symbol cs = currentClassSymbolTable.getMember(node.getIdentifier());
+            return is == cs;
+        }
     }
+
+    //for short-cut value evaluaiton
+
+    private boolean isLogicOperator(int op){
+        if(op == MxStarParser.AND || op == MxStarParser.OR) return true;
+        else return false;
+    }
+
+    private Operand processLogic(ExpressionNode node){
+        if(node instanceof BinaryExpressionNode && isLogicOperator(((BinaryExpressionNode) node).getOp())) {
+            ExpressionNode astLeft = ((BinaryExpressionNode) node).getLeft();
+            ExpressionNode astRight = ((BinaryExpressionNode) node).getRight();
+            int op = ((BinaryExpressionNode) node).getOp();
+            if(node.trueJumpTarget == null && node.falseJumpTarget == null) {
+                VirtualRegister resultReg = currentMethod.allocateNewTmpRegister();
+                BasicBlock trueBB = new BasicBlock(currentMethod, currentSuperBlock, null, currentMethod.generateTmpLabel());
+                BasicBlock falseBB = new BasicBlock(currentMethod, currentSuperBlock, null, currentMethod.generateTmpLabel());
+                BasicBlock exitBB = new BasicBlock(currentMethod, currentSuperBlock, trueBB, currentMethod.generateTmpLabel());
+                exitBB.addPred(falseBB);
+                node.trueJumpTarget = trueBB;
+                node.falseJumpTarget = falseBB;
+                trueBB.insertEnd(new MoveInstruction(resultReg, new Immediate(1)));
+                trueBB.insertEnd(new DirectJumpInstruction(exitBB));
+                falseBB.insertEnd(new MoveInstruction(resultReg, new Immediate(0)));
+                falseBB.insertEnd(new DirectJumpInstruction(exitBB));
+                processLogic(node);
+                return resultReg;
+            }else{
+                if(op == MxStarParser.AND){
+                    astLeft.falseJumpTarget = node.falseJumpTarget;
+                    astLeft.trueJumpTarget = new BasicBlock(currentMethod, currentSuperBlock, null, currentMethod.generateTmpLabel());
+                    Operand ret = processLogic(astLeft);
+                    if(ret != null){
+                        currentBasicBlock.insertEnd(new CompareInstruction(ret, new Immediate(1)));
+                        currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, astLeft.trueJumpTarget, astLeft.falseJumpTarget));
+                        currentBasicBlock.addSucc(astLeft.falseJumpTarget);
+                        currentBasicBlock.addSucc(astLeft.trueJumpTarget);
+                    }
+                    currentBasicBlock = astLeft.trueJumpTarget;
+                }
+                else{
+                    astLeft.trueJumpTarget = node.trueJumpTarget;
+                    astLeft.falseJumpTarget = new BasicBlock(currentMethod, currentSuperBlock, null, currentMethod.generateTmpLabel());
+                    Operand ret = processLogic(astLeft);
+                    if(ret != null){
+                        currentBasicBlock.insertEnd(new CompareInstruction(ret, new Immediate(1)));
+                        currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, astLeft.trueJumpTarget, astLeft.falseJumpTarget));
+                        currentBasicBlock.addSucc(astLeft.trueJumpTarget);
+                        currentBasicBlock.addSucc(astLeft.falseJumpTarget);
+                    }
+                    currentBasicBlock = astLeft.falseJumpTarget;
+                }
+                astRight.trueJumpTarget = node.trueJumpTarget;
+                astRight.falseJumpTarget = node.falseJumpTarget;
+                Operand ret = processLogic(astRight);
+                if(ret != null) {
+                    currentBasicBlock.insertEnd(new CompareInstruction(ret, new Immediate(1)));
+                    currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, astRight.trueJumpTarget, astRight.falseJumpTarget));
+                    currentBasicBlock.addSucc(astRight.falseJumpTarget);
+                    currentBasicBlock.addSucc(astRight.trueJumpTarget);
+                }
+                return null;
+            }
+        } else return visit(node);
+    }
+
 }

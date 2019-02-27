@@ -13,6 +13,7 @@ public class Method {
     public static String retTmp             = "_returnTmpValue";
     public static String thisPtr            = "_this";
     public static String tmpRegPrefix       =  "_tmp";
+    public boolean                          isBuiltin;
     public Integer                          tmpRegisterCounter;
     public ArrayList<VirtualRegister>       parameters;
     public HashMap<String, VirtualRegister> localVariables;
@@ -29,11 +30,14 @@ public class Method {
 
 
     private VirtualRegister                 returnRegister;
+    private Integer                         tmpLabelCounter;
 
     public Method(String _hintName, boolean inClass){
+        isBuiltin           = false;
         returnRegister      = new VirtualRegister(retVal, _hintName + retVal);
         returnTmpRegister   = new VirtualRegister(retTmp, _hintName + retTmp);
         tmpRegisterCounter  = 0;
+        tmpLabelCounter     = 0;
         hintName            = _hintName;
         startBlock          = null;
         endBlock            = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret);
@@ -83,5 +87,13 @@ public class Method {
         return vreg;
     }
 
+    public String generateTmpLabel(){
+        String ret = hintName + tmpRegPrefix + tmpLabelCounter.toString();
+        tmpLabelCounter++;
+        return ret;
+    }
 
+    public void setBuiltin() {
+        isBuiltin = true;
+    }
 }

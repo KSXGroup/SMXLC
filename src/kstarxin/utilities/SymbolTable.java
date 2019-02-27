@@ -180,4 +180,7 @@ public class SymbolTable {
        isGlobal = true;
     }
 
+    public Map<String, Symbol> getOriginTable(){
+        return currentScopeTable;
+    }
 }
