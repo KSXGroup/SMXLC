@@ -10,7 +10,7 @@ public class ClassDeclarationNode extends DeclarationNode{
     LinkedList<MethodDeclarationNode> classConstructorDeclaration;
     LinkedList<VariableDeclarationNode> classMemberVariableDeclaration;
     LinkedList<MethodDeclarationNode> classMemberMethodDeclaration;
-    LinkedList<ClassDeclarationNode> classSubclassDeclaration = null;
+    LinkedList<ClassDeclarationNode> classSubclassDeclaration = null; // will be added if have spare time
 
     public ClassDeclarationNode(String _name, SymbolTable stb, Location loc){
         super(stb, loc);

@@ -17,11 +17,14 @@ public class IRProgram {
     private HashMap<String, MxType>     typeMap;
     private HashMap<String, Label>      globalVariableMap;
     private HashMap<String, Integer>    offsetInClass;
+    private HashMap<String, Integer>    classSize;
     private List<Method>                builtinMethodList;
     private List<LoopSuperBlock>        loopList;
     private List<ConditionSuperBlock>   conditionList;
 
-    public  VirtualRegister             compareResult;
+    public Method                       strcmp;
+    public Method                       strcat;
+    public Method                       malloc;
 
     public IRProgram(){
         stringConstantCounter   = 0;
@@ -89,5 +92,12 @@ public class IRProgram {
 
     public Label getGlobalVariableVirtualRegister(String mn){
         return globalVariableMap.get(mn);
+    }
+
+    public void addClassSize(String name, int size){
+        classSize.put(name, size);
+    }
+    public int getClassSize(String name){
+        return classSize.get(name);
     }
 }
