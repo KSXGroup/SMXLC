@@ -1,5 +1,7 @@
 package kstarxin.ir.operand;
 
 public class PhysicalRegister extends Operand {
-    public String hintName;
+    public PhysicalRegister(String _hintName){
+        super(_hintName);
+    }
 }

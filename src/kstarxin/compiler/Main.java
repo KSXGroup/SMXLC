@@ -12,7 +12,7 @@ public class Main{
             }
             System.out.print("testcase_" + i.toString() + " passed\n");
         }*/
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/failure/testcase_7.txt"); //88
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/success/my.txt"); //88
         compiler.compileStart();
     }
 }

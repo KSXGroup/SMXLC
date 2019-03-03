@@ -1,7 +1,5 @@
 package kstarxin.ir;
 
-import com.sun.org.apache.bcel.internal.generic.BALOAD;
-import com.sun.org.apache.bcel.internal.generic.IMPDEP1;
 import kstarxin.ast.*;
 import kstarxin.compiler.*;
 import kstarxin.ir.instruction.*;
@@ -64,19 +62,21 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             _BodyStartBasicBlockOfCurrentLoop   = BodyStartBasicBlockOfCurrentLoop;
         }
         public void restore(){
-            currentSuperBlock                  = _CurrentSuperBlock;
-            BasicBlockAfterCurrentLoop         = _BasicBlockAfterCurrentLoop;
-            CondBasicBlockOfCurrentLoop        = _CondBasicBlockOfCurrentLoop;
-            StepBasicBlockOfCurrentLoop        = _StepBasicBlockOfCurrentLoop;
-            BodyStartBasicBlockOfCurrentLoop   = _BodyStartBasicBlockOfCurrentLoop;
+            currentSuperBlock                   = _CurrentSuperBlock;
+            BasicBlockAfterCurrentLoop          = _BasicBlockAfterCurrentLoop;
+            CondBasicBlockOfCurrentLoop         = _CondBasicBlockOfCurrentLoop;
+            StepBasicBlockOfCurrentLoop         = _StepBasicBlockOfCurrentLoop;
+            BodyStartBasicBlockOfCurrentLoop    = _BodyStartBasicBlockOfCurrentLoop;
         }
     }
 
     private void init(){
         ast.getMethodDeclarations().forEach(
                 decl ->  {
-                    String mn = NameMangler.mangleName(decl);
-                    ir.addMethod(mn , new Method(mn, false), decl.getReturnType());
+                    String mn   = NameMangler.mangleName(decl);
+                    Method mth  = new Method(mn, false);
+                    ir.addMethod(mn , mth, decl.getReturnType());
+                    if(mn.equals(NameMangler.mainMethodName)) ir.setEntranceMethod(mth);
             }
         );
         ast.getClassDeclarations().forEach(
@@ -140,9 +140,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             }
             else if (t.isPrimitiveType() && !t.getEnumType().equals(MxType.TypeEnum.STRING)){
                 for (VariableDeclaratorNode decl : n.getDeclaratorList()) {
-                    StaticPointer sp = new StaticPointer(decl.getIdentifier(), Configure.PTR_SIZE);
+                    String mn = NameMangler.mangleName(decl);
+                    StaticPointer sp = new StaticPointer(mn, Configure.PTR_SIZE);
                     ExpressionNode init = decl.getInitializer();
-                    ir.addGlobalVariable(NameMangler.mangleName(decl), sp, t);
+                    ir.addGlobalVariable(mn , sp, t);
                     if (init != null) {
                         if(init instanceof IntegerConstantNode) sp.setValue(((IntegerConstantNode) init).getValue());
                         else if(init instanceof BooleanConstantNode){
@@ -158,9 +159,13 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 }
             }
             else
-                n.getDeclaratorList().forEach(decl -> ir.addGlobalVariable(NameMangler.mangleName(decl), new StaticString(decl.getIdentifier(), ((StringConstantNode)decl.getInitializer()).getValue()), t));
+                n.getDeclaratorList().forEach(decl -> {
+                        String mn = NameMangler.mangleName(decl);
+                        ir.addGlobalVariable(mn , new StaticString(mn , ((StringConstantNode)decl.getInitializer()).getValue()), t);
+                });
         }
         currentBasicBlock.insertEnd(new ReturnInstruction(null));
+        currentBasicBlock.addSucc(currentMethod.endBlock);
     }
 
     private Operand addHeapAlloc(VirtualRegister ret, Operand size){
@@ -170,18 +175,23 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         return ret;
     }
 
+    private void finishBuild(){
+        ir.getInitMethod().dfs(null, 0);
+        ir.getMethodMap().values().forEach(method -> method.dfs(null, 0));
+    }
+
     public IRProgram buildIR(){
         init();
         initBuiltin();
         currentMethod       = new Method(NameMangler.initMethod ,false);
-        BasicBlock startBB  = new BasicBlock(currentMethod,null,null, null);
+        BasicBlock startBB  = new BasicBlock(currentMethod,null,null, currentMethod.hintName);
         currentMethod.setStartBlock(startBB);
-        currentMethod.setEndBlock(startBB);
-        currentBasicBlock = startBB;
+        currentBasicBlock   = startBB;
         makeEntranceMethod();
         if(startBB.size() == 0) ir.setInitMethod(null);
         else ir.setInitMethod(currentMethod);
         visit(ast);
+        finishBuild();
         return ir;
     }
 
@@ -217,6 +227,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentMethod.addParameter(para);
         });
         visit(node.getBlock());
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(currentMethod.endBlock));
         currentBasicBlock.addSucc(currentMethod.endBlock);
         currentBasicBlock   = null;
         currentMethod       = null;
@@ -285,6 +296,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public Operand visit(ConditionNode node) {
         String          mn          = NameMangler.mangleName(node);
         ExpressionNode  astCond     = node.getCond();
+        Node            astBody     = node.getBody();
+        Node            astElse     = node.getElse();
         Operand         cond        = null;
         if(astCond != null) cond    = visit(astCond);
         else{
@@ -293,14 +306,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         }
         if(cond instanceof Immediate){
             if(((Immediate) cond).value == 0){
-                ConditionNode astElse = node.getElse();
-                if(astElse == null) return null;
-                else{
-                    visit(astElse);
-                    return null;
-                }
+                if(astElse != null) visit(astElse);
+                return null;
             } else if(((Immediate) cond).value == 1){
-                visit(node.getBody());
+                if(astBody != null) visit(node.getBody());
                 return null;
             }
             else throw new RuntimeException("No such immediate in if!");
@@ -314,10 +323,11 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, ifTrueBB, ifFalseBB));
 
         currentBasicBlock = ifTrueBB;
-        visit(node.getBody());
+        if(astBody != null) visit(astBody);
         currentBasicBlock.insertEnd(new DirectJumpInstruction(ifExitBB));
+        currentBasicBlock.addSucc(ifExitBB);
         currentBasicBlock = ifFalseBB;
-        visit(node.getElse());
+        if(astElse != null) visit(astElse);
         currentBasicBlock.insertEnd(new DirectJumpInstruction(ifExitBB));
         currentBasicBlock = ifExitBB;
         return null;
@@ -440,6 +450,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         Operand ret = visit(node.getReturnValue());
         ReturnInstruction retInst = new ReturnInstruction(ret);
         currentBasicBlock.insertEnd(retInst);
+        currentBasicBlock.addSucc(currentMethod.endBlock);
         currentMethod.returnInsts.add(retInst);
         currentBasicBlock = new BasicBlock(currentMethod, currentSuperBlock, null, null);
         return null;

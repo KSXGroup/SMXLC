@@ -85,19 +85,19 @@ public class OperatorTranslator {
                 ret = "ADD";
                 break;
             case MxStarParser.ASSIGN:
-                ret = "ASSGIN";
+                ret = "ASS";
                 break;
             case MxStarParser.BITAND:
-                ret = "BITAND";
+                ret = "BAN";
                 break;
             case MxStarParser.AND:
                 ret = "AND";
                 break;
             case MxStarParser.BITNOT:
-                ret = "BITNOT";
+                ret = "BNO";
                 break;
             case MxStarParser.BITOR:
-                ret = "OR";
+                ret = "BOR";
                 break;
             case MxStarParser.BITXOR:
                 ret = "XOR";
@@ -106,37 +106,37 @@ public class OperatorTranslator {
                 ret = "DEC";
                 break;
             case MxStarParser.DIV:
-                ret = "IDIV";
+                ret = "DIV";
                 break;
             case MxStarParser.EQ:
-                ret = "EQ";
+                ret = "EQU";
                 break;
             case MxStarParser.GE:
-                ret = "GE";
+                ret = "GEQ";
                 break;
             case MxStarParser.GT:
-                ret = "GT";
+                ret = "GTH";
                 break;
             case MxStarParser.INC:
                 ret = "INC";
                 break;
             case MxStarParser.LE:
-                ret = "LE";
+                ret = "LEQ";
                 break;
             case MxStarParser.LT:
-                ret = "LT";
+                ret = "LTH";
                 break;
             case MxStarParser.MOD:
                 ret = "MOD";
                 break;
             case MxStarParser.MUL:
-                ret = "IMUL";
+                ret = "MUL";
                 break;
             case MxStarParser.NEQ:
                 ret = "NEQ";
                 break;
             case MxStarParser.OR:
-                ret = "OR";
+                ret = "ORI";
                 break;
             case MxStarParser.SFTL:
                 ret = "SHL";

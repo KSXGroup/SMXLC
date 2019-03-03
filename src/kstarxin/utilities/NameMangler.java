@@ -9,6 +9,7 @@ public class NameMangler {
         public static String strcmp         = "@_Zstrcmpss";
         public static String strcat         = "@_Zstrcatss";
         public static String malloc         = "@_Zmalloci";
+        public static String mainMethodName = "@main";
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;

@@ -347,7 +347,7 @@ public class ASTPrinterVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(NewCreatorNode node){
-        printNoIdt("[NEW " + node.type.toString()  + "]" );
+        printNoIdt("[NEW " + node.getType().toString()  + "]" );
         if(node.isArrayCreator()){
             ArrayList<ExpressionNode> lst = node.getSizeExpressionList();
             for(ExpressionNode n : lst){

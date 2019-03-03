@@ -8,3 +8,5 @@
 2019.2.14 error report elaborate finished
 
 2019.2.28 roughly finish IRBuilder
+
+2019.3.3 can print some simple ir

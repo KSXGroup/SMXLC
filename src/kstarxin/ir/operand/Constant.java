@@ -1,4 +1,7 @@
 package kstarxin.ir.operand;
 
-public class Constant extends Operand {
+abstract public class Constant extends Operand {
+    public Constant(String _hintName){
+        super(_hintName);
+    }
 }

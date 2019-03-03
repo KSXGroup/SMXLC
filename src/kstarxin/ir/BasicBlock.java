@@ -3,28 +3,30 @@ package kstarxin.ir;
 import kstarxin.ir.instruction.*;
 import kstarxin.ir.superblock.*;
 
-import java.util.HashSet;
+import java.util.*;
 
 public class BasicBlock {
-    public SuperBlock superBlockBelongTo;
-    public HashSet<BasicBlock> pred;
-    public HashSet<BasicBlock> succ;
-    public String blockLabel;
-    private Instruction beginInst;
-    private Instruction endInst;
-    private int size;
+    public  SuperBlock                  superBlockBelongTo;
+    public  LinkedHashSet<BasicBlock>   pred;
+    public  LinkedHashSet<BasicBlock>   succ;
+    public  String                      blockLabel;
+    public  int                         dfsOrder;
+
+    private Instruction                 beginInst;
+    private Instruction                 endInst;
+    private int                         size;
 
     public BasicBlock(Method _methodBelongto, SuperBlock _superBlockBelongTo, BasicBlock _pred, String _blockLabel){
-        _methodBelongto.addBasicBlock(this);
+       // _methodBelongto.addBasicBlock(this);
         blockLabel = _blockLabel;
         superBlockBelongTo = _superBlockBelongTo;
         beginInst = null;
         endInst = null;
-        pred = new HashSet<BasicBlock>();
-        succ = new HashSet<BasicBlock>();
+        pred = new LinkedHashSet<BasicBlock>();
+        succ = new LinkedHashSet<BasicBlock>();
         if(_pred != null) {
             pred.add(_pred);
-            _pred.pred.add(this);
+            _pred.succ.add(this);
         }
         size = 0;
     }
@@ -38,6 +40,7 @@ public class BasicBlock {
             endInst = inst;
         }
         inst.basicBlockBelongTo = this;
+        ++size;
     }
 
     public void addPred(BasicBlock _pred){
@@ -70,6 +73,14 @@ public class BasicBlock {
 
     public int size(){
         return size;
+    }
+
+    public Instruction getEndInst(){
+        return endInst;
+    }
+
+    public Instruction getBeginInst(){
+        return beginInst;
     }
 
 }

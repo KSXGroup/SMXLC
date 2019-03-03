@@ -8,4 +8,9 @@ public class Memory extends Address {
         address = _address;
         offset  = _offset;
     }
+
+    @Override
+    public String getDisplayName() {
+        return "[" + address.getDisplayName()+" " + offset + "]";
+    }
 }

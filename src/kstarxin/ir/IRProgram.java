@@ -36,7 +36,6 @@ public class IRProgram {
         builtinMethodList       = new LinkedList<Method>();
         loopList                = new LinkedList<LoopSuperBlock>();
         conditionList           = new LinkedList<ConditionSuperBlock>();
-        //compareResult           = new VirtualRegister(compareResultRegisterName, compareResultRegisterName);
     }
 
     public void setInitMethod(Method _initMethod){
@@ -99,5 +98,17 @@ public class IRProgram {
     }
     public int getClassSize(String name){
         return classSize.get(name);
+    }
+
+    public Method getInitMethod(){
+        return initMethod;
+    }
+
+    public HashMap<String, Method> getMethodMap(){
+        return methodMap;
+    }
+
+    public HashMap<String, Label> getGlobalVariableMap(){
+        return globalVariableMap;
     }
 }

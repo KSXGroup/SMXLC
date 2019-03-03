@@ -11,4 +11,9 @@ public class StaticPointer extends Label {
     public void setValue(int _value){
         value = _value;
     }
+
+    @Override
+    public String getDisplayName(){
+        return "[" + hintName +"]" + spaceSize;
+    }
 }
