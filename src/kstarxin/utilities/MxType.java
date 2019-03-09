@@ -168,9 +168,10 @@ public class MxType {
     }
 
     public boolean equals(MxType other){
+        if(type.equals(TypeEnum.STRING) && other.getEnumType().equals(TypeEnum.NULL)) return true;
         if(other.name.equals(name) && other.dimension == dimension && other.type.equals(type)) return true;
         if(dimension > 0 && other.getEnumType().equals(TypeEnum.NULL)) return true;
-        if(!(type.equals(TypeEnum.BOOL) || type.equals(TypeEnum.INT) || type.equals(TypeEnum.STRING)) && other.getEnumType().equals(TypeEnum.NULL)) return true;
+        if(!(type.equals(TypeEnum.BOOL) || type.equals(TypeEnum.INT)) && other.getEnumType().equals(TypeEnum.NULL)) return true;
         return false;
     }
 

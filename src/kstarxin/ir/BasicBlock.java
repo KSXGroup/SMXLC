@@ -35,7 +35,10 @@ public class BasicBlock {
         if(beginInst == null){
             beginInst = inst;
             endInst = inst;
+            inst.prev = null;
+            inst.next = null;
         }else {
+            inst.prev = endInst;
             endInst.next = inst;
             endInst = inst;
         }

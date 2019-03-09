@@ -499,7 +499,10 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
                     errorProcessor.add(new MxSemanticCheckError("type not equal when assign", node.getLocation()));
                     return null;
                 }
-                else node.setType(new MxType(lhs.getType().getEnumType(), lhs.toString(), lhs.getType().getDimension()));
+                else{
+                    if(lhs instanceof IndexAccessNode) ((IndexAccessNode) lhs).setAssigned();
+                    node.setType(new MxType(lhs.getType().getEnumType(), lhs.toString(), lhs.getType().getDimension()));
+                }
                 break;
             case MxStarParser.EQ:
             case MxStarParser.NEQ:
@@ -642,21 +645,25 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(BooleanConstantNode node) {
+        node.setType(new MxType(MxType.TypeEnum.BOOL));
         return null;
     }
 
     @Override
     public Void visit(IntegerConstantNode node) {
+        node.setType(new MxType(MxType.TypeEnum.INT));
         return null;
     }
 
     @Override
     public Void visit(StringConstantNode node) {
+        node.setType(new MxType(MxType.TypeEnum.STRING));
         return null;
     }
 
     @Override
     public Void visit(NullConstantNode node) {
+        node.setType(new MxType(MxType.TypeEnum.NULL));
         return null;
     }
 

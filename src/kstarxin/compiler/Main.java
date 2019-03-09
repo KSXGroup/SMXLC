@@ -12,7 +12,16 @@ public class Main{
             }
             System.out.print("testcase_" + i.toString() + " passed\n");
         }*/
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/success/my.txt"); //88
-        compiler.compileStart();
+        for(Integer i = 1; i <=  72; ++i) {
+            try {
+                Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_" + i.toString() + ".txt"); //88
+                compiler.compileStart();
+            }catch (RuntimeException e){
+                System.err.println(e + "\nfailed on test" + i.toString());
+                System.exit(0);
+            }
+        }
+       /* Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_22.txt"); //88
+        compiler.compileStart();*/
     }
 }

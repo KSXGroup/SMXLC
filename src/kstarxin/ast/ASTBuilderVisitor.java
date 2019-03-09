@@ -199,7 +199,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         BlockNode block = null;
         ParameterFieldNode pf = (ParameterFieldNode) visit(ctx.parameterField());
         for(ParameterDeclarationNode n : pf.getParameterList()){
-            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE,n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
+            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE,n.getIdentifier(), n.getTypeNode().getType(),scopePrefix + "_" + scopeName, n.getLocation()));
         }
         retTypeNode = (TypeNode) visit(ctx.typeWithVoid());
         MxType funcDefType = new MxType(retTypeNode.getType().toString(), retTypeNode.getType().getDimension(), pf.getParameterTypeList());
@@ -331,7 +331,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         SymbolTable classTable = currentSymbolTable;
         ParameterFieldNode para = (ParameterFieldNode) visit(ctx.parameterField());
         for(ParameterDeclarationNode n : para.getParameterList()){
-            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE, n.getIdentifier(), n.getTypeNode().getType(),scopeName, n.getLocation()));
+            parameterBuffer.add(new Symbol(Symbol.SymbolType.VARIABLE, n.getIdentifier(), n.getTypeNode().getType(),scopePrefix + "_" + scopeName, n.getLocation()));
         }
         MxType consRetType = new MxType(name);
         consRetType.setParaTypeList(para.getParameterTypeList());
@@ -493,6 +493,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             ret = new LoopNode(true, tinit,tcond ,tstep ,tbody ,currentSymbolTable, new Location(ctx));
         }
         else errorProcessor.add(new MxSemanticCheckError("unknown loop", new Location(ctx)));
+        ((LoopNode) ret).setLoopName(scopeName);
         scopeName = parentScopeName;
         inLoop--;
         return  ret;

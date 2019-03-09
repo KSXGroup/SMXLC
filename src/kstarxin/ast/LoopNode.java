@@ -9,6 +9,7 @@ public class LoopNode extends StatementNode{
     private ExpressionNode step = null;
     private Node body = null;
     private boolean isForLoop = false;
+    private String loopName = null;
 
     LoopNode(boolean _isForLoop, ExpressionNode _init, ExpressionNode _cond, ExpressionNode _step,Node _body ,SymbolTable stb, Location loc){
         super(stb,loc);
@@ -37,6 +38,14 @@ public class LoopNode extends StatementNode{
 
     public boolean isForLoop(){
         return isForLoop;
+    }
+
+    public void setLoopName(String _loopName) {
+        this.loopName = _loopName;
+    }
+
+    public String getLoopName(){
+        return loopName;
     }
 
     @Override

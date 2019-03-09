@@ -11,6 +11,12 @@ public class StaticString extends Label {
 
     @Override
     public String getDisplayName() {
-        return "["+ hintName + "]" + value + value.length() * Configure.PTR_SIZE;
+        if(value != null) return "["+ hintName + "]" + value.length() * Configure.PTR_SIZE;
+        else return "["+ hintName + "]" + "0";
+    }
+
+    public String getInitName(){
+        if(value != null) return "["+ hintName + "]" + value +value.length() * Configure.PTR_SIZE;
+        else return "["+ hintName + "]" + "0";
     }
 }

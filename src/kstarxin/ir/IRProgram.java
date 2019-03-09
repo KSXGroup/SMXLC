@@ -1,6 +1,8 @@
 package kstarxin.ir;
 
 import java.util.*;
+
+import kstarxin.compiler.Configure;
 import kstarxin.ir.operand.*;
 import kstarxin.ir.instruction.*;
 import kstarxin.ir.superblock.*;
@@ -8,7 +10,6 @@ import kstarxin.utilities.*;
 
 public class IRProgram {
     private static String stringConstantPrefix      = "_tmpString_";
-    //private static String compareResultRegisterName = "_compareResult";
 
     private Integer                     stringConstantCounter;
     private Method                      initMethod;
@@ -25,6 +26,9 @@ public class IRProgram {
     public Method                       strcmp;
     public Method                       strcat;
     public Method                       malloc;
+    public Method                       ord;
+    public Method                       parseInt;
+    public Method                       substring;
 
     public IRProgram(){
         stringConstantCounter   = 0;
@@ -33,6 +37,7 @@ public class IRProgram {
         typeMap                 = new HashMap<String, MxType>();
         globalVariableMap       = new HashMap<String, Label>();
         offsetInClass           = new HashMap<String, Integer>();
+        classSize               = new HashMap<String, Integer>();
         builtinMethodList       = new LinkedList<Method>();
         loopList                = new LinkedList<LoopSuperBlock>();
         conditionList           = new LinkedList<ConditionSuperBlock>();
@@ -96,8 +101,14 @@ public class IRProgram {
     public void addClassSize(String name, int size){
         classSize.put(name, size);
     }
+
     public int getClassSize(String name){
         return classSize.get(name);
+    }
+
+    public int getTypeSize(MxType t){
+        if(t.isPrimitiveType() || t.getDimension() > 0) return Configure.PTR_SIZE;
+        else return getClassSize(t.toString());
     }
 
     public Method getInitMethod(){
@@ -110,5 +121,9 @@ public class IRProgram {
 
     public HashMap<String, Label> getGlobalVariableMap(){
         return globalVariableMap;
+    }
+
+    public MxType getTypeWithMangledName(String mn){
+        return typeMap.get(mn);
     }
 }

@@ -34,4 +34,8 @@ public class VirtualRegister extends Register {
         if(mangledName != null) return "$" + mangledName;
         else return "$"+ tmpId;
     }
+
+    public boolean isTmpRegister(){
+        return tmpId < 0;
+    }
 }

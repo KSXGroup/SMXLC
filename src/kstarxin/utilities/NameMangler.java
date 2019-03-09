@@ -9,6 +9,9 @@ public class NameMangler {
         public static String strcmp         = "@_Zstrcmpss";
         public static String strcat         = "@_Zstrcatss";
         public static String malloc         = "@_Zmalloci";
+        public static String substring      = "@_Zstring4substringii";
+        public static String ord            = "@_Zstring4ordi";
+        public static String parseInt       = "@_Zstring4parseInt";
         public static String mainMethodName = "@main";
 
         public static boolean isGlobal(String scopeName){
@@ -38,7 +41,7 @@ public class NameMangler {
         }
 
         public static String mangleName(LoopNode n){
-            return n.getCurrentSymbolTable().getName();
+            return n.getLoopName();
         }
 
         public static String mangleName(Symbol s){

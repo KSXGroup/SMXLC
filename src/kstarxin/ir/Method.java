@@ -58,7 +58,7 @@ public class Method {
         if(inClass) classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);
         else classThisPointer           = null;
         
-        endBlock.insertEnd(new LoadInstruction(returnRegister, returnTmpRegister, new Immediate(0)));
+        endBlock.insertEnd(new MoveInstruction(returnRegister, returnTmpRegister));
     }
 
 
@@ -86,9 +86,11 @@ public class Method {
     }
 
     public VirtualRegister allocateNewTmpRegister(){
-        String id = tmpRegisterCounter.toString();
-        String regName = tmpRegPrefix+id;
-        VirtualRegister vreg =  new VirtualRegister(id, regName);
+        String          id      = tmpRegisterCounter.toString();
+        String          regName = tmpRegPrefix+id;
+        VirtualRegister vreg    = new VirtualRegister(id, regName);
+        vreg.tmpId              = tmpRegisterCounter;
+
         tmpLocalRegisters.put(regName, vreg);
         tmpRegisterCounter++;
         return vreg;
@@ -104,6 +106,10 @@ public class Method {
         isBuiltin = true;
     }
 
+    public String getDisplayName(){
+        return "%" + hintName;
+    }
+
     protected void dfs(BasicBlock bb, int order){
         if(isBuiltin) return;
         else if(visited.contains(bb)) return;
@@ -112,11 +118,13 @@ public class Method {
             BasicBlock cur = null;
             if(bb == null) cur = startBlock;
             else cur = bb;
-            visited.add(cur);
-            basicBlockInDFSOrder.add(cur);
             cur.dfsOrder = order;
             if(cur.succ.size() == 0) return;
-            cur.succ.forEach(succ -> dfs(succ, order + 1));
+            cur.succ.forEach(succ -> {
+                basicBlockInDFSOrder.add(succ);
+                visited.add(succ);
+                dfs(succ, order + 1);
+            });
         }
     }
 

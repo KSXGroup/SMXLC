@@ -1,6 +1,9 @@
 package kstarxin.ir;
 
 import kstarxin.ir.instruction.*;
+import kstarxin.ir.operand.Operand;
+import kstarxin.ir.operand.StaticPointer;
+import kstarxin.ir.operand.StaticString;
 import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.OperatorTranslator;
@@ -9,7 +12,7 @@ import java.io.*;
 import java.util.*;
 
 public class IRPrinter {
-    private static String           labelHeader             = "<LABEL>\t";
+    private static String           labelHeader             = "%";
     private static String           localVariableHeader     = "<LOCAL>\t";
     private static String           methodHeader            = "<METHO>\t";
 
@@ -26,7 +29,11 @@ public class IRPrinter {
     }
     public void printIR(){
         //print global variables
-        ir.getGlobalVariableMap().values().forEach(var -> irPrintStream.println(var.getDisplayName()));
+        ir.getGlobalVariableMap().values().forEach(var -> {
+            if(var instanceof StaticPointer) irPrintStream.println(var.getDisplayName());
+            else if(var instanceof StaticString) irPrintStream.println(((StaticString) var).getInitName());
+            else throw new RuntimeException("no such global var type");
+        });
         irPrintStream.println();
         //print init part first
         printMethod(init);
@@ -55,6 +62,8 @@ public class IRPrinter {
         else if(inst instanceof DirectJumpInstruction       )    printDirectJump        ((DirectJumpInstruction         ) inst);
         else if(inst instanceof CompareInstruction          )    printCompareInstruction((CompareInstruction            ) inst);
         else if(inst instanceof MoveInstruction             )    printMoveInstruciton   ((MoveInstruction               ) inst);
+        else if(inst instanceof CallInstruction             )    printMethodCall        ((CallInstruction               ) inst);
+        else if(inst instanceof LeaInstruction              )    printLeaInstruction    ((LeaInstruction                ) inst);
     }
 
     private void printBinaryInstruction(BinaryArithmeticInstruction inst){
@@ -62,15 +71,15 @@ public class IRPrinter {
     }
 
     private void printUnaryInstruction(UnaryInstruction inst){
-        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t" + inst.dest);
+        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.dest.getDisplayName());
     }
 
     private void printLoadInstruction(LoadInstruction inst){
-        irPrintStream.println("LOA\t\t" +  inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" + inst.offset.getDisplayName());
+        irPrintStream.println("LOA\t\t" +  inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" );
     }
 
     private void printStoreInstruction(StoreInstruction inst){
-        irPrintStream.println("STO\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" + inst.offset.getDisplayName());
+        irPrintStream.println("STO\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" );
     }
 
     private void printReturnInstruction(ReturnInstruction ret){
@@ -103,7 +112,7 @@ public class IRPrinter {
             default:
                 throw new RuntimeException("what shit opeator do you in conditional jump ??????");
         }
-        irPrintStream.println(instName + "\t\t" + inst.trueTarget.blockLabel + "\t" + inst.falseTarget.blockLabel);
+        irPrintStream.println(instName + "\t\t%" + inst.trueTarget.blockLabel + "\t%" + inst.falseTarget.blockLabel);
     }
 
     private void printCompareInstruction(CompareInstruction inst){
@@ -115,7 +124,21 @@ public class IRPrinter {
     }
 
     private void printDirectJump(DirectJumpInstruction inst){
-        irPrintStream.println("JMP\t\t" + inst.target.blockLabel);
+        irPrintStream.println("JMP\t\t%" + inst.target.blockLabel);
+    }
+
+    private void printMethodCall(CallInstruction inst){
+        String retReg = inst.returnValue != null ? inst.returnValue.getDisplayName() : "null" ;
+        String classPtr = inst.isClassMemberCall? inst.classThisPointer.getDisplayName() : "null";
+        String toPrint ="CAL\t\t" + inst.callee.getDisplayName() + "\t" + retReg + "\t" + classPtr + "\t";
+        for (Operand parameter : inst.parameters) {
+            toPrint += parameter.getDisplayName() + "\t";
+        }
+        irPrintStream.println(toPrint);
+    }
+
+    private void printLeaInstruction(LeaInstruction inst){
+        irPrintStream.println("LEA\t\t" + inst.dest.getDisplayName() + "\t" + inst.addr.getDisplayName());
     }
 
     private void printLocalVariable(VirtualRegister local){
