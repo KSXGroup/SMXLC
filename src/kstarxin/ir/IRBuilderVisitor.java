@@ -324,12 +324,12 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         currentVariableOffset   = 0;
         currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberVariableList().forEach(this::visit);
+        ir.addClassSize(node.getName(), currentVariableOffset + Configure.PTR_SIZE);
+        currentVariableOffset   = 0;
         node.getMemberMethodList().forEach(this::visit);
         node.getConstructorList().forEach(this::visit);
         inClass                 = false;
         currentClassSymbolTable = null;
-        ir.addClassSize(node.getName(), currentVariableOffset + Configure.PTR_SIZE);
-        currentVariableOffset   = 0;
         return null;
     }
 
@@ -650,7 +650,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             if (classPointer instanceof Address) {
                 addrReg = currentMethod.allocateNewTmpRegister();
                 currentBasicBlock.insertEnd(new LoadInstruction(addrReg, (Address) classPointer));
-            } else throw new RuntimeException("the dotMemberCall shit!");
+            }
+            else if(classPointer instanceof VirtualRegister) addrReg = (VirtualRegister) classPointer;
+            else throw new RuntimeException("the dotMemberCall shit!");
+
             tcall = new CallInstruction(ir.getMethod(mn), retReg);
             for (ExpressionNode para : node.getParameterExpressionList()){
                 tcall.addParameter(resolveParameter(para));

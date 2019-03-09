@@ -11,12 +11,12 @@ public class StaticString extends Label {
 
     @Override
     public String getDisplayName() {
-        if(value != null) return "["+ hintName + "]" + value.length() * Configure.PTR_SIZE;
-        else return "["+ hintName + "]" + "0";
+        if(value != null) return "["+ hintName + "]" ;
+        else return "["+ hintName + "]";
     }
 
     public String getInitName(){
-        if(value != null) return "["+ hintName + "]" + value +value.length() * Configure.PTR_SIZE;
-        else return "["+ hintName + "]" + "0";
+        if(value != null) return value.length() * Configure.PTR_SIZE + " ["+ hintName + "] " + value ;
+        else return "0 ["+ hintName + "]";
     }
 }

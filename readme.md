@@ -14,8 +14,11 @@
 2019.3.9 can print all ir of codegn test
 ir rules:
 	1.return memory and virtual register when build ir
+
 	2.memory operand is allowed in arithmetic instruction
+
 	3.method call parameters is vreg or immediate
+
 	4.only dot member and index access return memory operand
 
 start working on ir interpreter

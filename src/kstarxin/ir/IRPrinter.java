@@ -63,7 +63,6 @@ public class IRPrinter {
         else if(inst instanceof CompareInstruction          )    printCompareInstruction((CompareInstruction            ) inst);
         else if(inst instanceof MoveInstruction             )    printMoveInstruciton   ((MoveInstruction               ) inst);
         else if(inst instanceof CallInstruction             )    printMethodCall        ((CallInstruction               ) inst);
-        else if(inst instanceof LeaInstruction              )    printLeaInstruction    ((LeaInstruction                ) inst);
     }
 
     private void printBinaryInstruction(BinaryArithmeticInstruction inst){
@@ -135,10 +134,6 @@ public class IRPrinter {
             toPrint += parameter.getDisplayName() + "\t";
         }
         irPrintStream.println(toPrint);
-    }
-
-    private void printLeaInstruction(LeaInstruction inst){
-        irPrintStream.println("LEA\t\t" + inst.dest.getDisplayName() + "\t" + inst.addr.getDisplayName());
     }
 
     private void printLocalVariable(VirtualRegister local){

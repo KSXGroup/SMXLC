@@ -16,12 +16,15 @@ public class Main{
             try {
                 Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_" + i.toString() + ".txt"); //88
                 compiler.compileStart();
-            }catch (RuntimeException e){
-                System.err.println(e + "\nfailed on test" + i.toString());
+            }catch (Exception e){
+                System.out.println(e + "\n\n\n\nfailed on test" + i.toString());
+                System.exit(0);
+            }catch (StackOverflowError e){
+                System.out.println(e + "\n\n\n\nfailed on test" + i.toString());
                 System.exit(0);
             }
         }
-       /* Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_22.txt"); //88
+        /*Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_67.txt"); //88
         compiler.compileStart();*/
     }
 }

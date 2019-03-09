@@ -63,14 +63,14 @@ public class BasicBlock {
     public void removeSucc(BasicBlock _succ){
         if(_succ != null) {
             succ.remove(_succ);
-            _succ.removePred(this);
+            _succ.pred.remove(this);
         }
     }
 
     public void removePred(BasicBlock _pred){
         if(_pred != null) {
             pred.remove(_pred);
-            _pred.removeSucc(this);
+            _pred.succ.remove(this);
         }
     }
 
