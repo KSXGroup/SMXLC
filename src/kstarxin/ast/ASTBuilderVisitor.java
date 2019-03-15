@@ -393,6 +393,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         }
         ConditionNode curr = null, ret = null, tmp = null;
         curr = new ConditionNode(cond, then , null, currentSymbolTable, new Location(ctx));
+        curr.setName(scopePrefix + scopeName);
         ret = curr;
         for (MxStarParser.ElseIfStatementContext stm : ctx.elseIfStatement()) {
             tmp = (ConditionNode) visit(stm);
@@ -423,8 +424,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             then = visit(ctx.statement());
             currentSymbolTable = parentTable;
         }
+        ConditionNode ret = new ConditionNode(cond, then, null, currentSymbolTable, new Location(ctx));
+        ret.setName(scopePrefix + scopeName);
         scopeName = parentScopeName;
-        return new ConditionNode(cond, then, null, currentSymbolTable, new Location(ctx));
+        return ret;
     }
 
     @Override
@@ -444,8 +447,10 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
             then = visit(ctx.statement());
             currentSymbolTable = parentTable;
         }
+        ConditionNode ret = new ConditionNode(null, then, null, currentSymbolTable, new Location(ctx));
+        ret.setName(scopePrefix + scopeName);
         scopeName = parentScopeName;
-        return new ConditionNode(null, then, null, currentSymbolTable, new Location(ctx));
+        return ret;
     }
 
     @Override

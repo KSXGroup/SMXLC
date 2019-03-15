@@ -7,6 +7,7 @@ public class ConditionNode extends StatementNode{
     private ExpressionNode cond;
     private Node ifthen;
     private ConditionNode ifelse;
+    private String condtionName;
 
     public ConditionNode(SymbolTable stb, Location loc){
         super(stb,loc);
@@ -41,6 +42,14 @@ public class ConditionNode extends StatementNode{
 
     public Node getBody(){
         return ifthen;
+    }
+
+    public void setName(String _name){
+        condtionName = _name;
+    }
+
+    public String getName(){
+        return condtionName;
     }
 
     @Override

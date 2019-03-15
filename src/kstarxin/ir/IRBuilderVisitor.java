@@ -21,6 +21,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public static final String ret        = "_return";
     public static final String ifTrue     = "_true";
     public static final String ifFalse    = "_false";
+    public static final String ifAfter    = "_ifAfter";
     public static final String memberSize = "size";
     public static final String substring  = "substring";
     public static final String ord        = "ord";
@@ -201,8 +202,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                         else throw new RuntimeException("init should return immediate or vreg or memory");
                     }
                 }
-            }
-            else if(t.getEnumType().equals(MxType.TypeEnum.STRING))
+            } else if(t.getEnumType().equals(MxType.TypeEnum.STRING))
                 n.getDeclaratorList().forEach(decl -> {
                         String mn = NameMangler.mangleName(decl);
                         String value = null;
@@ -284,8 +284,9 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(ProgramNode node) {
-       node.getClassDeclarations().forEach(this::visit);
-       node.getMethodDeclarations().forEach(this::visit);
+        node.getClassDeclarations().forEach(this::preProcessClass);
+        node.getClassDeclarations().forEach(this::visit);
+        node.getMethodDeclarations().forEach(this::visit);
        // global variable is processed before
         return null;
     }
@@ -318,14 +319,21 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         return null;
     }
 
-    @Override
-    public Operand visit(ClassDeclarationNode node) {
-        inClass                 = true;
+    private void preProcessClass(ClassDeclarationNode node){
         currentVariableOffset   = 0;
+        inClass                 = true;
         currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberVariableList().forEach(this::visit);
         ir.addClassSize(node.getName(), currentVariableOffset + Configure.PTR_SIZE);
+        inClass                 = false;
+        currentClassSymbolTable = null;
         currentVariableOffset   = 0;
+    }
+
+    @Override
+    public Operand visit(ClassDeclarationNode node) {
+        inClass                 = true;
+        currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberMethodList().forEach(this::visit);
         node.getConstructorList().forEach(this::visit);
         inClass                 = false;
@@ -408,7 +416,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
         ifTrueBB    = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, mn + ifTrue);
         ifFalseBB   = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, mn + ifFalse);
-        ifExitBB    = new BasicBlock(currentMethod, currentSuperBlock, null, mn + after);
+        ifExitBB    = new BasicBlock(currentMethod, currentSuperBlock, null, mn + ifAfter);
 
         currentBasicBlock.insertEnd(new CompareInstruction(cond, new Immediate(1)));
         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, ifTrueBB, ifFalseBB));
@@ -446,6 +454,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         BasicBlock loopBodyStart= new BasicBlock(currentMethod, loop,  null,mangledLoopName + body);
         BasicBlock afterLoopBB  = new BasicBlock(currentMethod, null, currentBasicBlock, mangledLoopName + after);
         Operand    condResult   = null;
+        DirectJumpInstruction bj= null;
 
         BasicBlockAfterCurrentLoop = afterLoopBB;
         BodyStartBasicBlockOfCurrentLoop = loopBodyStart;
@@ -457,14 +466,16 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             loop.condBB                 = loopCond;
             currentBasicBlock           = loopCond;
             condResult                  = visit(astCond);
-            beforeLoop.insertEnd(new DirectJumpInstruction(loopCond));
+            bj                          = new DirectJumpInstruction(loopCond);
+            beforeLoop.insertEnd(bj);
             beforeLoop.addSucc(loopCond);
         } else{
             loopCond                    = null;
             loop.condBB                 = null;
             CondBasicBlockOfCurrentLoop = loopBodyStart;
             condResult                  = null;
-            beforeLoop.insertEnd(new DirectJumpInstruction(loopBodyStart));
+            bj                          = new DirectJumpInstruction(loopBodyStart);
+            beforeLoop.insertEnd(bj);
             beforeLoop.addSucc(loopBodyStart);
         }
 
@@ -477,15 +488,21 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentBasicBlock.addSucc(BasicBlockAfterCurrentLoop);
         } else if(condResult instanceof Immediate){
             if(((Immediate) condResult).value == 1){
+                bj.target = loopBodyStart;
                 beforeLoop.removeSucc(loopCond);
                 beforeLoop.addSucc(loopBodyStart);
                 loopCond = null;
+                CondBasicBlockOfCurrentLoop = loopBodyStart;
+                loop.condBB = null;
             }
             else{
                 // eliminate always false loop;
                 beforeLoop.removeSucc(loopCond);
                 beforeLoop.addSucc(afterLoopBB);
                 loopCond = null;
+                loop.condBB = null;
+                loop.stepBB = null;
+                loop.bodyBBStart = null;
                 bkp.restore();
                 afterLoopBB.superBlockBelongTo = currentSuperBlock;
                 return null;
@@ -1122,10 +1139,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             LoopBackUper bkp = new LoopBackUper();
             bkp.backup();
             currentSuperBlock = loop;
-            BasicBlock cond = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, currentMethod.generateTmpLabel() + "shortcut_cond");
-            BasicBlock body = new BasicBlock(currentMethod, currentSuperBlock, cond, currentMethod.generateTmpLabel() + "shortcut_body");
-            BasicBlock step = new BasicBlock(currentMethod, currentSuperBlock, body, currentMethod.generateTmpLabel() + "shortcut_step");
-            BasicBlock after= new BasicBlock(currentMethod, null, cond, currentMethod.generateTmpLabel() + "shortcut_after");
+            BasicBlock cond = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, currentMethod.generateTmpLabel() + "_cond");
+            BasicBlock body = new BasicBlock(currentMethod, currentSuperBlock, cond, currentMethod.generateTmpLabel() + "_body");
+            BasicBlock step = new BasicBlock(currentMethod, currentSuperBlock, body, currentMethod.generateTmpLabel() + "_step");
+            BasicBlock after= new BasicBlock(currentMethod, null, cond, currentMethod.generateTmpLabel() + "_after");
             CondBasicBlockOfCurrentLoop = cond;
             BodyStartBasicBlockOfCurrentLoop = body;
             StepBasicBlockOfCurrentLoop = step;

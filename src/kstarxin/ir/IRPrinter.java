@@ -1,10 +1,7 @@
 package kstarxin.ir;
 
 import kstarxin.ir.instruction.*;
-import kstarxin.ir.operand.Operand;
-import kstarxin.ir.operand.StaticPointer;
-import kstarxin.ir.operand.StaticString;
-import kstarxin.ir.operand.VirtualRegister;
+import kstarxin.ir.operand.*;
 import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.OperatorTranslator;
 
@@ -12,9 +9,12 @@ import java.io.*;
 import java.util.*;
 
 public class IRPrinter {
-    private static String           labelHeader             = "%";
-    private static String           localVariableHeader     = "<LOCAL>\t";
-    private static String           methodHeader            = "<METHO>\t";
+    public final static String           labelHeader             = "%";
+    public final static String           staticAreaHeader        = "<STAT>";
+    public final static String           codeAreaHeader          = "<CODE>";
+    public final static String           localVariableHeader     = "<LOCAL>\t";
+    public final static String           parameterHeader         = "<PARA>\t";
+    public final static String           methodHeader            = "<METHO>\t";
 
     private IRProgram               ir;
     private Method                  init;
@@ -29,13 +29,15 @@ public class IRPrinter {
     }
     public void printIR(){
         //print global variables
+        irPrintStream.println(staticAreaHeader);
         ir.getGlobalVariableMap().values().forEach(var -> {
-            if(var instanceof StaticPointer) irPrintStream.println(var.getDisplayName());
+            if(var instanceof StaticPointer) irPrintStream.println(((StaticPointer)var).getInitName());
             else if(var instanceof StaticString) irPrintStream.println(((StaticString) var).getInitName());
             else throw new RuntimeException("no such global var type");
         });
         irPrintStream.println();
         //print init part first
+        irPrintStream.println(codeAreaHeader);
         printMethod(init);
         map.values().forEach(this::printMethod);
     }
@@ -43,6 +45,7 @@ public class IRPrinter {
     void printMethod(Method m){
         m.bfs();
         if(!m.isBuiltin) irPrintStream.println("\n" + methodHeader + m.hintName);
+        m.parameters.forEach(this::printParameter);
         m.localVariables.values().forEach(this::printLocalVariable);
         List<BasicBlock> blockList = m.basicBlockInBFSOrder;
         blockList.forEach(bb ->{
@@ -138,5 +141,9 @@ public class IRPrinter {
 
     private void printLocalVariable(VirtualRegister local){
         irPrintStream.println(localVariableHeader + local.getDisplayName());
+    }
+
+    private void printParameter(VirtualRegister para){
+        irPrintStream.println(parameterHeader + para.getDisplayName());
     }
 }

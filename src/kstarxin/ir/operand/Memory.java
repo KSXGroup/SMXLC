@@ -48,15 +48,15 @@ public class Memory extends Address {
         String ret = scale + "[" + addrString;
         if(sizePerData == -1){
             if(offsetInClass == 0) ret += "]";
-            else ret = ret + " + " + offsetInClass + "]";
+            else ret = ret + "+" + offsetInClass + "]";
         }
         else{
             if(index instanceof Immediate) {
                 int sz = ((Immediate) index).value * sizePerData;
                 if(sz == 0) ret += "]";
-                else ret += " + " + sz + "]";
+                else ret += "+" + sz + "]";
             } else {
-                ret = ret + " + " + sizePerData + " * " + index.getDisplayName() + "]";
+                ret = ret + "+" + sizePerData + "*" + index.getDisplayName() + "]";
             }
         }
         return ret;

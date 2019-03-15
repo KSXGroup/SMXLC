@@ -3,6 +3,7 @@ package kstarxin.compiler;
 import java.io.*;
 
 import kstarxin.ir.IRBuilderVisitor;
+import kstarxin.ir.IRInterpreter;
 import kstarxin.ir.IRPrinter;
 import kstarxin.ir.IRProgram;
 import kstarxin.parser.*;
@@ -11,10 +12,11 @@ import kstarxin.utilities.MxException.*;
 import org.antlr.v4.runtime.*;
 
 public class Compiler {
-    private static  String              compileTerminateInfo = "compliation terminated";
-    private         MxStarParser        parser;
-    private         String              fileName;
-    private         MxErrorProcessor    errorProcessor;
+    private static final    String              compileTerminateInfo = "compliation terminated";
+    private static final    String              irPrintPath = "/home/kstarxin/code/compiler/ir.txt";
+    private                 MxStarParser        parser;
+    private                 String              fileName;
+    private                 MxErrorProcessor    errorProcessor;
 
     public Compiler(String f) {
         fileName = f;
@@ -38,14 +40,19 @@ public class Compiler {
         }
     }
 
-    public void compileStart() {
-        ASTBuilderVisitor       builder     = null;
-        ProgramNode             prog        = null;
-        ASTTypeCheckerVisitor   typeChecker = null;
-        IRBuilderVisitor        irBuilder   = null;
-        IRProgram               ir          = null;
-        IRPrinter               irPrinter   = null;
+    public void compileStart(boolean ifPrintIRtoFile) throws Exception {
+        ASTBuilderVisitor       builder         = null;
+        ProgramNode             prog            = null;
+        ASTTypeCheckerVisitor   typeChecker     = null;
+        IRBuilderVisitor        irBuilder       = null;
+        IRProgram               ir              = null;
+        IRPrinter               irPrinter       = null;
+        PrintStream             irOutputStream  = null;
+        IRInterpreter           irIntererter    = null;
 
+        if(ifPrintIRtoFile){
+            irOutputStream = new PrintStream(new File(irPrintPath));
+        }
         if(errorProcessor.size() > 0) {
             errorProcessor.printError();
             throw new MxCompileException(compileTerminateInfo);
@@ -76,14 +83,17 @@ public class Compiler {
             throw new MxCompileException(compileTerminateInfo);
         }
 
+        if(Configure.PRINT_AST_SYMBOLTABLE) {
+            ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
+            printer.display();
+            prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
+        }
 
-        //ASTPrinterVisitor printer = new ASTPrinterVisitor(prog, System.out);
-        //printer.display();
-        //prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
-
-        irBuilder   = new IRBuilderVisitor(prog);
-        ir          = irBuilder.buildIR();
-        irPrinter   = new IRPrinter(ir, System.out);
+        irBuilder       = new IRBuilderVisitor(prog);
+        ir              = irBuilder.buildIR();
+        irPrinter       = new IRPrinter(ir, irOutputStream);
         irPrinter.printIR();
+        irIntererter    = new IRInterpreter(irPrintPath);
+        irIntererter.runIR();
     }
 }

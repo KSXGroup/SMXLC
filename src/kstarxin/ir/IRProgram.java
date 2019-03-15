@@ -17,6 +17,7 @@ public class IRProgram {
     private HashMap<String, Method>     methodMap;
     private HashMap<String, MxType>     typeMap;
     private HashMap<String, Label>      globalVariableMap;
+    private HashMap<String, Label>      staticStringMap;
     private HashMap<String, Integer>    offsetInClass;
     private HashMap<String, Integer>    classSize;
     private List<Method>                builtinMethodList;
@@ -36,6 +37,7 @@ public class IRProgram {
         methodMap               = new HashMap<String, Method>();
         typeMap                 = new HashMap<String, MxType>();
         globalVariableMap       = new HashMap<String, Label>();
+        staticStringMap         = new HashMap<String, Label>();
         offsetInClass           = new HashMap<String, Integer>();
         classSize               = new HashMap<String, Integer>();
         builtinMethodList       = new LinkedList<Method>();
@@ -80,9 +82,12 @@ public class IRProgram {
     }
 
     public StaticString addStringConstant(String s){
+        StaticString ret = (StaticString) staticStringMap.get(s);
+        if(ret != null) return ret;
         String tmpHintName = stringConstantPrefix + stringConstantCounter.toString();
         StaticString tmp = new StaticString(tmpHintName,s);
         globalVariableMap.put(tmpHintName, tmp);
+        staticStringMap.put(s, tmp);
         stringConstantCounter++;
         return tmp;
     }

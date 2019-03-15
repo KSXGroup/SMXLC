@@ -1,7 +1,7 @@
 package kstarxin.compiler;
 
 public class Main{
-    public static void main(String [] arg){
+    public static void main(String [] arg) throws Exception{
         /*for(Integer i = 1; i <=  51; ++i) {
             try {
                 Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/success/testcase_" + i.toString() + ".txt"); //88
@@ -12,7 +12,7 @@ public class Main{
             }
             System.out.print("testcase_" + i.toString() + " passed\n");
         }*/
-        for(Integer i = 1; i <=  72; ++i) {
+        /*for(Integer i = 1; i <=  72; ++i) {
             try {
                 Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_" + i.toString() + ".txt"); //88
                 compiler.compileStart();
@@ -23,8 +23,9 @@ public class Main{
                 System.out.println(e + "\n\n\n\nfailed on test" + i.toString());
                 System.exit(0);
             }
-        }
-        /*Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_67.txt"); //88
-        compiler.compileStart();*/
+        }*/
+
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_67.txt"); //88
+        compiler.compileStart(true);
     }
 }

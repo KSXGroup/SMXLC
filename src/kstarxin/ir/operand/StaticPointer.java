@@ -16,8 +16,13 @@ public class StaticPointer extends Label {
         value = _value;
     }
 
+    public String getInitName(){
+        if(initialized) return spaceSize + "[" + hintName + "]\t" + value;
+        else  return spaceSize + "[" + hintName + "]";
+    }
+
     @Override
     public String getDisplayName(){
-        return spaceSize + "[" + hintName +"]";
+       return spaceSize + "[" + hintName + "]";
     }
 }

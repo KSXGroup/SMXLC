@@ -77,6 +77,6 @@ public class NameMangler {
         }
 
         public static String mangleName(ConditionNode n){
-            return n.getCurrentSymbolTable().getName();
+            return n.getName();
         }
 }
