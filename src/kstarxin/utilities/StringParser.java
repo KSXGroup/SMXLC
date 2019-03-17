@@ -4,7 +4,7 @@ public class StringParser {
     public static String parseString(String originString){
         int len = originString.length();
         String ret = "";
-        for(int i = 1; i < len - 1; ++i){
+        for(int i = 0; i < len; ++i){
             if(originString.charAt(i) == '\\') {
                 switch (originString.charAt(i + 1)) {
                     case 'b':
@@ -33,7 +33,7 @@ public class StringParser {
                         break;
                 }
                 i += 1;
-            }else ret += originString.charAt(i);
+            }else if(originString.charAt(i) != '\"') ret += originString.charAt(i);
         }
         return ret;
     }

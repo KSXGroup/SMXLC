@@ -229,17 +229,27 @@ public class IRInterpreter {
         private ArrayList<String> parameters;
         public callInst(String[] arr){
             super("CAL");
-            calleeName = arr[0];
-            returnReg = arr[1];
+            calleeName = arr[1];
+            returnReg = arr[2];
             parameters = new ArrayList<String>();
-            if(classThisPointer.equals("null")) classThisPointer = null;
-            else classThisPointer = arr[2];
-            for(int i = 3; i < arr.length; ++i)
+            if(arr[3].equals("null")) classThisPointer = null;
+            else classThisPointer = arr[3];
+            for(int i = 4; i < arr.length; ++i)
                 parameters.add(arr[i]);
         }
         @Override
         public void run() {
             callMethod(calleeName, classThisPointer, parameters, returnReg);
+        }
+    }
+
+    class returnInst extends irInst{
+        public returnInst(){
+            super("RET");
+        }
+        @Override
+        public void run() {
+            methodReturn();
         }
     }
 
@@ -270,7 +280,9 @@ public class IRInterpreter {
             if(startNum  == null) throw new RuntimeException("not found the enterance line of method " + name);
             programCounter = startNum + 1;
             while(!retFlag){
-                insts.get(programCounter).run();
+                irInst i = insts.get(programCounter);
+                if(i == null) break;
+                else i.run();
                 programCounter++;
             }
         }
@@ -395,8 +407,10 @@ public class IRInterpreter {
                 writeMemory(staticTop, size - Configure.PTR_SIZE);
                 staticTop += Configure.PTR_SIZE;
                 value = StringParser.parseString(value);
-                for (int i = 0; i < value.length(); ++i)
-                    memory[staticTop++] = (byte) value.charAt(i);
+                for (int i = 0; i < value.length(); ++i) {
+                    memory[staticTop] = (byte) value.charAt(i);
+                    staticTop++;
+                }
                 memory[staticTop] = '\0';
                 alignToFour();
             }else{
@@ -409,15 +423,15 @@ public class IRInterpreter {
     private void parseInstruction(String line){
         String[] arr = line.trim().split("\\s+");
         switch(arr[0]){
-            case IRPrinter.methodHeader:
+            case "<METHO>":
                 irMethod mth = new irMethod(arr[1]);
                 currentMethodParsing = mth;
                 methodMap.put(arr[1], mth);
                 break;
-            case IRPrinter.parameterHeader:
+            case "<PARA>":
                 currentMethodParsing.paras.add(arr[1]);
                 break;
-            case IRPrinter.localVariableHeader:
+            case "<LOCAL>":
                 registerHeap.put(arr[1], 0);
                 break;
             default:
@@ -487,8 +501,8 @@ public class IRInterpreter {
             else return ret;
         }
         else if(c == '['){
-            String inner = removeBrac(op);
-            if(inner.charAt(0) != '$') return readMemory(staticAddressMapper.get(inner));
+            if(op.charAt(1) != '$')
+                return readMemory(staticAddressMapper.get(op));
             else return readMemory(resolveMemoryAddres(op));
         }
         else if(c >= '0' &&  c <= '9') return Integer.valueOf(op);
@@ -499,12 +513,18 @@ public class IRInterpreter {
         char c = op.charAt(0);
         if(c == '$'){
             Integer ret = registerHeap.get(op);
-            if(ret == null) throw new RuntimeException("use of not defined reg " + op);
+            if(ret == null) registerHeap.put(op, value);
             else registerHeap.replace(op, value);
         }
         else if(c == '[') writeMemory(resolveMemoryAddres(op), value);
         else if(c >= '0' &&  c <= '9') throw new RuntimeException("write constant????");
         else throw new RuntimeException("unknown opread " + op);
+    }
+
+    private int malloc(int sizeAsByte){
+        int ret = memoryBottom;
+        memoryBottom += sizeAsByte;
+        return ret;
     }
 
     private String processPrint(String pointer){
@@ -516,7 +536,7 @@ public class IRInterpreter {
         return ret;
     }
 
-    private void callMethod(String name,String classThisPointer, ArrayList<String> para, String returnReg){
+    private int callMethod(String name,String classThisPointer, ArrayList<String> para, String returnReg){
         switch (name){
             case "%@_Zprintlns":
                 if(classThisPointer != null) throw new RuntimeException("why there is class pointer for print ???");
@@ -528,8 +548,18 @@ public class IRInterpreter {
                 else if(para.size() > 1) throw new RuntimeException("why there is more than one parameter");
                 else output += processPrint(para.get(0));
                 break;
+            case "%@_ZtoStringi":
+                int a = read(para.get(0));
+                String s = a + "";
+                int addr = malloc(s.length() + Configure.PTR_SIZE);
+                writeMemory(addr, s.length());
+                int st = addr + Configure.PTR_SIZE;
+                for(int i = 0; i < s.length(); ++i) memory[st + i] = (byte) s.charAt(i);
+                return addr;
+            case "%@_Zmalloci":
+                //TODO
         }
-        return;
+        return 0;
     }
 
     private void methodReturn(){
@@ -551,7 +581,10 @@ public class IRInterpreter {
             labelToLineNumber.put(arr[0], currentLineNumber);
             return new labelInst(arr[0]);
         }
+        else if(arr[0].equals("RET"))   return new returnInst();
         else if(arr[0].equals("CAL"))   return new callInst(arr);
+        else if(arr[0].equals("JMP"))   return new djumpInst(arr[1]);
+        else if(arr[0].charAt(0) == 'J')return new cjumpInst(arr[0], arr[1], arr[2]);
         else if(arr.length == 2)        return new oneOpInst(arr[0], arr[1]);
         else if(arr.length == 3)        return new twoOpInst(arr[0], arr[1], arr[2]);
         else if(arr.length == 4)        return new threeOpInst(arr[0], arr[1], arr[2], arr[3]);
@@ -581,7 +614,7 @@ public class IRInterpreter {
                 }
                 //System.out.println(line);
                 currentLineNumber++;
-                if (current_state == STATUS.STATIC)
+                if (current_state.equals(STATUS.STATIC))
                     parseStaticData(line);
                 else
                     parseInstruction(line);
@@ -592,7 +625,10 @@ public class IRInterpreter {
     public void runIR() throws IOException{
         parseFile();
         irMethod initm = methodMap.get(NameMangler.initMethod);
-        if(initm != null) initm.run();
+        if(initm != null){
+            currentMethodRunning = initm;
+            initm.run();
+        }
         irMethod mainm = methodMap.get(NameMangler.mainMethodName);
         if(mainm == null) throw new RuntimeException("No main method in ir!!!!!");
         currentMethodRunning = mainm;
