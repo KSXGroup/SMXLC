@@ -44,15 +44,17 @@ public class IRPrinter {
 
     void printMethod(Method m){
         m.bfs();
-        if(!m.isBuiltin) irPrintStream.println("\n" + methodHeader + m.hintName);
-        m.parameters.forEach(this::printParameter);
-        m.localVariables.values().forEach(this::printLocalVariable);
-        List<BasicBlock> blockList = m.basicBlockInBFSOrder;
-        blockList.forEach(bb ->{
-            irPrintStream.print("\n");
-            if(bb.blockLabel != null) irPrintStream.println(labelHeader + bb.blockLabel);
-            for(Instruction inst = bb.getBeginInst(); inst != null; inst = inst.next) printInst(inst);
-        });
+        if(!m.isBuiltin) {
+            irPrintStream.println("\n" + methodHeader + m.hintName);
+            m.parameters.forEach(this::printParameter);
+            m.localVariables.values().forEach(this::printLocalVariable);
+            List<BasicBlock> blockList = m.basicBlockInBFSOrder;
+            blockList.forEach(bb -> {
+                irPrintStream.print("\n");
+                if (bb.blockLabel != null) irPrintStream.println(labelHeader + bb.blockLabel);
+                for (Instruction inst = bb.getBeginInst(); inst != null; inst = inst.next) printInst(inst);
+            });
+        }
     }
 
     private void printInst(Instruction inst){
@@ -73,7 +75,7 @@ public class IRPrinter {
     }
 
     private void printUnaryInstruction(UnaryInstruction inst){
-        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.dest.getDisplayName());
+        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName());
     }
 
     private void printLoadInstruction(LoadInstruction inst){

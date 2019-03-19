@@ -304,7 +304,6 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         currentMethod               = ir.getMethod(mangledName);
         currentBasicBlock           = new BasicBlock(currentMethod, null, null, mangledName);
         currentMethod.startBlock    = currentBasicBlock;
-        currentMethod.endBlock      = new BasicBlock(currentMethod, null, null, mangledName + ret);
         node.getParameterList().forEach(para ->{
             ir.addLocalVariable(NameMangler.mangleName(para), para.getTypeNode().getType());
             currentMethod.addParameter(para);
@@ -708,8 +707,21 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     throw new RuntimeException("shit in unary expression generation");
             }
         } else if(rhsValue instanceof VirtualRegister || rhsValue instanceof Address){
-            currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(), rhsValue));
-            return rhsValue;
+            switch (node.getOp()) {
+                case MxStarParser.INC:
+                case MxStarParser.DEC:
+                    currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(), rhsValue, rhsValue));
+                    return rhsValue;
+                case MxStarParser.SUB:
+                case MxStarParser.ADD:
+                case MxStarParser.NOT:
+                case MxStarParser.BITNOT:
+                    VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
+                    currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(),tmpReg , rhsValue));
+                    return tmpReg;
+                default:
+                    throw new RuntimeException("unknown oprand");
+            }
         } else throw new RuntimeException("what shit type operand? in unary operand process");
     }
 
@@ -904,7 +916,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     }
 
     @Override
-    public Operand visit(IndexAccessNode node) {
+        public Operand visit(IndexAccessNode node) {
         //[SIZE|DATA0|DATA1|.....|DATA N]
         Operand         expr                        = visit(node.getExpression());
         Operand         index                       = visit(node.getIndex());
@@ -945,17 +957,24 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     throw new RuntimeException("What shit suffix INC/DEC instruction is this??????");
             }
         } else {
+            VirtualRegister ret = currentMethod.allocateNewTmpRegister();
+            if(expr instanceof Address){
+                currentBasicBlock.insertEnd(new LoadInstruction(ret, (Address)expr));
+            }
+            else if(expr instanceof  VirtualRegister) {
+                currentBasicBlock.insertEnd(new MoveInstruction(ret, (VirtualRegister)expr));
+            } else throw new RuntimeException("unknown oprand!");
             switch (node.getOp()) {
                 case MxStarParser.INC:
-                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.INC, expr));
+                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.INC, expr, expr));
                     break;
                 case MxStarParser.DEC:
-                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.DEC, expr));
+                    currentBasicBlock.insertEnd(new UnaryInstruction(MxStarParser.DEC, expr, expr));
                     break;
                 default:
                     throw new RuntimeException("What shit suffix INC/DEC instruction is this??????");
             }
-            return expr;
+            return ret;
         }
     }
 
@@ -1158,7 +1177,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentBasicBlock.insertEnd(new DirectJumpInstruction(cond));
             cond.insertEnd(new CompareInstruction(currentLoopVar, new Immediate(0)));
             cond.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, after, body));
-            step.insertEnd(new UnaryInstruction(MxStarParser.DEC, currentLoopVar));
+            step.insertEnd(new UnaryInstruction(MxStarParser.DEC,currentLoopVar, currentLoopVar));
             step.insertEnd(new DirectJumpInstruction(cond));
             currentBasicBlock = body;
 

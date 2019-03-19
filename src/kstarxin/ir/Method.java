@@ -58,7 +58,8 @@ public class Method {
         if(inClass) classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);
         else classThisPointer           = null;
         
-        endBlock.insertEnd(new MoveInstruction(returnRegister, returnTmpRegister));
+        //endBlock.insertEnd(new MoveInstruction(returnRegister, returnTmpRegister));
+        endBlock.insertEnd(new ReturnInstruction(returnRegister));
     }
 
 

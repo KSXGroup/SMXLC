@@ -1,6 +1,7 @@
 package kstarxin.compiler;
 
 import java.io.*;
+import java.util.Scanner;
 
 import kstarxin.ir.IRBuilderVisitor;
 import kstarxin.ir.IRInterpreter;
@@ -94,6 +95,7 @@ public class Compiler {
         irPrinter       = new IRPrinter(ir, irOutputStream);
         irPrinter.printIR();
         irIntererter    = new IRInterpreter(irPrintPath);
+        //(new Scanner(System.in)).nextInt();
         irIntererter.runIR();
     }
 }
