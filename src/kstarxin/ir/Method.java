@@ -55,7 +55,10 @@ public class Method {
         endBlock            = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret); //block for merge return insts
         visited             = new HashSet<BasicBlock>();
 
-        if(inClass) classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);
+        if(inClass){
+            classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);
+            localVariables.put(_hintName + thisPtr , classThisPointer);
+        }
         else classThisPointer           = null;
         
         //endBlock.insertEnd(new MoveInstruction(returnRegister, returnTmpRegister));
@@ -88,7 +91,7 @@ public class Method {
 
     public VirtualRegister allocateNewTmpRegister(){
         String          id      = tmpRegisterCounter.toString();
-        String          regName = tmpRegPrefix+id;
+        String          regName = hintName + tmpRegPrefix+id;
         VirtualRegister vreg    = new VirtualRegister(id, regName);
         vreg.tmpId              = tmpRegisterCounter;
 

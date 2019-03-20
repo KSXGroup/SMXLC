@@ -9,13 +9,14 @@ public class StaticString extends Label {
     public StaticString(String _hintName, String _value){
         super(_hintName);
         value       = _value;
-        parsedValue = StringParser.parseString(_value);
+        if(_value != null)
+            parsedValue = StringParser.parseString(_value);
+        else parsedValue = null;
     }
 
     @Override
     public String getDisplayName() {
-        if(value != null) return "["+ hintName + "]" ;
-        else return "["+ hintName + "]";
+        return "4["+ hintName + "]" ;
     }
 
     public String getInitName(){

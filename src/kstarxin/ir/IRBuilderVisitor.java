@@ -35,6 +35,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     private IRProgram   ir;
     private ProgramNode ast;
     private SymbolTable currentClassSymbolTable;
+    private String      currentClassName;
     private Method      currentMethod;
     private SuperBlock  currentSuperBlock;
     private BasicBlock  currentBasicBlock;
@@ -90,13 +91,13 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 decl -> {
                     decl.getMemberMethodList().forEach(
                             mdecl -> {
-                                String mn = NameMangler.mangleName(mdecl);
+                                String mn = NameMangler.mangleName(decl.getName(), mdecl);
                                 ir.addMethod(mn, new Method(mn, true), mdecl.getReturnType());
                             }
                     );
                     decl.getConstructorList().forEach(
                             cdecl -> {
-                                String mn = NameMangler.mangleName(cdecl);
+                                String mn = NameMangler.mangleName(decl.getName(), cdecl);
                                 ir.addMethod(mn, new Method(mn, true), cdecl.getReturnType());
                             }
                     );
@@ -161,6 +162,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     //resolve global variable and make program entrance
     private void makeEntranceMethod(){
+        ast.getClassDeclarations().forEach(this::preProcessClass);
         for(VariableDeclarationNode  n : ast.getVariableDeclarations()){
             //process global variable
             MxType t = n.getTypeNode().getType();
@@ -284,7 +286,6 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(ProgramNode node) {
-        node.getClassDeclarations().forEach(this::preProcessClass);
         node.getClassDeclarations().forEach(this::visit);
         node.getMethodDeclarations().forEach(this::visit);
        // global variable is processed before
@@ -300,7 +301,9 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     @Override
     public Operand visit(MethodDeclarationNode node) {
         inMethod                    = true;
-        String mangledName          = NameMangler.mangleName(node);
+        String mangledName          = null;
+        if(!inClass) mangledName = NameMangler.mangleName(node);
+        else mangledName = NameMangler.mangleName(currentClassName, node);
         currentMethod               = ir.getMethod(mangledName);
         currentBasicBlock           = new BasicBlock(currentMethod, null, null, mangledName);
         currentMethod.startBlock    = currentBasicBlock;
@@ -321,11 +324,13 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     private void preProcessClass(ClassDeclarationNode node){
         currentVariableOffset   = 0;
         inClass                 = true;
+        currentClassName        = node.getName();
         currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberVariableList().forEach(this::visit);
         ir.addClassSize(node.getName(), currentVariableOffset + Configure.PTR_SIZE);
         inClass                 = false;
         currentClassSymbolTable = null;
+        currentClassName        = null;
         currentVariableOffset   = 0;
     }
 
@@ -333,9 +338,11 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public Operand visit(ClassDeclarationNode node) {
         inClass                 = true;
         currentClassSymbolTable = node.getCurrentSymbolTable();
+        currentClassName        = node.getName();
         node.getMemberMethodList().forEach(this::visit);
         node.getConstructorList().forEach(this::visit);
         inClass                 = false;
+        currentClassName        = null;
         currentClassSymbolTable = null;
         return null;
     }
@@ -590,8 +597,19 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(MethodCallNode node) {
-        String          mmn     = NameMangler.mangleName(node);
-        Method          callee  = ir.getMethod(mmn);
+        String          mmn     =  null;
+        Method          callee  =  null;
+        boolean         claCall = false;
+        if(inClass) {
+            mmn = NameMangler.mangleName(currentClassName, node);
+            callee = ir.getMethod(mmn);
+            claCall = true;
+        }
+        if(callee == null){
+            mmn = NameMangler.mangleName(node);
+            callee = ir.getMethod(mmn);
+        }
+        if(callee == null) throw new RuntimeException("method " + mmn + " not found");
         MxType          callRtt = ir.getTypeWithMangledName(mmn);
         VirtualRegister retReg  = currentMethod.allocateNewTmpRegister();
         CallInstruction call    = new CallInstruction(callee, retReg);
@@ -599,6 +617,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         node.getParameterExpressionList().forEach(para -> {
             call.addParameter(resolveParameter(para));
         });
+        if(claCall){
+            if(currentMethod.classThisPointer == null) throw new RuntimeException("impossible things happened!!");
+            call.setClassMemberCall(currentMethod.classThisPointer);
+        }
         currentBasicBlock.insertEnd(call);
        return retReg;
     }
@@ -655,22 +677,29 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         }
         else if(astExpr.getType().getDimension() > 0){
             if(memberName.equals(memberSize)){
-                if(classPointer instanceof Address) currentBasicBlock.insertEnd(new LoadInstruction(retReg, (Address) classPointer));
+                if(classPointer instanceof Address){
+                    VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
+                    currentBasicBlock.insertEnd(new LoadInstruction(tmpReg, (Address) classPointer));
+                    currentBasicBlock.insertEnd(new LoadInstruction(retReg, new Memory(tmpReg ,Configure.PTR_SIZE)));
+                }
                 else if(classPointer instanceof VirtualRegister) currentBasicBlock.insertEnd(new LoadInstruction(retReg, new Memory((VirtualRegister) classPointer, Configure.PTR_SIZE)));
                 else throw new RuntimeException("class point can not identified !!!");
                 return retReg;
             } else throw new RuntimeException("try invalid member method call of array!!!");
         }
         else {
-            mn = NameMangler.mangleName(node.getCurrentSymbolTable().get(astExpr.getType().toString(), astExpr.getLocation()).getMemberTable().getMember(node.getMemberMethodName()));
+            String className = astExpr.getType().toString();
+            mn = NameMangler.mangleName(className , node.getCurrentSymbolTable().get(astExpr.getType().toString(), astExpr.getLocation()).getMemberTable().getMember(node.getMemberMethodName()));
             if (classPointer instanceof Address) {
                 addrReg = currentMethod.allocateNewTmpRegister();
                 currentBasicBlock.insertEnd(new LoadInstruction(addrReg, (Address) classPointer));
             }
             else if(classPointer instanceof VirtualRegister) addrReg = (VirtualRegister) classPointer;
             else throw new RuntimeException("the dotMemberCall shit!");
-
-            tcall = new CallInstruction(ir.getMethod(mn), retReg);
+            Method target = ir.getMethod(mn);
+            if(target == null)
+                throw new RuntimeException("cant find " + mn);
+            tcall = new CallInstruction(target, retReg);
             for (ExpressionNode para : node.getParameterExpressionList()){
                 tcall.addParameter(resolveParameter(para));
             }
@@ -732,8 +761,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         Operand lhs = visit(node.getLeft());
         Operand rhs = visit(node.getRight());
         if(lhs instanceof Immediate && rhs instanceof Immediate){
-            int lval = ((Immediate) rhs).value;
-            int rval = ((Immediate) lhs).value;
+            int lval = ((Immediate) lhs).value;
+            int rval = ((Immediate) rhs).value;
             switch (op){
                 case MxStarParser.MUL:
                     return new Immediate(lval * rval);
@@ -781,7 +810,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 currentBasicBlock.insertEnd(new LoadInstruction(laddr, (Address) lhs));
             }
             if(rhs instanceof VirtualRegister) raddr = (VirtualRegister) rhs;
-            else if(lhs instanceof Address) {
+            else if(rhs instanceof Address) {
                 raddr = currentMethod.allocateNewTmpRegister();
                 currentBasicBlock.insertEnd(new LoadInstruction(raddr, (Address) rhs));
             }
@@ -789,6 +818,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 call = new CallInstruction(ir.strcat, ret);
                 call.addParameter(laddr);
                 call.addParameter(raddr);
+                currentBasicBlock.insertEnd(call);
                 return ret;
             } else if(op == MxStarParser.ASSIGN){
                 if(lhs instanceof VirtualRegister) currentBasicBlock.insertEnd(new MoveInstruction((VirtualRegister)lhs, raddr));
@@ -811,47 +841,55 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.GT, trueBB, falseBB));
-                        return ret;
+                        break;
                     case MxStarParser.LT:
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.LT, trueBB, falseBB));
-                        return ret;
+                        break;
                     case MxStarParser.GE:
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.LT, falseBB, trueBB));
-                        return ret;
+                        break;
                     case MxStarParser.LE:
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.GT, falseBB, trueBB));
-                        return ret;
+                        break;
                     case MxStarParser.EQ:
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, trueBB, falseBB));
-                        return ret;
+                        break;
                     case MxStarParser.NEQ:
                         call = new CallInstruction(ir.strcmp, cmpres);
                         call.addParameter(laddr);
                         call.addParameter(raddr);
+                        currentBasicBlock.insertEnd(call);
                         currentBasicBlock.insertEnd(new CompareInstruction(cmpres, new Immediate(0)));
                         currentBasicBlock.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, falseBB, trueBB));
-                        return ret;
+                        break;
                     default:
                         throw new RuntimeException("no such shit operator of string!");
                 }
+                currentBasicBlock = afterBB;
+                return ret;
             }
         } else{
             VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
@@ -983,7 +1021,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         String nm = NameMangler.mangleName(node.getCurrentSymbolTable().get(node.getIdentifier(), node.getLocation()));
         if(inClass && isClassMemberVariable(node)){
             VirtualRegister classPtr = currentMethod.classThisPointer;
-            return new Memory(classPtr, ir.getOffsetInClass(nm));
+            return new Memory(classPtr, ir.getOffsetInClass(nm), Configure.PTR_SIZE);
         } else{
             Operand ret = currentMethod.localVariables.get(nm);
             if(ret == null) ret = ir.getGlobalVariableVirtualRegister(nm);
@@ -1173,7 +1211,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             VirtualRegister currentLoopVar      = currentMethod.allocateNewTmpRegister();
             if(sizeOfCurDim instanceof Immediate)currentBasicBlock.insertEnd(new MoveInstruction(currentLoopVar,(Immediate) sizeOfCurDim));
             else if(sizeOfCurDim instanceof VirtualRegister) currentBasicBlock.insertEnd(new MoveInstruction(currentLoopVar, (VirtualRegister) sizeOfCurDim));
-            currentBasicBlock.insertEnd(new BinaryArithmeticInstruction(MxStarParser.ADD, resultReg, addressOffsetReg,  new Immediate(Configure.PTR_SIZE)));
+            currentBasicBlock.insertEnd(new BinaryArithmeticInstruction(MxStarParser.ADD, addressOffsetReg, resultReg,  new Immediate(Configure.PTR_SIZE)));
             currentBasicBlock.insertEnd(new DirectJumpInstruction(cond));
             cond.insertEnd(new CompareInstruction(currentLoopVar, new Immediate(0)));
             cond.insertEnd(new ConditionJumpInstruction(MxStarParser.EQ, after, body));

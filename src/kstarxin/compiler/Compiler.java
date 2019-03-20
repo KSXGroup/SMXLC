@@ -41,7 +41,7 @@ public class Compiler {
         }
     }
 
-    public void compileStart(boolean ifPrintIRtoFile) throws Exception {
+    public void compileStart(boolean buildIR, boolean ifPrintIRtoFile, boolean runIR) throws Exception {
         ASTBuilderVisitor       builder         = null;
         ProgramNode             prog            = null;
         ASTTypeCheckerVisitor   typeChecker     = null;
@@ -53,7 +53,7 @@ public class Compiler {
 
         if(ifPrintIRtoFile){
             irOutputStream = new PrintStream(new File(irPrintPath));
-        }
+        } else irOutputStream = System.out;
         if(errorProcessor.size() > 0) {
             errorProcessor.printError();
             throw new MxCompileException(compileTerminateInfo);
@@ -90,12 +90,17 @@ public class Compiler {
             prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
         }
 
-        irBuilder       = new IRBuilderVisitor(prog);
-        ir              = irBuilder.buildIR();
-        irPrinter       = new IRPrinter(ir, irOutputStream);
-        irPrinter.printIR();
-        irIntererter    = new IRInterpreter(irPrintPath);
-        //(new Scanner(System.in)).nextInt();
-        irIntererter.runIR();
+        if(buildIR) {
+            irBuilder = new IRBuilderVisitor(prog);
+            ir = irBuilder.buildIR();
+            irPrinter = new IRPrinter(ir, irOutputStream);
+            irPrinter.printIR();
+        }
+        if(runIR) {
+            irIntererter = new IRInterpreter(irPrintPath);
+            //(new Scanner(System.in)).nextInt();
+            irIntererter.runIR();
+        }
+        return;
     }
 }

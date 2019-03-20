@@ -12,6 +12,7 @@ public class IRPrinter {
     public final static String           labelHeader             = "%";
     public final static String           staticAreaHeader        = "<STAT>";
     public final static String           codeAreaHeader          = "<CODE>";
+    public final static String           classThisPointerHeader  = "<THIS>\t";
     public final static String           localVariableHeader     = "<LOCAL>\t";
     public final static String           parameterHeader         = "<PARA>\t";
     public final static String           methodHeader            = "<METHO>\t";
@@ -47,6 +48,7 @@ public class IRPrinter {
         if(!m.isBuiltin) {
             irPrintStream.println("\n" + methodHeader + m.hintName);
             m.parameters.forEach(this::printParameter);
+            if(m.classThisPointer != null) irPrintStream.println(classThisPointerHeader + m.classThisPointer.getDisplayName());
             m.localVariables.values().forEach(this::printLocalVariable);
             List<BasicBlock> blockList = m.basicBlockInBFSOrder;
             blockList.forEach(bb -> {
@@ -134,6 +136,8 @@ public class IRPrinter {
     private void printMethodCall(CallInstruction inst){
         String retReg = inst.returnValue != null ? inst.returnValue.getDisplayName() : "null" ;
         String classPtr = inst.isClassMemberCall? inst.classThisPointer.getDisplayName() : "null";
+        if(inst.callee == null)
+            throw new RuntimeException("shit!");
         String toPrint ="CAL\t\t" + inst.callee.getDisplayName() + "\t" + retReg + "\t" + classPtr + "\t";
         for (Operand parameter : inst.parameters) {
             toPrint += parameter.getDisplayName() + "\t";

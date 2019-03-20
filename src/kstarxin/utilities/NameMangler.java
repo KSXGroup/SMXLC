@@ -36,8 +36,18 @@ public class NameMangler {
             return mangledName;
         }
 
+        public static String mangleName(String className ,MethodDeclarationNode n){
+            String ret = mangleName(n);
+            return ret + "_" + className;
+        }
+
         public static String mangleName(MethodCallNode n){
             return mangleName(n.getCurrentSymbolTable().get(n.getMethodName(), n.getLocation()));
+        }
+
+        public static String mangleName(String className, MethodCallNode n){
+            String ret = mangleName(n);
+            return ret + "_" + className;
         }
 
         public static String mangleName(LoopNode n){
@@ -69,6 +79,11 @@ public class NameMangler {
                     return s.getIdentifier();
             }
             return null;
+        }
+
+        public static String mangleName(String className, Symbol s){
+            String ret = mangleName(s);
+             return ret + "_" + className;
         }
 
         public static String mangleName(ParameterDeclarationNode n) {

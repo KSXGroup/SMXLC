@@ -95,10 +95,10 @@ public class MxErrorPrinter {
 
     public void printWithReference(String fileaName, MxCompileException e, String refenceLine){
         if(e instanceof MxParseError){
-            errPrintStream.print(RED_BACKGROUND_BRIGHT + " PARSE ERROR " + RESET + GREEN_BOLD_BRIGHT + fileaName +  RESET +" : "+ e.getMessage() + "\n\n" + BLACK_BOLD_BRIGHT + refenceLine + RESET + "\n\n");
+            errPrintStream.print(RED_BACKGROUND_BRIGHT + " PARSE ERROR " + RESET + GREEN_BOLD_BRIGHT + fileaName +  RESET +" : "+ e.getMessage() + "\n\n" + refenceLine + RESET + "\n\n");
         }
         else if(e instanceof MxSemanticCheckError){
-            errPrintStream.print(RED_BACKGROUND_BRIGHT + " TYPECHECK ERROR " + RESET + GREEN_BOLD_BRIGHT + fileaName +  RESET +" : "+ e.getMessage() + "\n\n" + BLACK_BOLD_BRIGHT + refenceLine + RESET + "\n\n");
+            errPrintStream.print(RED_BACKGROUND_BRIGHT + " TYPECHECK ERROR " + RESET + GREEN_BOLD_BRIGHT + fileaName +  RESET +" : "+ e.getMessage() + "\n\n"  + refenceLine + RESET + "\n\n");
         }
     }
 }

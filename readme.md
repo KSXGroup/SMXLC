@@ -23,3 +23,5 @@ ir rules:
 	4.only dot member and index access return memory operand
 
 start working on ir interpreter
+
+2019.3.20 rougly finish ir interpreter and can run some testcase
