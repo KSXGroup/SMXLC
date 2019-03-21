@@ -339,7 +339,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
             classSymbol = node.getCurrentSymbolTable().get(ASTBuilderVisitor.builtinArrayClassName, node.getLocation());
         }
         else {
-            classSymbol = node.getCurrentSymbolTable().get(t.toString(), node.getLocation());
+            classSymbol = node.getCurrentSymbolTable().getClassType(t.toString(), node.getLocation());
         }
         memberTable = classSymbol.getMemberTable();
         Symbol classMemberSymbol = memberTable.getMember(memId);
@@ -427,7 +427,7 @@ public class ASTTypeCheckerVisitor implements ASTBaseVisitor<Void> {
         MxType t = null;
         visit(expr);
         t = expr.getType();
-        Symbol classSymbol = node.getCurrentSymbolTable().get(t.toString(), node.getLocation());
+        Symbol classSymbol = node.getCurrentSymbolTable().getClassType(t.toString(), node.getLocation());
         classMemberTable = classSymbol.getMemberTable();
         Symbol memberSymbol = classMemberTable.getMember(memId);
         if(memberSymbol == null) {

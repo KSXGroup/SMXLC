@@ -168,6 +168,12 @@ public class SymbolTable {
         else return null;
     }
 
+    public Symbol getClassType(String id, Location loc){
+        Symbol ret = get(id, loc);
+        while(ret != null && !ret.getSymbolType().equals(Symbol.SymbolType.CLASS)) ret = get(id, ret.getLocation());
+        return ret;
+    }
+
     public Symbol getMember(String id){
        return currentScopeTable.get(id);
     }

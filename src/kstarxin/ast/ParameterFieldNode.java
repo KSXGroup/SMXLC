@@ -11,7 +11,7 @@ public class ParameterFieldNode extends Node {
     private ArrayList<ParameterDeclarationNode> paraDeclList;
     private ArrayList<MxType> paraTypeList;
 
-    public ParameterFieldNode(ArrayList _paraDeclList, ArrayList _paraTypeList, SymbolTable stb, Location loc){
+    public ParameterFieldNode(ArrayList<ParameterDeclarationNode> _paraDeclList, ArrayList<MxType> _paraTypeList, SymbolTable stb, Location loc){
         super(stb, loc);
         paraDeclList = _paraDeclList;
         paraTypeList = _paraTypeList;

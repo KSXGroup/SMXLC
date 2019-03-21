@@ -20,14 +20,14 @@ public class NewCreatorNode extends ExpressionNode{
         type                        = _type;
     }
 
-    public NewCreatorNode(MxType _type, ArrayList _para, SymbolTable stb, Location loc){
+    public NewCreatorNode(MxType _type, ArrayList<ExpressionNode> _para, SymbolTable stb, Location loc){
         super(false,stb,loc);
         para                        = _para;
         dim                         = 0;
         type                        = _type;
     }
 
-    public NewCreatorNode(MxType _type, int _dim,ArrayList _sizeExprList, SymbolTable stb, Location loc){
+    public NewCreatorNode(MxType _type, int _dim,ArrayList<ExpressionNode> _sizeExprList, SymbolTable stb, Location loc){
         super(false, stb, loc);
         sizeExprList                = _sizeExprList;
         para                        = null;

@@ -14,7 +14,7 @@ public class MethodDeclarationNode extends DeclarationNode {
     private TypeNode retType;
     private String id;
 
-    public MethodDeclarationNode(TypeNode _type, String _id, ArrayList _paraList, BlockNode _block, SymbolTable stb, Location loc){
+    public MethodDeclarationNode(TypeNode _type, String _id, ArrayList<ParameterDeclarationNode> _paraList, BlockNode _block, SymbolTable stb, Location loc){
         super(stb, loc);
         retType = _type;
         id = _id;

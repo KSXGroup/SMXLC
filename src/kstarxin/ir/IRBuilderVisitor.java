@@ -584,7 +584,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public Operand visit(DotMemberNode node) {
         ExpressionNode  astExpr     = node.getExpression();
         Operand         expr        = visit(astExpr);
-        int             offset      = ir.getOffsetInClass(NameMangler.mangleName(node.getCurrentSymbolTable().get(node.getExpression().getType().toString(), node.getLocation()).getMemberTable().getMember(node.getMember())));
+        int             offset      = ir.getOffsetInClass(NameMangler.mangleName(node.getCurrentSymbolTable().getClassType(node.getExpression().getType().toString(), node.getLocation()).getMemberTable().getMember(node.getMember())));
         VirtualRegister loadReg     = null;
         if(expr instanceof Address) {
             loadReg = currentMethod.allocateNewTmpRegister();
@@ -603,12 +603,11 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         if(inClass) {
             mmn = NameMangler.mangleName(currentClassName, node);
             callee = ir.getMethod(mmn);
-            claCall = true;
         }
         if(callee == null){
             mmn = NameMangler.mangleName(node);
             callee = ir.getMethod(mmn);
-        }
+        } else claCall = true;
         if(callee == null) throw new RuntimeException("method " + mmn + " not found");
         MxType          callRtt = ir.getTypeWithMangledName(mmn);
         VirtualRegister retReg  = currentMethod.allocateNewTmpRegister();
@@ -689,7 +688,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         }
         else {
             String className = astExpr.getType().toString();
-            mn = NameMangler.mangleName(className , node.getCurrentSymbolTable().get(astExpr.getType().toString(), astExpr.getLocation()).getMemberTable().getMember(node.getMemberMethodName()));
+            mn = NameMangler.mangleName(className , node.getCurrentSymbolTable().getClassType(astExpr.getType().toString(), astExpr.getLocation()).getMemberTable().getMember(node.getMemberMethodName()));
             if (classPointer instanceof Address) {
                 addrReg = currentMethod.allocateNewTmpRegister();
                 currentBasicBlock.insertEnd(new LoadInstruction(addrReg, (Address) classPointer));
@@ -929,7 +928,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             VirtualRegister newInstanceAddr = currentMethod.allocateNewTmpRegister();
             addHeapAlloc(newInstanceAddr ,new Immediate(ir.getClassSize(node.getCreatorType().toString())));
             String classType = node.getCreatorType().toString();
-            Symbol cons = node.getCurrentSymbolTable().get(classType, node.getLocation()).getMemberTable().getMember(classType);
+            Symbol cons = node.getCurrentSymbolTable().getClassType(classType, node.getLocation()).getMemberTable().getMember(classType);
             if(cons != null){
                 CallInstruction call = new CallInstruction(ir.getMethod(NameMangler.mangleName(cons)), null);
                 call.setClassMemberCall(newInstanceAddr);
@@ -1236,7 +1235,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     }
 
     private Symbol getConstructorSymbol(String className, SymbolTable stb, Location loc){
-        Symbol classSymbol = stb.get(className, loc);
+        Symbol classSymbol = stb.getClassType(className, loc);
         return classSymbol.getMemberTable().getMember(className);
     }
 }

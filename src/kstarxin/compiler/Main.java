@@ -2,15 +2,16 @@ package kstarxin.compiler;
 
 public class Main{
     public static void main(String [] arg) throws Exception{
-        /*for(Integer i = 1; i <=  51; ++i) {
+       /* for(Integer i = 1; i <=  83; ++i) {
             try {
-                Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/success/testcase_" + i.toString() + ".txt"); //88
-                compiler.compileStart(false, false);
+                Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/failure/testcase_" + i.toString() + ".txt"); //88
+                compiler.compileStart(false, false, false);
             }catch (Exception e){
                 System.out.print("testcase_" + i.toString() + " failed\n");
-                break;
+                continue;
             }
             System.out.print("testcase_" + i.toString() + " passed\n");
+            break;
         }*/
         /*for(Integer i = 1; i <=  72; ++i) {
             try {
@@ -25,7 +26,8 @@ public class Main{
             }
         }*/
 
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/semantic/success/testcase_15.txt"); //88
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_34.txt"); //88
+        //34 61 67 68
         compiler.compileStart(true,true, true);
     }
 }

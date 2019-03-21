@@ -361,7 +361,7 @@ public class ASTBuilderVisitor extends MxStarBaseVisitor<Node> {
         currentSymbolTable = newScopeTable;
         parameterBuffer.forEach(n -> currentSymbolTable.addVariable(n));
         parameterBuffer.clear();
-        List stml = ctx.statement();
+        List<MxStarParser.StatementContext> stml = ctx.statement();
         for (MxStarParser.StatementContext stm : ctx.statement()) {
             Node tmp = visit(stm);
             if (tmp != null) block.addStatement(tmp);

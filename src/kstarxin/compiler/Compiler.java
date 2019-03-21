@@ -22,7 +22,7 @@ public class Compiler {
     public Compiler(String f) {
         fileName = f;
         ParserErrorListener pel = ParserErrorListener.INSTANCE;
-        errorProcessor = new MxErrorProcessor(fileName, System.out,pel);
+        errorProcessor = new MxErrorProcessor(fileName, System.err ,pel);
         try {
             FileInputStream     in      = new FileInputStream(f);
             BufferedReader      reader  = new BufferedReader(new InputStreamReader(in));
@@ -68,7 +68,9 @@ public class Compiler {
 
         try {
             prog = builder.build();
-        }catch (Exception e){}
+        }catch (Exception e){
+            throw new MxCompileException(e.getMessage() + "\n" + compileTerminateInfo);
+        }
 
         if (errorProcessor.size() > 0) {
             errorProcessor.printErrorWithReference();
@@ -78,7 +80,10 @@ public class Compiler {
         try {
             typeChecker = new ASTTypeCheckerVisitor(prog, errorProcessor);
             typeChecker.checkType();
-        }catch (Exception e){}
+        }catch (Exception e){
+            throw e;
+        }
+
         if(errorProcessor.size() > 0){
             errorProcessor.printErrorWithReference();
             throw new MxCompileException(compileTerminateInfo);
@@ -98,7 +103,6 @@ public class Compiler {
         }
         if(runIR) {
             irIntererter = new IRInterpreter(irPrintPath);
-            //(new Scanner(System.in)).nextInt();
             irIntererter.runIR();
         }
         return;

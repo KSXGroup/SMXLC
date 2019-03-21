@@ -5,6 +5,7 @@ import kstarxin.ir.*;
 import kstarxin.utilities.*;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 /*
@@ -89,8 +90,11 @@ public class IRInterpreter {
                     write(op1, read(op2) - 1);
                     break;
                 case "BNO":
-                case "NOT":
                     write(op1, ~read(op2));
+                    break;
+                case "NOT":
+                    if(read(op2) <= 0) write(op1, 1);
+                    else write(op1, 0);
                     break;
                 case "SUB":
                     write(op1, -read(op2));
@@ -138,7 +142,7 @@ public class IRInterpreter {
                     res = a ^ b;
                     break;
                 case "DIV":
-                    res = (int) a / b;
+                    res =  a / b;
                     break;
                 case "EQU":
                     if (a == b) res = 1;
@@ -300,6 +304,7 @@ public class IRInterpreter {
 
     class irMethod {
         private ArrayList<String> paras;
+        private ArrayList<String> localVars;
         private HashMap<Integer, irInst> insts;
         private String name;
         private String thisPointer;
@@ -308,6 +313,7 @@ public class IRInterpreter {
         public irMethod(String _name) {
             name            = _name;
             paras           = new ArrayList<String>();
+            localVars       = new ArrayList<String>();
             insts           = new HashMap<Integer, irInst>();
             retFlag         = false;
             thisPointer     = null;
@@ -318,7 +324,8 @@ public class IRInterpreter {
             if (startNum == null) throw new RuntimeException("not found the enterance line of method " + name);
             programCounter = startNum + 1;
             while (!retFlag) {
-                System.out.println(programCounter);
+                //comment for search progccccc
+                //System.out.println(programCounter);
                 /*if (programCounter == 38) {
                     int a = 1;
                 }*/
@@ -349,8 +356,8 @@ public class IRInterpreter {
         STATIC, TEXT
     }
 
-    private final static int memorySize = (1 << 28);  //256 MB memory
-    private final static int nonStaticStart = (1 << 14); //16 MB static area fixed memory start
+    private final static int memorySize = (1 << 30);  //256 MB memory
+    private final static int nonStaticStart = (1 << 18); //16 MB static area fixed memory start
     private final static String globalReturnReg = "$__global_return_register";
     private STATUS current_state;
     private String fileName;
@@ -483,10 +490,10 @@ public class IRInterpreter {
                 }
                 memory[staticTop] = '\0';
                 staticTop++;
-                alignToFour();
+                //alignToFour();
             } else {
                 writeMemory(addr, Integer.valueOf(value));
-                staticTop += Configure.PTR_SIZE;
+                //staticTop += Configure.PTR_SIZE;
             }
         }
     }
@@ -504,6 +511,7 @@ public class IRInterpreter {
                 break;
             case "<LOCAL>":
                 registerHeap.put(arr[1], 0);
+                currentMethodParsing.localVars.add(arr[1]);
                 break;
             case "<THIS>":
                 currentMethodParsing.thisPointer = arr[1];
@@ -613,9 +621,9 @@ public class IRInterpreter {
         char c = op.charAt(0);
         if (c == '$') {
             /*if(op.equals("$_GLOBAL_METHOD_gcd_x"))
-                System.out.println("write " + value + " to " + op + " at line " + programCounter);
-            if(op.equals("$_GLOBAL_METHOD_gcd_y"))
                 System.out.println("write " + value + " to " + op + " at line " + programCounter);*/
+            //if(op.equals("$@main_tmp106"))
+                //System.out.println("write " + value + " to " + op + " at line " + programCounter);
             Integer ret = registerHeap.get(op);
             if (ret == null) registerHeap.put(op, value);
             else registerHeap.replace(op, value);
@@ -639,8 +647,10 @@ public class IRInterpreter {
 
     private methodInfo callBackUp() {
         methodInfo m = new methodInfo(currentMethodRunning, programCounter);
-        currentMethodRunning.paras.forEach(s -> {
-            m.varibales.add(new Pair<String, Integer>(s, read(s)));
+        currentMethodRunning.localVars.forEach(s -> {
+            int val = read(s);
+            //System.out.println("back up " + s + " with val " + val);
+            m.varibales.add(new Pair<String, Integer>(s, val));
         });
         return m;
     }
@@ -649,6 +659,7 @@ public class IRInterpreter {
         currentMethodRunning = info.meth;
         programCounter = info.programPointer;
         info.varibales.forEach(p->{
+            //System.out.println("restore " + p.first + " with val " + p.second);
             write(p.first, p.second);
         });
     }
@@ -665,9 +676,9 @@ public class IRInterpreter {
     private void callMethod(String name,String classThisPointer, ArrayList<String> para, String returnReg){
         switch (name){
             case "%@_Zprintlns":
-                if(classThisPointer != null) throw new RuntimeException("why there is class pointer for print ???");
+                if(classThisPointer != null) throw new RuntimeException("why there is class pointer for print ???" + programCounter);
                 else if(para.size() > 1) throw new RuntimeException("why there is more than one parameter");
-                else;{
+                else{
                     String s = processPrint(para.get(0));
                     //System.out.println("[DEBUG]"+s);
                     output += s + "\n";
@@ -695,7 +706,7 @@ public class IRInterpreter {
                 write(returnReg, malloc(read(para.get(0))));
                 break;
             case "%@_ZgetInt":
-                int ipt = input.nextInt();
+                int ipt = Integer.parseInt(input.nextLine());
                 write(returnReg, ipt);
                 break;
             case "%@_Zstrcatss":
@@ -703,9 +714,11 @@ public class IRInterpreter {
                 String sb = "";
                 int addra = read(para.get(0)) + Configure.PTR_SIZE;
                 int addrb = read(para.get(1)) + Configure.PTR_SIZE;
+                //System.err.println("[start] " + addra + " : " + addrb +" : "+programCounter);
                 for(int i = addra; memory[i] !='\0'; ++i) sa += (char) memory[i];
                 for(int i = addrb; memory[i] !='\0'; ++i) sb += (char) memory[i];
                 sa += sb;
+                //System.err.println("[cat]" + sa);
                 int maddr = malloc(Configure.PTR_SIZE + sa.length() + 1);
                 writeMemory(maddr, sa.length());
                 int addrst = maddr + Configure.PTR_SIZE;
@@ -756,7 +769,7 @@ public class IRInterpreter {
                 addr = read(classThisPointer);
                 sa = "";
                 for(int i = addr + Configure.PTR_SIZE; memory[i] != '\0'; ++i) sa += (char) memory[i];
-                write(returnReg, Integer.valueOf(sa));
+                write(returnReg, builtinParseInt(sa));
                 break;
             default:
                 name = name.substring(1, name.length());
@@ -770,10 +783,18 @@ public class IRInterpreter {
                         else write(newMethodToRun.thisPointer, read(classThisPointer));
                     }
                     if(para.size() != newMethodToRun.paras.size()) throw new RuntimeException("parameter number not match!!");
-                    else for(int i = 0; i < para.size(); ++i) write(newMethodToRun.paras.get(i), read(para.get(i)));
+                    else{
+                        int[] vars = new int[para.size()];
+                        //gather variables
+                        for(int i = 0; i < para.size(); ++i) vars[i] = read(para.get(i));
+                        //put variables
+                        for(int i = 0; i < para.size(); ++i) write(newMethodToRun.paras.get(i), vars[i]);
+                    }
+                    //System.out.println("\n");
                     currentMethodRunning = newMethodToRun;
                     //System.out.println("call " + currentMethodRunning.name);
                     currentMethodRunning.run();
+                    //System.err.println("call " + currentMethodRunning.name + " return with value" + read(globalReturnReg));
                     currentMethodRunning.retFlag = false;
                     retRestore(originInfo);
                     write(returnReg, read(globalReturnReg));
@@ -785,6 +806,15 @@ public class IRInterpreter {
 
     private void methodReturn(){
         currentMethodRunning.retFlag = true;
+    }
+
+    private int builtinParseInt(String s){
+        String numPrex = "";
+        for(int i = 0; i < s.length(); ++i)
+            if(s.charAt(i) >= '0' && s.charAt(i) <= '9')
+                numPrex += s.charAt(i);
+        if(numPrex.equals("")) return 0;
+        else return Integer.parseInt(numPrex);
     }
 
     private void jumpTo(String label){

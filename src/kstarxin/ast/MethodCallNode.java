@@ -8,7 +8,7 @@ import java.util.ArrayList;
 public class MethodCallNode extends ExpressionNode{
     private String methodName;
     private ArrayList<ExpressionNode> para;
-    MethodCallNode(String _methodName,ArrayList _para, SymbolTable stb, Location loc){
+    MethodCallNode(String _methodName,ArrayList<ExpressionNode> _para, SymbolTable stb, Location loc){
         super(false,stb, loc);
         methodName = _methodName;
         para = _para;

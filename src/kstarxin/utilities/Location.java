@@ -36,7 +36,7 @@ public class Location {
 
     public boolean before(Location other){
         if(LineNumber > other.LineNumber) return false;
-        else if(LineNumber == other.LineNumber && ColumnNumber > other.ColumnNumber) return false;
+        else if(LineNumber == other.LineNumber && ColumnNumber >= other.ColumnNumber) return false;
         return true;
     }
 }
