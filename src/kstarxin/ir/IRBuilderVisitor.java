@@ -757,8 +757,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public Operand visit(BinaryExpressionNode node) {
         int      op = node.getOp();
         if(op == MxStarParser.AND || op == MxStarParser.OR) return processLogic(node);
-        Operand lhs = visit(node.getLeft());
         Operand rhs = visit(node.getRight());
+        Operand lhs = visit(node.getLeft());
         if(lhs instanceof Immediate && rhs instanceof Immediate){
             int lval = ((Immediate) lhs).value;
             int rval = ((Immediate) rhs).value;

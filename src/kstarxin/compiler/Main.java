@@ -26,8 +26,8 @@ public class Main{
             }
         }*/
 
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_34.txt"); //88
-        //34 61 67 68
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_67.txt"); //88
+        //67 68
         compiler.compileStart(true,true, true);
     }
 }

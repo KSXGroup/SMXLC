@@ -145,6 +145,7 @@ public class IRInterpreter {
                     res =  a / b;
                     break;
                 case "EQU":
+                   // if(programCounter != 193) System.out.println("EQU " + a +" "+b + "at line " + programCounter);
                     if (a == b) res = 1;
                     else res = 0;
                     break;
@@ -286,7 +287,10 @@ public class IRInterpreter {
             methodReturn();
             if(retReg != null){
                 if(retReg.charAt(0) == '$' && !registerHeap.containsKey(retReg)) write(globalReturnReg, 0);
-                else write(globalReturnReg, read(retReg));
+                else{
+                   // System.out.println("ret " + retReg + read(retReg));
+                    write(globalReturnReg, read(retReg));
+                }
             }
         }
     }
@@ -611,7 +615,12 @@ public class IRInterpreter {
             Integer num = processed.first;
             String pop = processed.second;
             if (num != null && pop.equals("")) return num;
-            else if (num != null && pop.charAt(0) == '[') return readMemory(resolveMemoryAddres(pop));
+            else if (num != null && pop.charAt(0) == '['){
+                int addr = resolveMemoryAddres(pop);
+                int ret = readMemory(addr);
+                //if(programCounter == 435)System.out.println("read " + pop  + " : " + addr + " and get " + ret + " at " + programCounter);
+                return ret;
+            }
             else
                 throw new RuntimeException("unknown oprand " + op);
         }
@@ -633,7 +642,11 @@ public class IRInterpreter {
             String pop = processed.second;
             if (num != null && pop.equals(""))
                 throw new RuntimeException("write constant????");
-            else if (num != null && pop.charAt(0) == '[') writeMemory(resolveMemoryAddres(pop), value);
+            else if (num != null && pop.charAt(0) == '['){
+                int addr  = resolveMemoryAddres(pop);
+                //if(programCounter == 469 || programCounter == 455) System.out.println("write " + pop + ":" + addr + " with " + value + " at line " + programCounter);
+                writeMemory(addr , value);
+            }
             else throw new RuntimeException("unknown oprand " + op);
         }
     }
@@ -786,7 +799,12 @@ public class IRInterpreter {
                     else{
                         int[] vars = new int[para.size()];
                         //gather variables
-                        for(int i = 0; i < para.size(); ++i) vars[i] = read(para.get(i));
+                        //System.out.print(name +  " ");
+                        for(int i = 0; i < para.size(); ++i){
+                            vars[i] = read(para.get(i));
+                          //  System.out.print(vars[i] + " ");
+                        }
+                      //  System.out.print("\n");
                         //put variables
                         for(int i = 0; i < para.size(); ++i) write(newMethodToRun.paras.get(i), vars[i]);
                     }
