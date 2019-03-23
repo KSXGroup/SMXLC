@@ -129,20 +129,20 @@ public class IRInterpreter {
                     res = a + b;
                     break;
                 case "BAN":
-                    res = a & b;
+                    res = (a & b);
                     break;
                 case "AND":
                     if (ba && bb) res = 1;
                     else res = 0;
                     break;
                 case "BOR":
-                    res = a & b;
+                    res = (a | b);
                     break;
                 case "XOR":
-                    res = a ^ b;
+                    res = (a ^ b);
                     break;
                 case "DIV":
-                    res =  a / b;
+                    res = (a / b);
                     break;
                 case "EQU":
                    // if(programCounter != 193) System.out.println("EQU " + a +" "+b + "at line " + programCounter);
@@ -179,13 +179,13 @@ public class IRInterpreter {
                     res = (ba || bb) ? 1 : 0;
                     break;
                 case "SHL":
-                    res = a << b;
+                    res = (a << b);
                     break;
                 case "SAR":
-                    res = a >> b;
+                    res = (a >> b);
                     break;
                 case "SUB":
-                    res = a - b;
+                    res = (a - b);
                     break;
                 default:
                     throw new RuntimeException("unknown inst" + opCode);
@@ -420,7 +420,7 @@ public class IRInterpreter {
         ret |= (memory[addr + 1] & 0xff) << 8;
         ret |= (memory[addr + 2] & 0xff) << 16;
         ret |= (memory[addr + 3] & 0xff) << 24;
-        //System.out.println("get" + addr + ":" + ret);
+        //System.out.println("get" + addr + ":" + ret  + " at line " + programCounter);
         return ret;
     }
 
@@ -576,7 +576,7 @@ public class IRInterpreter {
                     break;
                 case 2:
                     c = memOp.charAt(i);
-                    if (c > '0' && c < '9') {
+                    if (c >= '0' && c <= '9') {
                         if (num == null) num = "" + c;
                         else num += c;
                     }
@@ -752,7 +752,8 @@ public class IRInterpreter {
             case "%@_Zstring4ordi":
                 int sptr = read(classThisPointer);
                 int pos = read(para.get(0));
-                write(returnReg, memory[sptr + Configure.PTR_SIZE + pos] & 0xff);
+                write(returnReg, memory[sptr + Configure.PTR_SIZE + pos]);
+                //System.out.println("ordi " + (char)memory[sptr + Configure.PTR_SIZE + pos]);
                 break;
             case "%@_Zstring4substringii":
                 sptr = read(classThisPointer);
@@ -762,7 +763,12 @@ public class IRInterpreter {
                 sptr += Configure.PTR_SIZE;
                 writeMemory(addr, ped - pst  + 1);
                 addr += Configure.PTR_SIZE;
-                for(int i = pst; i <= ped;  ++i) memory[addr + i - pst] =  memory[i + sptr];
+                //System.out.print("[sbs]");
+                for(int i = pst; i <= ped;  ++i){
+                    //System.out.print((int)memory[i + sptr]);
+                    memory[addr + i - pst] =  memory[i + sptr];
+                }
+                //System.out.println("[end]");
                 memory[addr + ped - pst + 1] = '\0';
                 write(returnReg, addr - Configure.PTR_SIZE);
                 break;

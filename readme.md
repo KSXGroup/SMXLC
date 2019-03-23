@@ -25,3 +25,5 @@ ir rules:
 start working on ir interpreter
 
 2019.3.20 rougly finish ir interpreter and can run some testcase
+
+2019.3.22 ir interpreter passed all codegen test, start optimize
