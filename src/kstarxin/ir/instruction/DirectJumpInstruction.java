@@ -8,4 +8,8 @@ public class DirectJumpInstruction extends Instruction {
         super("jmp");
         target = _target;
     }
+
+    public void replaceTargetWith(BasicBlock _target){
+        target = _target;
+    }
 }

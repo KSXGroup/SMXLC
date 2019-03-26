@@ -296,7 +296,6 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                         return;
                     }
                 });
-                method.cleanUp();
             }
         });
         System.err.println("IR BUILD FIN!");

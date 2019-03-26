@@ -16,4 +16,12 @@ public class ConditionJumpInstruction extends Instruction {
     public void replaceOperatorWith(int _operator){
         op = _operator;
     }
+
+    public void replaceTrueTargetWith(BasicBlock bb){
+        trueTarget = bb;
+    }
+
+    public void replaceFalseTargetWith(BasicBlock bb){
+        falseTarget = bb;
+    }
 }

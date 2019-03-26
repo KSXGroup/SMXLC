@@ -148,18 +148,21 @@ public class Method {
         }
     }
 
-    public void cleanUp(){
-        if(isBuiltin) return;
+    public int cleanUp(){
+        if(isBuiltin) return 0;
         Queue<BasicBlock> Q = new LinkedList<BasicBlock>();
         visited.clear();
+        int count = 0;
         Q.add(endBlock);
         while(!Q.isEmpty()){
             BasicBlock cur = Q.poll();
             if(cur.pred.size() == 0 && cur != startBlock){
                 cur.succ.forEach(bb->{
                     bb.pred.remove(cur);
-                    cur.setRemoved();
+                    if(bb.pred.size() == 0) Q.add(bb);
                 });
+                count++;
+                cur.setRemoved();
                 visited.add(cur);
             }else{
                 cur.pred.forEach(bb->{
@@ -170,5 +173,7 @@ public class Method {
                 });
             }
         }
+       // basicBlockInBFSOrder.clear();
+        return count;
     }
 }

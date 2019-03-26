@@ -17,7 +17,7 @@ public class CFGSimplifier {
         ir = _ir;
     }
 
-    public void mergeInstructions(){
+    private void mergeInstructions(){
         ir.getMethodMap().values().forEach(method -> {
             if(!method.isBuiltin) {
                 method.bfs();
@@ -71,7 +71,7 @@ public class CFGSimplifier {
         b.setRemoved();
     }
 
-    public void mergeBlocks(){
+    private void mergeBlocks(){
         blockMergedCount = 0;
         ir.getMethodMap().values().forEach(method -> {
             if(!method.isBuiltin){
@@ -107,9 +107,83 @@ public class CFGSimplifier {
         return ;
     }
 
+    private BasicBlock doCompressRoute(BasicBlock bb, BasicBlock target){
+        BasicBlock originTarget = target;
+        while(target.size() == 1 && target.getBeginInst() instanceof DirectJumpInstruction) target = ((DirectJumpInstruction) target.getBeginInst()).target;
+        if(target != originTarget){
+            originTarget.removePred(bb);
+            target.addPred(bb);
+        }
+        return target;
+    }
+
+    private void doCompressCondtionalJumpRoute(BasicBlock bb, ConditionJumpInstruction cji){
+        BasicBlock tbb = cji.trueTarget;
+        BasicBlock fbb = cji.falseTarget;
+        BasicBlock newTbb = doCompressRoute(bb, tbb);
+        BasicBlock newFbb = doCompressRoute(bb, fbb);
+        cji.replaceTrueTargetWith(newTbb);
+        cji.replaceFalseTargetWith(newFbb);
+    }
+
+    private void doCompressDirectJumpRoute(BasicBlock bb, DirectJumpInstruction dji){
+        BasicBlock tbb = dji.target;
+        BasicBlock newTarget = doCompressRoute(bb, tbb);
+        dji.replaceTargetWith(newTarget);
+    }
+
+    private void compressJumpRoute(){
+        ir.getMethodMap().values().forEach(method -> {
+            if(!method.isBuiltin){
+                method.bfs();
+                for (BasicBlock bb : method.basicBlockInBFSOrder) {
+                    Instruction endInst = bb.getEndInst();
+                    if(endInst instanceof ConditionJumpInstruction){
+                        ConditionJumpInstruction cji = (ConditionJumpInstruction) endInst;
+                        doCompressCondtionalJumpRoute(bb, cji);
+                    }
+                    else if(endInst instanceof DirectJumpInstruction){
+                        DirectJumpInstruction dji = (DirectJumpInstruction) endInst;
+                        doCompressDirectJumpRoute(bb, dji);
+                    }
+                    else if(endInst instanceof ReturnInstruction) continue;
+                    else throw new RuntimeException("why bb not end with jump or ret ???");
+                }
+                method.basicBlockInBFSOrder.clear();
+            }
+        });
+    }
+
+    private int cleanUpAll(){
+        int ret = 0;
+        for (Method method : ir.getMethodMap().values()) {
+            if(!method.isBuiltin) ret += method.cleanUp();
+        }
+        return ret;
+    }
+
     public void run(){
+        int total = 0;
+        int tmp = 0;
+
+        total = cleanUpAll();
+        System.err.println(total + " basic block(s) eliminated in phase 0");
+
         mergeInstructions();
-        do mergeBlocks();
-        while(blockMergedCount > 0);
+
+        total = 0;
+
+        do{
+            mergeBlocks();
+            total += blockMergedCount;
+        } while(blockMergedCount > 0);
+
+        System.err.println(total + " basic block(s) eliminated in phase 1");
+
+        total = 0;
+        compressJumpRoute();
+        total = cleanUpAll();
+
+        System.err.println(total + " basic block(s) eliminated in phase 2");
     }
 }
