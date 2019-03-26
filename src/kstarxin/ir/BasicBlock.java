@@ -12,18 +12,21 @@ public class BasicBlock {
     public  String                      blockLabel;
     public  int                         dfsOrder;
 
+    private boolean                     isRemoved;
     private Instruction                 beginInst;
     private Instruction                 endInst;
     private int                         size;
 
     public BasicBlock(Method _methodBelongto, SuperBlock _superBlockBelongTo, BasicBlock _pred, String _blockLabel){
        // _methodBelongto.addBasicBlock(this);
-        blockLabel = _blockLabel;
-        superBlockBelongTo = _superBlockBelongTo;
-        beginInst = null;
-        endInst = null;
-        pred = new LinkedHashSet<BasicBlock>();
-        succ = new LinkedHashSet<BasicBlock>();
+        blockLabel          = _blockLabel;
+        superBlockBelongTo  = _superBlockBelongTo;
+        beginInst           = null;
+        endInst             = null;
+        pred                = new LinkedHashSet<BasicBlock>();
+        succ                = new LinkedHashSet<BasicBlock>();
+        isRemoved           = false;
+
         if(_pred != null) {
             pred.add(_pred);
             _pred.succ.add(this);
@@ -78,6 +81,14 @@ public class BasicBlock {
         return size;
     }
 
+    public int increaseSize(){
+        return ++size;
+    }
+
+    public int decreaseSize(){
+        return --size;
+    }
+
     public Instruction getEndInst(){
         return endInst;
     }
@@ -86,4 +97,23 @@ public class BasicBlock {
         return beginInst;
     }
 
+    public void setBeginInst(Instruction inst){
+        beginInst = inst;
+    }
+
+    public void setEndInst(Instruction inst){
+        endInst = inst;
+    }
+
+    public void setSize(int _size){
+        size = _size;
+    }
+
+    public void setRemoved(){
+        isRemoved = true;
+    }
+
+    public boolean isRemoved(){
+        return  isRemoved;
+    }
 }

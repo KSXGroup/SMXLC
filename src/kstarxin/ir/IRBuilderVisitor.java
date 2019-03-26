@@ -214,7 +214,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 });
             else throw new RuntimeException("you forget something when init!");
         }
-        currentBasicBlock.insertEnd(new ReturnInstruction(null));
+        currentBasicBlock.insertEnd(new DirectJumpInstruction(currentMethod.endBlock));
         currentBasicBlock.addSucc(currentMethod.endBlock);
     }
 
@@ -260,8 +260,48 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     }
 
     private void finishBuild(){
-        ir.getInitMethod().dfs(null, 0);
-        ir.getMethodMap().values().forEach(method -> method.dfs(null, 0));
+        //merge return inst into one block
+        ir.getMethodMap().values().forEach(method ->{
+            if(!method.isBuiltin) {
+                method.returnInsts.forEach(retInst -> {
+                    DirectJumpInstruction jmp = new DirectJumpInstruction(method.endBlock);
+                    Instruction prev = retInst.prev;
+                    Operand retValue = retInst.returnValue;
+                    //eliminate unreached insts
+                    if (retInst.next != null) {
+                        System.err.println("next of ret not null");
+                        retInst.next.prev = null;
+                        retInst.next = null;
+                    }
+                    if (retValue == null) {
+                        MoveInstruction inst = new MoveInstruction(method.returnRegister, new Immediate(0));
+                        retInst.replaceThisWith(inst);
+                        inst.insertInstAfterThis(jmp);
+                        return;
+                    }
+                    if (retValue instanceof Address) {
+                        LoadInstruction inst = new LoadInstruction(method.returnRegister, (Address) retValue);
+                        retInst.replaceThisWith(inst);
+                        inst.insertInstAfterThis(jmp);
+                        return;
+                    } else if (retValue instanceof VirtualRegister) {
+                        MoveInstruction inst = new MoveInstruction(method.returnRegister, (VirtualRegister) retValue);
+                        retInst.replaceThisWith(inst);
+                        inst.insertInstAfterThis(jmp);
+                        return;
+                    } else if (retValue instanceof Immediate) {
+                        MoveInstruction inst = new MoveInstruction(method.returnRegister, (Immediate) retValue);
+                        retInst.replaceThisWith(inst);
+                        inst.insertInstAfterThis(jmp);
+                        return;
+                    }
+                });
+                method.cleanUp();
+            }
+        });
+        System.err.println("IR BUILD FIN!");
+        //ir.getInitMethod().dfs(null, 0);
+        //ir.getMethodMap().values().forEach(method -> method.dfs(null, 0));
     }
 
     public IRProgram buildIR(){
@@ -269,8 +309,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         initBuiltin();
         currentMethod       = new Method(NameMangler.initMethod ,false);
         BasicBlock startBB  = new BasicBlock(currentMethod,null,null, currentMethod.hintName);
-        currentMethod.setStartBlock(startBB);
         currentBasicBlock   = startBB;
+        currentMethod.setStartBlock(startBB);
         makeEntranceMethod();
         if(startBB.size() == 0) ir.setInitMethod(null);
         else ir.setInitMethod(currentMethod);
@@ -312,8 +352,11 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentMethod.addParameter(para);
         });
         visit(node.getBlock());
-        currentBasicBlock.insertEnd(new DirectJumpInstruction(currentMethod.endBlock));
-        currentBasicBlock.addSucc(currentMethod.endBlock);
+        if(!(currentBasicBlock.getEndInst() instanceof ReturnInstruction)) {
+            currentBasicBlock.insertEnd(new MoveInstruction(currentMethod.returnRegister, new Immediate(0)));
+            currentBasicBlock.insertEnd(new DirectJumpInstruction(currentMethod.endBlock));
+            currentBasicBlock.addSucc(currentMethod.endBlock);
+        }
         currentBasicBlock   = null;
         currentMethod       = null;
         currentSuperBlock   = null;

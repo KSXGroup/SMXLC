@@ -50,7 +50,7 @@ public class IRPrinter {
             m.parameters.forEach(this::printParameter);
             if(m.classThisPointer != null) irPrintStream.println(classThisPointerHeader + m.classThisPointer.getDisplayName());
             m.localVariables.values().forEach(this::printLocalVariable);
-            List<BasicBlock> blockList = m.basicBlockInBFSOrder;
+            LinkedHashSet<BasicBlock> blockList = m.basicBlockInBFSOrder;
             blockList.forEach(bb -> {
                 irPrintStream.print("\n");
                 if (bb.blockLabel != null) irPrintStream.println(labelHeader + bb.blockLabel);

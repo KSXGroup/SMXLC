@@ -22,25 +22,24 @@ public class Method {
     public List<ReturnInstruction>          returnInsts;
     public List<LoopSuperBlock>             loops;
     public List<BasicBlock>                 basicBlockInDFSOrder;
-    public List<BasicBlock>                 basicBlockInBFSOrder;
+    public LinkedHashSet<BasicBlock>        basicBlockInBFSOrder;
     public BasicBlock                       startBlock;
     public BasicBlock                       endBlock;
     public List<ConditionSuperBlock>        conditions;
     public String                           hintName;
-    public VirtualRegister                  returnTmpRegister;
+    public VirtualRegister                  returnRegister;
     public VirtualRegister                  classThisPointer; // as parameter;
 
 
-    private VirtualRegister                 returnRegister;
+
     private Integer                         tmpLabelCounter;
     private HashSet<BasicBlock>             visited;
 
     public Method(String _hintName, boolean inClass){
         isBuiltin           = false;
         basicBlockInDFSOrder= new LinkedList<BasicBlock>();
-        basicBlockInBFSOrder= new LinkedList<BasicBlock>();
+        basicBlockInBFSOrder= new LinkedHashSet<BasicBlock>();
         returnRegister      = new VirtualRegister(retVal, _hintName + retVal);
-        returnTmpRegister   = new VirtualRegister(retTmp, _hintName + retTmp);
         tmpRegisterCounter  = 0;
         tmpLabelCounter     = 0;
         hintName            = _hintName;
@@ -114,7 +113,7 @@ public class Method {
         return "%" + hintName;
     }
 
-    protected void dfs(BasicBlock bb, int order){
+    public void dfs(BasicBlock bb, int order){
         if(isBuiltin) return;
         else if(visited.contains(bb)) return;
         else{
@@ -132,7 +131,7 @@ public class Method {
         }
     }
 
-    protected void bfs(){
+    public void bfs(){
         if(isBuiltin) return;
         Queue<BasicBlock> Q = new LinkedList<BasicBlock>();
         visited.clear();
@@ -146,6 +145,30 @@ public class Method {
                     visited.add(basicBlock);
                 }
             });
+        }
+    }
+
+    public void cleanUp(){
+        if(isBuiltin) return;
+        Queue<BasicBlock> Q = new LinkedList<BasicBlock>();
+        visited.clear();
+        Q.add(endBlock);
+        while(!Q.isEmpty()){
+            BasicBlock cur = Q.poll();
+            if(cur.pred.size() == 0 && cur != startBlock){
+                cur.succ.forEach(bb->{
+                    bb.pred.remove(cur);
+                    cur.setRemoved();
+                });
+                visited.add(cur);
+            }else{
+                cur.pred.forEach(bb->{
+                    if(!visited.contains(bb)) {
+                        Q.add(bb);
+                        visited.add(bb);
+                    }
+                });
+            }
         }
     }
 }

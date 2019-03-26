@@ -10,4 +10,12 @@ public class CompareInstruction extends Instruction {
         lhs = _lhs;
         rhs = _rhs;
     }
+
+    public void replaceLhs(Operand _lhs){
+        lhs = _lhs;
+    }
+
+    public void replaceRhs(Operand _rhs){
+        rhs = _rhs;
+    }
 }

@@ -1,12 +1,12 @@
 package kstarxin.compiler;
 
 import java.io.*;
-import java.util.Scanner;
 
 import kstarxin.ir.IRBuilderVisitor;
 import kstarxin.ir.IRInterpreter;
 import kstarxin.ir.IRPrinter;
 import kstarxin.ir.IRProgram;
+import kstarxin.optimization.*;
 import kstarxin.parser.*;
 import kstarxin.ast.*;
 import kstarxin.utilities.MxException.*;
@@ -41,7 +41,7 @@ public class Compiler {
         }
     }
 
-    public void compileStart(boolean buildIR, boolean ifPrintIRtoFile, boolean runIR) throws Exception {
+    public void compileStart() throws Exception {
         ASTBuilderVisitor       builder         = null;
         ProgramNode             prog            = null;
         ASTTypeCheckerVisitor   typeChecker     = null;
@@ -51,9 +51,7 @@ public class Compiler {
         PrintStream             irOutputStream  = null;
         IRInterpreter           irIntererter    = null;
 
-        if(ifPrintIRtoFile){
-            irOutputStream = new PrintStream(new File(irPrintPath));
-        } else irOutputStream = System.out;
+        irOutputStream = new PrintStream(new File(irPrintPath));
         if(errorProcessor.size() > 0) {
             errorProcessor.printError();
             throw new MxCompileException(compileTerminateInfo);
@@ -95,16 +93,20 @@ public class Compiler {
             prog.getCurrentSymbolTable().dumpSymbolTable("", System.out);
         }
 
-        if(buildIR) {
-            irBuilder = new IRBuilderVisitor(prog);
-            ir = irBuilder.buildIR();
-            irPrinter = new IRPrinter(ir, irOutputStream);
-            irPrinter.printIR();
-        }
-        if(runIR) {
-            irIntererter = new IRInterpreter(irPrintPath);
-            irIntererter.runIR();
-        }
+
+        irBuilder = new IRBuilderVisitor(prog);
+        ir = irBuilder.buildIR();
+
+        Optimizer optimizer = new Optimizer(ir);
+        optimizer.run();
+
+        irPrinter = new IRPrinter(ir, irOutputStream);
+        irPrinter.printIR();
+
+        irIntererter = new IRInterpreter(irPrintPath);
+        irIntererter.runIR();
+
+
         return;
     }
 }

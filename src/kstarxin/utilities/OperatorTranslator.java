@@ -152,4 +152,18 @@ public class OperatorTranslator {
         }
         return ret;
     }
+
+    public static boolean isCompareOperator(int op){
+        switch (op){
+            case MxStarParser.NEQ:
+            case MxStarParser.EQ:
+            case MxStarParser.GE:
+            case MxStarParser.GT:
+            case MxStarParser.LE:
+            case MxStarParser.LT:
+                return true;
+            default:
+                return false;
+        }
+    }
 }
