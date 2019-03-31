@@ -21,7 +21,7 @@ public class ReturnInstruction extends JumpInstruction {
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = null;
         if(returnValue instanceof Memory) ((Memory) returnValue).replaceOperandForInline(map);
-        else{
+        else if(!(returnValue instanceof Immediate)){
             a = map.get(returnValue);
             if(a == null) throw new RuntimeException();
             returnValue = a;

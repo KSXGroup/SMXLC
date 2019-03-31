@@ -120,7 +120,9 @@ public class BasicBlock {
 
     public BasicBlock copy(){
         BasicBlock ret = new BasicBlock(null, superBlockBelongTo, null, blockLabel);
-        for(Instruction i = beginInst; i != null; i = i.next) ret.insertEnd(i.copy());
+        for(Instruction i = beginInst; i != null; i = i.next){
+            ret.insertEnd(i.copy());
+        }
         pred.forEach(p->ret.pred.add(p));
         succ.forEach(s-> ret.succ.add(s));
         ret.superBlockBelongTo = superBlockBelongTo;

@@ -14,6 +14,7 @@ public class NameMangler {
         public final static String parseInt       = "@_Zstring4parseInt";
         public final static String mainMethodName = "@main";
         public final static String inlineSuffix   = "#inline";
+        public final static String splitSuffix    = "#split";
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;

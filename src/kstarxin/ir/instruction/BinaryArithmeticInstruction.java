@@ -40,23 +40,25 @@ public class BinaryArithmeticInstruction extends Instruction {
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = null;
         if(lhs instanceof Memory) ((Memory) lhs).replaceOperandForInline(map);
-        else{
+        else if(!(lhs instanceof Immediate)){
             a = map.get(lhs);
             if(a == null) throw new RuntimeException();
             else lhs = a;
         }
 
         if(rhs instanceof Memory) ((Memory) rhs).replaceOperandForInline(map);
-        else{
+        else if(!(rhs instanceof Immediate)){
             a = map.get(rhs);
-            if(a == null) throw new RuntimeException();
+            if(a == null)
+                throw new RuntimeException();
             else rhs = a;
         }
 
-        if(target instanceof Memory) ((Memory) rhs).replaceOperandForInline(map);
-        else{
+        if(target instanceof Memory) ((Memory) target).replaceOperandForInline(map);
+        else {
             a = map.get(target);
-            if(a == null) throw new RuntimeException();
+            if(a == null)
+                throw new RuntimeException();
             else target = a;
         }
     }

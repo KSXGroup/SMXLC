@@ -35,13 +35,14 @@ public class StoreInstruction extends Instruction{
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = null;
         if(dest instanceof  Memory) ((Memory) dest).replaceOperandForInline(map);
-        else{
+        else {
             a = map.get(dest);
             if(a == null) throw new RuntimeException();
             dest = a;
         }
 
-        a = map.get(src);
+        if(!(src instanceof Immediate)) a = map.get(src);
+        else a = src;
         if(a == null) throw new RuntimeException();
         src = a;
     }

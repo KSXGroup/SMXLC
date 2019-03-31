@@ -16,7 +16,7 @@ public class LoadInstruction extends Instruction {
 
     @Override
     public LoadInstruction copy() {
-        if(src instanceof Memory) return new LoadInstruction((Register)dest, new Memory((Memory)dest));
+        if(src instanceof Memory) return new LoadInstruction((Register)dest, new Memory((Memory)src));
         else return new LoadInstruction((Register) dest, (Address) src);
     }
 

@@ -43,7 +43,8 @@ public class IRPrinter {
         map.values().forEach(this::printMethod);
     }
 
-    void printMethod(Method m){
+    public void printMethod(Method m){
+        m.basicBlockInBFSOrder.clear();
         m.bfs();
         if(!m.isBuiltin) {
             irPrintStream.println("\n" + methodHeader + m.hintName);
@@ -59,7 +60,7 @@ public class IRPrinter {
         }
     }
 
-    private void printInst(Instruction inst){
+    public void printInst(Instruction inst){
         if     (inst instanceof BinaryArithmeticInstruction )    printBinaryInstruction ((BinaryArithmeticInstruction   ) inst);
         else if(inst instanceof UnaryInstruction            )    printUnaryInstruction  ((UnaryInstruction              ) inst);
         else if(inst instanceof LoadInstruction             )    printLoadInstruction   ((LoadInstruction               ) inst);

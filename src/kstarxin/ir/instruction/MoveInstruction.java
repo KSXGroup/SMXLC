@@ -31,7 +31,8 @@ public class MoveInstruction extends Instruction {
        if(src instanceof Immediate) nsrc = src;
        else nsrc = map.get(src);
        ndest = map.get(dest);
-       if(ndest == null || nsrc == null) throw new RuntimeException();
+       if(ndest == null || nsrc == null)
+           throw new RuntimeException();
        src = nsrc;
        dest = ndest;
     }

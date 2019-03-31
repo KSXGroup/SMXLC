@@ -249,7 +249,12 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentBasicBlock.insertEnd(new LoadInstruction(ret, (Address) paraOp));
             return ret;
         }
-        else if(paraOp instanceof VirtualRegister || paraOp instanceof Immediate) return paraOp;
+        else if(paraOp instanceof VirtualRegister) return paraOp;
+        else if(paraOp instanceof Immediate){
+            VirtualRegister ret = currentMethod.allocateNewTmpRegister();
+            currentBasicBlock.insertEnd(new MoveInstruction(ret, (Immediate) paraOp));
+            return ret;
+        }
         else throw new RuntimeException("can not resolve type of parameter");
     }
 

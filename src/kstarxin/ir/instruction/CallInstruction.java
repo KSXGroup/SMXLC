@@ -40,9 +40,12 @@ public class CallInstruction extends Instruction{
     @Override
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = null;
-        a  = map.get(returnValue);
-        if(a == null || !(a instanceof VirtualRegister)) throw new RuntimeException();
-        else returnValue = (VirtualRegister) a;
+        if(returnValue != null) {
+            a = map.get(returnValue);
+            if (a == null || !(a instanceof VirtualRegister))
+                throw new RuntimeException();
+            else returnValue = (VirtualRegister) a;
+        }
 
         if(classThisPointer != null){
             a = map.get(classThisPointer);
@@ -52,9 +55,11 @@ public class CallInstruction extends Instruction{
 
         ArrayList<Operand> newPara = new ArrayList<Operand>();
         for (Operand para : parameters) {
-            a = map.get(para);
+            if(!(para instanceof Immediate)) a = map.get(para);
+            else a = para;
             if(a == null) throw new RuntimeException();
             else newPara.add(a);
         }
+        parameters = newPara;
     }
 }

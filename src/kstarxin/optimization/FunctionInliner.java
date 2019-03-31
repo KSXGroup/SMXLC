@@ -25,7 +25,13 @@ public class FunctionInliner {
     private int level;
     private int inlineCounter = 0;
     private IRProgram ir;
+    private IRPrinter printer;
 
+    public FunctionInliner(IRProgram _ir, int _level){
+        ir = _ir;
+        level = _level;
+        printer = new IRPrinter(_ir, System.out);
+    }
 
     //function return the start bb and end bb pair
     private copiedMethodInfo copyAndReplace(Method m, Method into, CallInstruction callInst){
@@ -38,6 +44,22 @@ public class FunctionInliner {
             BasicBlock copiedBB = bb.copy();
             if(copiedBB.blockLabel != null) copiedBB.blockLabel += (NameMangler.inlineSuffix + inlineCounter);
             basicBlockReplaceMap.put(bb, copiedBB);
+        });
+
+        //for every bb, update the pred and succ set use mapping
+        basicBlockReplaceMap.values().forEach(bb -> {
+            LinkedHashSet<BasicBlock> newPred = new LinkedHashSet<BasicBlock>();
+            LinkedHashSet<BasicBlock> newSucc = new LinkedHashSet<BasicBlock>();
+            bb.succ.forEach(dsucc->{
+                newSucc.add(basicBlockReplaceMap.get(dsucc));
+            });
+
+            bb.pred.forEach(dpred ->{
+                newPred.add(basicBlockReplaceMap.get(dpred));
+            });
+
+            bb.succ = newSucc;
+            bb.pred = newPred;
         });
 
         //the function copied may contain loop, record these info will do good to loop-related optimization if i have time to do that
@@ -109,14 +131,18 @@ public class FunctionInliner {
         else if(retInst.returnValue instanceof Immediate || retInst.returnValue instanceof VirtualRegister){
             regVal = retInst.returnValue;
         }
-        if(regVal instanceof VirtualRegister) retInst.replaceThisWith(new MoveInstruction(callInst.returnValue, (VirtualRegister) regVal));
-        else  retInst.replaceThisWith(new MoveInstruction(callInst.returnValue, (Immediate) regVal));
+
+        if (regVal instanceof VirtualRegister)
+            retInst.replaceThisWith(new MoveInstruction(callInst.returnValue, (VirtualRegister) regVal));
+        else retInst.replaceThisWith(new MoveInstruction(callInst.returnValue, (Immediate) regVal));
 
         return new copiedMethodInfo(basicBlockReplaceMap.get(m.startBlock), basicBlockReplaceMap.get(m.endBlock),superBlocks);
     }
 
     private void collectCallInfo(){
         ir.getMethodMap().values().forEach(method -> {
+            method.recursiveMethodCall.clear();
+            method.nonRecursiveMethodCall.clear();
             if(!method.isBuiltin){
                 method.basicBlockInBFSOrder.clear();
                 method.bfs();
@@ -124,7 +150,7 @@ public class FunctionInliner {
                 for (BasicBlock bb : method.basicBlockInBFSOrder) {
                     for(Instruction inst = bb.getBeginInst(); inst != null; inst = inst.next) {
                         instCnt++;
-                        if (inst instanceof CallInstruction){
+                        if (inst instanceof CallInstruction && !((CallInstruction) inst).callee.isBuiltin){
                             if(((CallInstruction) inst).callee == method) method.recursiveMethodCall.add((CallInstruction) inst);
                             else method.nonRecursiveMethodCall.add((CallInstruction) inst);
                         }
@@ -140,8 +166,9 @@ public class FunctionInliner {
     private void inlineFunction(CallInstruction call, Method into){
         inlineCounter++;
         copiedMethodInfo copy = copyAndReplace(call.callee, into, call);
+        copy.loops.forEach(loop->into.loops.add(loop));
         BasicBlock bb = call.basicBlockBelongTo;
-        BasicBlock newBB = new BasicBlock(into, bb.superBlockBelongTo, null, null);
+        BasicBlock newBB = new BasicBlock(into, bb.superBlockBelongTo, null, call.basicBlockBelongTo.blockLabel + NameMangler.splitSuffix + inlineCounter);
 
         //move inst after call to new BB
         Instruction nextToCall = call.next;
@@ -161,6 +188,11 @@ public class FunctionInliner {
         copy.startBB.setEndInst(null);
         copy.startBB.setBeginInst(null);
         copy.startBB.setSize(0);
+        copy.startBB.succ.forEach(stbsucc->{
+            stbsucc.pred.remove(copy.startBB);
+            stbsucc.pred.add(bb);
+        });
+
         //connect with old bb
         copyStartBegin.prev = call;
         call.next = copyStartBegin;
@@ -187,23 +219,47 @@ public class FunctionInliner {
         }
         newBB.setSize(instCnt);
 
-        into.canBeInlined = false;
+        if(call.returnValue == null) copyEndEnd.removeThisInst(); // if no return value, remove the replaced inst
+
+        if(bb == into.endBlock) into.endBlock = newBB;
+        copy.endBB.pred.forEach(edbbpred->{
+            Instruction ed = edbbpred.getEndInst();
+            if(ed instanceof DirectJumpInstruction){
+                if(((DirectJumpInstruction) ed).target == copy.endBB) ((DirectJumpInstruction) ed).target = newBB;
+                else throw new RuntimeException();
+            }
+            else if(ed instanceof ConditionJumpInstruction){
+                if(((ConditionJumpInstruction) ed).trueTarget == copy.endBB) ((ConditionJumpInstruction) ed).trueTarget = newBB;
+                else if(((ConditionJumpInstruction) ed).falseTarget == copy.endBB) ((ConditionJumpInstruction) ed).falseTarget = newBB;
+                else throw new RuntimeException();
+            }
+            else throw new RuntimeException();
+            edbbpred.succ.remove(copy.endBB);
+            edbbpred.succ.add(newBB);
+        });
+
+        copy.endBB.setEndInst(null);
+        copy.endBB.setBeginInst(null);
+        copy.endBB.setSize(0);
+
         into.basicBlockInBFSOrder.clear();
     }
 
-    public FunctionInliner(IRProgram _ir, int _level){
-        ir = _ir;
-        level = _level;
-    }
 
     public void run(){
-        collectCallInfo();
-        ir.getMethodMap().values().forEach(method -> {
-            //inline non-recursive call first
-            //just do one level inline first
-            method.nonRecursiveMethodCall.forEach(call->{
-                if(!method.isBuiltin && !method.canBeInlined && call.callee.canBeInlined) inlineFunction(call, method);
+        if(ir.getMethodMap().size() <= 2) return;
+        while(level > 0) {
+            collectCallInfo();
+            ir.getMethodMap().values().forEach(method -> {
+                //inline non-recursive call first
+                method.nonRecursiveMethodCall.forEach(call -> {
+                    if (!method.isBuiltin && !method.canBeInlined && call.callee.canBeInlined) {
+                        inlineFunction(call, method);
+                        printer.printMethod(method);
+                    }
+                });
             });
-        });
+            level--;
+        }
     }
 }

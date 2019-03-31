@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.operand.Immediate;
 import kstarxin.ir.operand.Memory;
 import kstarxin.ir.operand.Operand;
 
@@ -36,14 +37,14 @@ public class CompareInstruction extends Instruction {
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = null;
         if(lhs instanceof Memory) ((Memory) lhs).replaceOperandForInline(map);
-        else{
+        else if(!(lhs instanceof Immediate)){
              a = map.get(lhs);
              if(a == null) throw new RuntimeException();
              else lhs = a;
         }
 
         if(rhs instanceof Memory) ((Memory) rhs).replaceOperandForInline(map);
-        else{
+        else if(!(rhs instanceof Immediate)){
             a = map.get(rhs);
             if(a == null) throw new RuntimeException();
             else rhs = a;

@@ -163,12 +163,16 @@ public class CFGSimplifier {
         return ret;
     }
 
+    public void cleanUp(){
+        int total = 0;
+        int tmp = 0;
+        total = cleanUpAll();
+        System.err.println(total + " basic block(s) eliminated in phase 0");
+    }
+
     public void run(){
         int total = 0;
         int tmp = 0;
-
-        total = cleanUpAll();
-        System.err.println(total + " basic block(s) eliminated in phase 0");
 
         mergeInstructions();
 
@@ -176,6 +180,7 @@ public class CFGSimplifier {
 
         do{
             mergeBlocks();
+            total += cleanUpAll();
             total += blockMergedCount;
         } while(blockMergedCount > 0);
 
@@ -184,7 +189,6 @@ public class CFGSimplifier {
         total = 0;
         compressJumpRoute();
         total = cleanUpAll();
-
         System.err.println(total + " basic block(s) eliminated in phase 2");
     }
 }

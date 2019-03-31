@@ -55,12 +55,16 @@ public class Memory extends Address {
 
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         Operand a = map.get(address);
-        if(a == null || !(a instanceof Register)) throw new RuntimeException();
+        if(a == null || !(a instanceof Register))
+            throw new RuntimeException();
         else address = (Register) a;
-        if(!(index instanceof Immediate)) {
+        if(index != null && !(index instanceof Immediate)) {
             a = map.get(index);
-            if(a == null || !(a instanceof Register)) throw new RuntimeException();
-            index = (Register) a;
+            if(a == null) throw new RuntimeException();
+            if(a instanceof Register)
+                index = (Register) a;
+            else if(a instanceof Immediate)
+                index = (Immediate)a;
         }
     }
 

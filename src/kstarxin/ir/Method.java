@@ -152,8 +152,33 @@ public class Method {
         }
     }
 
-    public int cleanUp(){
-        if(isBuiltin) return 0;
+    private void fixCFG(){
+        //holy shit, never try to maintain the cfg when build it
+        if(isBuiltin) return;
+        basicBlockInBFSOrder.clear();
+        bfs();
+        LinkedList<BasicBlock> predToRemove = new LinkedList<BasicBlock>();
+        for (BasicBlock bb : basicBlockInBFSOrder) {
+            predToRemove.clear();
+            Instruction endInst = bb.getEndInst();
+            bb.succ.forEach(dsucc->{dsucc.addPred(bb);});
+            bb.pred.forEach(dpred->{
+                Instruction end = dpred.getEndInst();
+                if(end instanceof DirectJumpInstruction){
+                    if(((DirectJumpInstruction) end).target != bb) predToRemove.add(dpred);
+                }
+                else if(end instanceof ConditionJumpInstruction){
+                    if(((ConditionJumpInstruction) end).trueTarget != bb && ((ConditionJumpInstruction) end).falseTarget != bb) predToRemove.add(dpred);
+                }
+                else if(!(end instanceof ReturnInstruction))
+                    throw new RuntimeException();
+            });
+            predToRemove.forEach(rm -> bb.removePred(rm));
+        }
+        basicBlockInBFSOrder.clear();
+    }
+
+    private int removeDeplicatedBB(){
         Queue<BasicBlock> Q = new LinkedList<BasicBlock>();
         visited.clear();
         int count = 0;
@@ -177,7 +202,14 @@ public class Method {
                 });
             }
         }
-       // basicBlockInBFSOrder.clear();
         return count;
+    }
+
+    public int cleanUp(){
+        //PAY FOR NOT ELEGENT DESIGN, SHIT!!
+        int ret = removeDeplicatedBB();
+        fixCFG();
+        ret += removeDeplicatedBB();
+        return ret;
     }
 }
