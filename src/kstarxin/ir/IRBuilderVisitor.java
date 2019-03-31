@@ -369,7 +369,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         currentClassName        = node.getName();
         currentClassSymbolTable = node.getCurrentSymbolTable();
         node.getMemberVariableList().forEach(this::visit);
-        ir.addClassSize(node.getName(), currentVariableOffset + Configure.PTR_SIZE);
+        ir.addClassSize(node.getName(), currentVariableOffset);
         inClass                 = false;
         currentClassSymbolTable = null;
         currentClassName        = null;
@@ -787,7 +787,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 case MxStarParser.NOT:
                 case MxStarParser.BITNOT:
                     VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
-                    currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(),tmpReg , rhsValue));
+                    currentBasicBlock.insertEnd(new UnaryInstruction(node.getOp(), tmpReg, rhsValue));
                     return tmpReg;
                 default:
                     throw new RuntimeException("unknown oprand");
@@ -970,9 +970,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             VirtualRegister newInstanceAddr = currentMethod.allocateNewTmpRegister();
             addHeapAlloc(newInstanceAddr ,new Immediate(ir.getClassSize(node.getCreatorType().toString())));
             String classType = node.getCreatorType().toString();
-            Symbol cons = node.getCurrentSymbolTable().getClassType(classType, node.getLocation()).getMemberTable().getMember(classType);
+            Symbol cons = node.getCurrentSymbolTable().getClassType(classType, node.getLocation()).getMemberTable().getMember(ASTBuilderVisitor.constructorPrefix + classType);
             if(cons != null){
-                CallInstruction call = new CallInstruction(ir.getMethod(NameMangler.mangleName(cons)), null);
+                //TODO:there may be some problem here
+                CallInstruction call = new CallInstruction(ir.getMethod(NameMangler.mangleClassConstructor(classType)), null);
                 call.setClassMemberCall(newInstanceAddr);
                 node.getParameterList().forEach(n ->{
                     call.addParameter(resolveParameter(n));
@@ -1065,11 +1066,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             return new Memory(classPtr, ir.getOffsetInClass(nm), Configure.PTR_SIZE);
         } else{
             Operand ret = currentMethod.localVariables.get(nm);
-            if(ret == null) ret = ir.getGlobalVariableVirtualRegister(nm);
-            /*else{
-                if(isNeedMemory(node.getType())) return new Memory((VirtualRegister) ret);
-                else return (VirtualRegister) ret;
-            }*/
+            if(ret == null) ret = ir.getGlobalVariable(nm);
             if(ret == null){
                 throw new RuntimeException("there is no shit variable called " + nm + " there must be something run in the symbol system!" + node.getLocation().getLineNumberString() + node.getLocation().getColumnNumberString());
             }

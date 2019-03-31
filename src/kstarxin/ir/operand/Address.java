@@ -1,6 +1,8 @@
 package kstarxin.ir.operand;
 
-public class Address extends Operand{
+import java.util.*;
+
+public abstract class Address extends Operand{
     public Address(String _hintName){
         super(_hintName);
     }

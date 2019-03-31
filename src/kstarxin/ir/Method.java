@@ -14,18 +14,20 @@ public class Method {
     public static String thisPtr            = "_this";
     public static String tmpRegPrefix       =  "_tmp";
     public boolean                          isBuiltin;
+    public boolean                          canBeInlined;
     public Integer                          tmpRegisterCounter;
     public ArrayList<VirtualRegister>       parameters;
     public HashMap<String, VirtualRegister> localVariables;
     public HashMap<String, VirtualRegister> tmpLocalRegisters;
     public HashMap<String, Integer>         localVariableOffset;
+    public LinkedList<CallInstruction>      nonRecursiveMethodCall;
+    public LinkedList<CallInstruction>      recursiveMethodCall;
     public List<ReturnInstruction>          returnInsts;
     public List<LoopSuperBlock>             loops;
     public List<BasicBlock>                 basicBlockInDFSOrder;
     public LinkedHashSet<BasicBlock>        basicBlockInBFSOrder;
     public BasicBlock                       startBlock;
     public BasicBlock                       endBlock;
-    public List<ConditionSuperBlock>        conditions;
     public String                           hintName;
     public VirtualRegister                  returnRegister;
     public VirtualRegister                  classThisPointer; // as parameter;
@@ -36,23 +38,25 @@ public class Method {
     private HashSet<BasicBlock>             visited;
 
     public Method(String _hintName, boolean inClass){
-        isBuiltin           = false;
-        basicBlockInDFSOrder= new LinkedList<BasicBlock>();
-        basicBlockInBFSOrder= new LinkedHashSet<BasicBlock>();
-        returnRegister      = new VirtualRegister(retVal, _hintName + retVal);
-        tmpRegisterCounter  = 0;
-        tmpLabelCounter     = 0;
-        hintName            = _hintName;
-        startBlock          = null;
-        loops               = new LinkedList<LoopSuperBlock>();
-        conditions          = new LinkedList<ConditionSuperBlock>();
-        parameters          = new ArrayList<VirtualRegister>();
-        localVariables      = new HashMap<String, VirtualRegister>();
-        tmpLocalRegisters   = new HashMap<String, VirtualRegister>();
-        localVariableOffset = new HashMap<String, Integer>();
-        returnInsts         = new LinkedList<ReturnInstruction>();
-        endBlock            = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret); //block for merge return insts
-        visited             = new HashSet<BasicBlock>();
+        isBuiltin               = false;
+        canBeInlined            = false;
+        basicBlockInDFSOrder    = new LinkedList<BasicBlock>();
+        basicBlockInBFSOrder    = new LinkedHashSet<BasicBlock>();
+        returnRegister          = new VirtualRegister(retVal, _hintName + retVal);
+        tmpRegisterCounter      = 0;
+        tmpLabelCounter         = 0;
+        hintName                = _hintName;
+        startBlock              = null;
+        loops                   = new LinkedList<LoopSuperBlock>();
+        parameters              = new ArrayList<VirtualRegister>();
+        localVariables          = new HashMap<String, VirtualRegister>();
+        tmpLocalRegisters       = new HashMap<String, VirtualRegister>();
+        localVariableOffset     = new HashMap<String, Integer>();
+        returnInsts             = new LinkedList<ReturnInstruction>();
+        endBlock                = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret); //block for merge return insts
+        visited                 = new HashSet<BasicBlock>();
+        nonRecursiveMethodCall  = new LinkedList<CallInstruction>();
+        recursiveMethodCall     = new LinkedList<CallInstruction>();
 
         if(inClass){
             classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);

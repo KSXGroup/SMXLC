@@ -7,7 +7,6 @@ import kstarxin.utilities.*;
 import java.io.*;
 import java.lang.reflect.Array;
 import java.util.*;
-
 /*
 steps:
     1.read ir lines
@@ -23,19 +22,6 @@ compenents:
 
 //function call not supported for there is no run-time stack
 
-class Pair<K,V>{
-    K first;
-    V second;
-    public Pair(K _first, V _second){
-        first = _first;
-        second = _second;
-    }
-
-    public Pair(){
-        first = null;
-        second = null;
-    }
-}
 
 public class IRInterpreter {
 
@@ -821,7 +807,7 @@ public class IRInterpreter {
                     //System.err.println("call " + currentMethodRunning.name + " return with value" + read(globalReturnReg));
                     currentMethodRunning.retFlag = false;
                     retRestore(originInfo);
-                    write(returnReg, read(globalReturnReg));
+                    if(!returnReg.equals("null")) write(returnReg, read(globalReturnReg));
                 }
                 break;
         }
@@ -886,7 +872,6 @@ public class IRInterpreter {
                     currentLineNumber++;
                     continue;
                 }
-                //System.out.println(line);
                 currentLineNumber++;
                 if (current_state.equals(STATUS.STATIC))
                     parseStaticData(line);

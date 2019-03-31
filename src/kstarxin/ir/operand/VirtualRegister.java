@@ -16,12 +16,6 @@ public class VirtualRegister extends Register {
         tmpId = -1;
     }
 
-    public VirtualRegister(int _tmpId){
-        super(""+_tmpId);
-        tmpId = _tmpId;
-        mangledName = null;
-    }
-
     public VirtualRegister(VariableDeclaratorNode node){
         super(node.getIdentifier());
         hintName = node.getIdentifier();

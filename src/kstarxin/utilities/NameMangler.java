@@ -3,16 +3,17 @@ package kstarxin.utilities;
 import kstarxin.ast.*;
 
 public class NameMangler {
-        public static String globalPrefix   = "@";
-        public static String methodPrefix   = "_Z";
-        public static String initMethod     = "@_INIT_";
-        public static String strcmp         = "@_Zstrcmpss";
-        public static String strcat         = "@_Zstrcatss";
-        public static String malloc         = "@_Zmalloci";
-        public static String substring      = "@_Zstring4substringii";
-        public static String ord            = "@_Zstring4ordi";
-        public static String parseInt       = "@_Zstring4parseInt";
-        public static String mainMethodName = "@main";
+        public final static String globalPrefix   = "@";
+        public final static String methodPrefix   = "_Z";
+        public final static String initMethod     = "@_INIT_";
+        public final static String strcmp         = "@_Zstrcmpss";
+        public final static String strcat         = "@_Zstrcatss";
+        public final static String malloc         = "@_Zmalloci";
+        public final static String substring      = "@_Zstring4substringii";
+        public final static String ord            = "@_Zstring4ordi";
+        public final static String parseInt       = "@_Zstring4parseInt";
+        public final static String mainMethodName = "@main";
+        public final static String inlineSuffix   = "#inline";
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;
@@ -38,7 +39,7 @@ public class NameMangler {
 
         public static String mangleName(String className ,MethodDeclarationNode n){
             String ret = mangleName(n);
-            return ret + "_" + className;
+            return ret + globalPrefix + className;
         }
 
         public static String mangleName(MethodCallNode n){
@@ -47,7 +48,11 @@ public class NameMangler {
 
         public static String mangleName(String className, MethodCallNode n){
             String ret = mangleName(n);
-            return ret + "_" + className;
+            return ret + globalPrefix + className;
+        }
+
+        public static String mangleClassConstructor(String className){
+            return globalPrefix + methodPrefix + className + globalPrefix + className;
         }
 
         public static String mangleName(LoopNode n){
@@ -83,7 +88,7 @@ public class NameMangler {
 
         public static String mangleName(String className, Symbol s){
             String ret = mangleName(s);
-             return ret + "_" + className;
+             return ret + globalPrefix + className;
         }
 
         public static String mangleName(ParameterDeclarationNode n) {

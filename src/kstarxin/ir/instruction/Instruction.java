@@ -1,14 +1,28 @@
 package kstarxin.ir.instruction;
 
 import kstarxin.ir.BasicBlock;
+import kstarxin.ir.operand.Operand;
 
-public class Instruction {
+import java.util.HashMap;
+
+public abstract class Instruction {
     public String hintName;
     public Instruction next;
     public Instruction prev;
     public BasicBlock basicBlockBelongTo;
     public Instruction(String _hintName){
         hintName = _hintName;
+    }
+
+    public void insertBeforeThis(Instruction inst){
+        Instruction tprev = prev;
+        prev = inst;
+        inst.next = this;
+        inst.prev = tprev;
+        if(tprev != null) tprev.next = inst;
+        else basicBlockBelongTo.setBeginInst(inst);
+        inst.basicBlockBelongTo = basicBlockBelongTo;
+        basicBlockBelongTo.increaseSize();
     }
 
     public void insertInstAfterThis(Instruction inst){
@@ -42,4 +56,8 @@ public class Instruction {
         basicBlockBelongTo.decreaseSize();
         basicBlockBelongTo = null;
     }
+
+    public abstract Instruction copy();
+
+    public abstract void replaceOperandForInline(HashMap<Operand, Operand> map);
 }

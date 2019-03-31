@@ -26,6 +26,7 @@ public class BasicBlock {
         pred                = new LinkedHashSet<BasicBlock>();
         succ                = new LinkedHashSet<BasicBlock>();
         isRemoved           = false;
+        dfsOrder            = -1;
 
         if(_pred != null) {
             pred.add(_pred);
@@ -115,5 +116,14 @@ public class BasicBlock {
 
     public boolean isRemoved(){
         return  isRemoved;
+    }
+
+    public BasicBlock copy(){
+        BasicBlock ret = new BasicBlock(null, superBlockBelongTo, null, blockLabel);
+        for(Instruction i = beginInst; i != null; i = i.next) ret.insertEnd(i.copy());
+        pred.forEach(p->ret.pred.add(p));
+        succ.forEach(s-> ret.succ.add(s));
+        ret.superBlockBelongTo = superBlockBelongTo;
+        return ret;
     }
 }

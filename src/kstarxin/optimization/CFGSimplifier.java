@@ -90,6 +90,7 @@ public class CFGSimplifier {
 
                         if(dsucc != bb && sflag){
                             doMergeBlock(bb, dsucc);
+                            if(dsucc == method.endBlock) method.endBlock = bb;
                             bb.succ = dsucc.succ; //set the merger's succ as mergee's succ
                             for (BasicBlock succbb : dsucc.succ) {
                                 //for every mergee's succ, update it's pred

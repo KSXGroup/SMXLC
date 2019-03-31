@@ -12,4 +12,9 @@ public class LoopSuperBlock extends SuperBlock {
     public LoopSuperBlock(Method _methodBelongTo){
         _methodBelongTo.loops.add(this);
     }
+    public LoopSuperBlock(LoopSuperBlock lsb){
+        condBB      = lsb.condBB;
+        stepBB      = lsb.stepBB;
+        bodyBBStart = lsb.bodyBBStart;
+    }
 }

@@ -1,6 +1,9 @@
 package kstarxin.ir.instruction;
 
 import kstarxin.ir.BasicBlock;
+import kstarxin.ir.operand.Operand;
+
+import java.util.HashMap;
 
 public class ConditionJumpInstruction extends Instruction {
     public int op;
@@ -23,5 +26,15 @@ public class ConditionJumpInstruction extends Instruction {
 
     public void replaceFalseTargetWith(BasicBlock bb){
         falseTarget = bb;
+    }
+
+    @Override
+    public ConditionJumpInstruction copy() {
+        return new ConditionJumpInstruction(op, trueTarget, falseTarget);
+    }
+
+    @Override
+    public void replaceOperandForInline(HashMap<Operand, Operand> map) {
+        //DO NOTHING
     }
 }

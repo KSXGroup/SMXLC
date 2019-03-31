@@ -1,5 +1,7 @@
 package kstarxin.ir.operand;
 
+import java.util.HashMap;
+
 public class Memory extends Address {
     public Register address;
     public Operand  index;
@@ -15,7 +17,7 @@ public class Memory extends Address {
         scale       = _scale;
     }
 
-    public Memory(VirtualRegister _address, VirtualRegister _index, int _sizePerData, int _scale){
+    public Memory(VirtualRegister _address, Register _index, int _sizePerData, int _scale){
         //for array access
         super("mem");
         address     = _address;
@@ -40,6 +42,26 @@ public class Memory extends Address {
         sizePerData     = -1;
         offsetInClass   = _offsetInClass;
         scale           = _scale;
+    }
+
+    public Memory(Memory other){
+        super("mem");
+        address         = other.address;
+        index           = other.index;
+        sizePerData     = other.sizePerData;
+        offsetInClass   = other.offsetInClass;
+        scale           = other.scale;
+    }
+
+    public void replaceOperandForInline(HashMap<Operand, Operand> map) {
+        Operand a = map.get(address);
+        if(a == null || !(a instanceof Register)) throw new RuntimeException();
+        else address = (Register) a;
+        if(!(index instanceof Immediate)) {
+            a = map.get(index);
+            if(a == null || !(a instanceof Register)) throw new RuntimeException();
+            index = (Register) a;
+        }
     }
 
     @Override

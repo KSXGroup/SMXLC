@@ -100,7 +100,7 @@ public class IRProgram {
         return offsetInClass.get(mangledName);
     }
 
-    public Label getGlobalVariableVirtualRegister(String mn){
+    public Label getGlobalVariable(String mn){
         return globalVariableMap.get(mn);
     }
 
