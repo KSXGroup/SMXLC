@@ -6,6 +6,7 @@ import kstarxin.ir.instruction.*;
 import kstarxin.ir.operand.*;
 import kstarxin.ir.superblock.*;
 import kstarxin.utilities.*;
+
 import java.util.*;
 
 public class FunctionInliner {
@@ -139,7 +140,7 @@ public class FunctionInliner {
         return new copiedMethodInfo(basicBlockReplaceMap.get(m.startBlock), basicBlockReplaceMap.get(m.endBlock),superBlocks);
     }
 
-    private void collectCallInfo(){
+    public void collectCallInfo(){
         ir.getMethodMap().values().forEach(method -> {
             method.recursiveMethodCall.clear();
             method.nonRecursiveMethodCall.clear();
@@ -166,6 +167,7 @@ public class FunctionInliner {
     private void inlineFunction(CallInstruction call, Method into){
         inlineCounter++;
         copiedMethodInfo copy = copyAndReplace(call.callee, into, call);
+        into.globalVariableUsed.addAll(call.callee.globalVariableUsed);
         copy.loops.forEach(loop->into.loops.add(loop));
         BasicBlock bb = call.basicBlockBelongTo;
         BasicBlock newBB = new BasicBlock(into, bb.superBlockBelongTo, null, call.basicBlockBelongTo.blockLabel + NameMangler.splitSuffix + inlineCounter);
@@ -245,6 +247,34 @@ public class FunctionInliner {
         into.basicBlockInBFSOrder.clear();
     }
 
+    private void removeUselessMethodFromIR(){
+        HashSet<Method> called = new HashSet<Method>();
+
+        collectCallInfo();
+
+        Queue<Method> callQ = new LinkedList<Method>();
+        Method main = ir.getMethodMap().get(NameMangler.mainMethodName);
+        Method init = ir.getInitMethod();
+        ((LinkedList<Method>) callQ).add(main);
+        ((LinkedList<Method>) callQ).add(init);
+        called.add(main);
+        called.add(init);
+
+        while(!callQ.isEmpty()){
+            Method m = ((LinkedList<Method>) callQ).pop();
+            m.nonRecursiveMethodCall.forEach(nrmc ->{
+                if(!called.contains(nrmc.callee)) ((LinkedList<Method>) callQ).add(nrmc.callee);
+                called.add(nrmc.callee);
+            });
+        }
+
+        LinkedList<String> toRemove = new LinkedList<String>();
+        ir.getMethodMap().forEach((k, v)->{
+            if(!called.contains(v)) toRemove.add(k);
+        });
+        toRemove.forEach(item -> ir.getMethodMap().remove(item));
+    }
+
 
     public void run(){
         if(ir.getMethodMap().size() <= 2) return;
@@ -255,11 +285,12 @@ public class FunctionInliner {
                 method.nonRecursiveMethodCall.forEach(call -> {
                     if (!method.isBuiltin && !method.canBeInlined && call.callee.canBeInlined) {
                         inlineFunction(call, method);
-                        printer.printMethod(method);
+                        //printer.printMethod(method);
                     }
                 });
             });
             level--;
         }
+        removeUselessMethodFromIR();
     }
 }

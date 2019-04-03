@@ -39,19 +39,18 @@ public class IRPrinter {
         irPrintStream.println();
         //print init part first
         irPrintStream.println(codeAreaHeader);
-        printMethod(init);
         map.values().forEach(this::printMethod);
     }
 
     public void printMethod(Method m){
-        m.basicBlockInBFSOrder.clear();
-        m.bfs();
+        //m.basicBlockInDFSOrder.clear();
+        m.dfs();
         if(!m.isBuiltin) {
             irPrintStream.println("\n" + methodHeader + m.hintName);
             m.parameters.forEach(this::printParameter);
             if(m.classThisPointer != null) irPrintStream.println(classThisPointerHeader + m.classThisPointer.getDisplayName());
             m.localVariables.values().forEach(this::printLocalVariable);
-            LinkedHashSet<BasicBlock> blockList = m.basicBlockInBFSOrder;
+            LinkedHashSet<BasicBlock> blockList = m.basicBlockInDFSOrder;
             blockList.forEach(bb -> {
                 irPrintStream.print("\n");
                 if (bb.blockLabel != null) irPrintStream.println(labelHeader + bb.blockLabel);

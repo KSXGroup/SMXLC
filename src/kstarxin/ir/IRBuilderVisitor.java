@@ -175,6 +175,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     VirtualRegister tmpAddrReg = null;
                     ir.addGlobalVariable(mn, sp, t);
                     if(init != null){
+                        currentMethod.globalVariableUsed.add(sp);
                         initOp = visit(init);
                         if(initOp instanceof VirtualRegister) currentBasicBlock.insertEnd(new StoreInstruction(sp, (VirtualRegister) initOp));
                         else if(initOp instanceof Immediate) currentBasicBlock.insertEnd(new StoreInstruction(sp, (Immediate)initOp));
@@ -193,6 +194,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     ExpressionNode init = decl.getInitializer();
                     ir.addGlobalVariable(mn , sp, t);
                     if (init != null) {
+                        currentMethod.globalVariableUsed.add(sp);
                         Operand v = visit(init);
                         if(v instanceof Immediate) sp.setInitialized(((Immediate) v).value);
                         else if(v instanceof VirtualRegister) currentBasicBlock.insertEnd(new StoreInstruction(sp, (VirtualRegister)v));
@@ -209,7 +211,9 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                         String mn = NameMangler.mangleName(decl);
                         String value = null;
                         ExpressionNode astInit = decl.getInitializer();
-                        if(astInit != null) value = ((StringConstantNode)astInit).getValue();
+                        if(astInit != null){
+                            value = ((StringConstantNode)astInit).getValue();
+                        }
                         ir.addGlobalVariable(mn , new StaticString(mn , value), t);
                 });
             else throw new RuntimeException("you forget something when init!");
@@ -304,7 +308,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             }
         });
         System.err.println("IR BUILD FIN!");
-        //ir.getInitMethod().dfs(null, 0);
+        //ir.getMethod().dfs(null, 0);
+        //ir.getMethod().dfs(null, 0);
         //ir.getMethodMap().values().forEach(method -> method.dfs(null, 0));
     }
 
@@ -312,6 +317,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         init();
         initBuiltin();
         currentMethod       = new Method(NameMangler.initMethod ,false);
+        ir.addMethod(NameMangler.initMethod, currentMethod, null);
         BasicBlock startBB  = new BasicBlock(currentMethod,null,null, currentMethod.hintName);
         currentBasicBlock   = startBB;
         currentMethod.setStartBlock(startBB);
@@ -1071,7 +1077,10 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             return new Memory(classPtr, ir.getOffsetInClass(nm), Configure.PTR_SIZE);
         } else{
             Operand ret = currentMethod.localVariables.get(nm);
-            if(ret == null) ret = ir.getGlobalVariable(nm);
+            if(ret == null){
+                ret = ir.getGlobalVariable(nm);
+                if(ret != null) currentMethod.globalVariableUsed.add((Address) ret);
+            }
             if(ret == null){
                 throw new RuntimeException("there is no shit variable called " + nm + " there must be something run in the symbol system!" + node.getLocation().getLineNumberString() + node.getLocation().getColumnNumberString());
             }
@@ -1097,7 +1106,9 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(StringConstantNode node) {
-        return ir.addStringConstant(node.getValue());
+        StaticString ret = ir.addStringConstant(node.getValue());
+        currentMethod.globalVariableUsed.add(ret);
+        return ret;
     }
 
     @Override

@@ -7,20 +7,22 @@ import kstarxin.ir.instruction.Instruction;
 import kstarxin.ir.instruction.ReturnInstruction;
 
 public class Optimizer {
-    IRProgram ir;
-    CFGSimplifier   simplifier;
-    FunctionInliner inliner;
+    IRProgram               ir;
+    CFGSimplifier           simplifier;
+    FunctionInliner         inliner;
+    GlobalVariableOptimizer globalVariableOptimizer;
 
     public Optimizer(IRProgram _ir){
-        ir          = _ir;
-        simplifier  = new CFGSimplifier(_ir);
-        inliner     = new FunctionInliner(_ir, 3);
+        ir                      = _ir;
+        simplifier              = new CFGSimplifier(_ir);
+        inliner                 = new FunctionInliner(_ir, 4);
+        globalVariableOptimizer = new GlobalVariableOptimizer(_ir);
     }
 
     public void run(){
         simplifier.cleanUp();
         inliner.run();
         simplifier.run();
-
+        globalVariableOptimizer.run();
     }
 }

@@ -1,6 +1,7 @@
 package kstarxin.ir.operand;
 
 import java.util.HashMap;
+import java.util.HashSet;
 
 public class Memory extends Address {
     public Register address;
@@ -85,6 +86,13 @@ public class Memory extends Address {
                 ret = ret + "+" + sizePerData + "*" + index.getDisplayName() + "]";
             }
         }
+        return ret;
+    }
+
+    public HashSet<Operand> collectUseInfo(){
+        HashSet<Operand> ret = new HashSet<Operand>();
+        ret.add(address);
+        if(index instanceof Register) ret.add(index);
         return ret;
     }
 }

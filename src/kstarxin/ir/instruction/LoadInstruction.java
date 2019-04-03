@@ -33,4 +33,23 @@ public class LoadInstruction extends Instruction {
         if(a == null) throw new RuntimeException();
         else dest = a;
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        def.clear();
+        use.clear();
+        def.add(dest);
+        if(src instanceof StaticString || src instanceof StaticPointer) use.add(src);
+        else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        if(src instanceof StaticPointer || src instanceof StaticString){
+            VirtualRegister vreg = map.get(src);
+            if(vreg == null) throw new RuntimeException();
+            replaceThisWith(new MoveInstruction((Register) dest, vreg));
+        }
+        return null;
+    }
 }

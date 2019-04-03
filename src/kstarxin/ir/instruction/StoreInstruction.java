@@ -46,4 +46,27 @@ public class StoreInstruction extends Instruction{
         if(a == null) throw new RuntimeException();
         src = a;
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        use.clear();
+        def.clear();
+        if(src instanceof Register) use.add(src);
+        if(dest instanceof StaticString || dest instanceof StaticPointer) def.add(dest);
+        else if(dest instanceof Memory) use.addAll(((Memory) dest).collectUseInfo());
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        if(dest instanceof StaticPointer || dest instanceof StaticString) {
+            VirtualRegister vreg = map.get(dest);
+            if(vreg == null)
+                throw new RuntimeException();
+            if(src instanceof Immediate) replaceThisWith(new MoveInstruction(vreg, (Immediate) src));
+            else if(src instanceof VirtualRegister) replaceThisWith(new MoveInstruction(vreg, (VirtualRegister)src));
+            else throw new RuntimeException();
+            return (Address) dest;
+        }
+        return null;
+    }
 }

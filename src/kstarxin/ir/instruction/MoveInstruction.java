@@ -36,4 +36,17 @@ public class MoveInstruction extends Instruction {
        src = nsrc;
        dest = ndest;
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        use.clear();
+        def.clear();
+        if(src instanceof Register) use.add(src);
+        def.add(dest);
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        return null;
+    }
 }

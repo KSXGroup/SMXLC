@@ -128,4 +128,8 @@ public class BasicBlock {
         ret.superBlockBelongTo = superBlockBelongTo;
         return ret;
     }
+
+    public void collectDefUseInfo(){
+        for(Instruction i = beginInst; i != null; i = i.next) i.collectDefUseInfo();
+    }
 }

@@ -27,4 +27,22 @@ public class ReturnInstruction extends JumpInstruction {
             returnValue = a;
         }
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        def.clear();
+        use.clear();
+        if (returnValue instanceof Register || returnValue instanceof StaticPointer || returnValue instanceof StaticString)
+            use.add(returnValue);
+        else if (returnValue instanceof Memory) use.addAll(((Memory) returnValue).collectUseInfo());
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        if(returnValue instanceof StaticString || returnValue instanceof StaticPointer){
+            returnValue = map.get(returnValue);
+            if(returnValue == null) throw new RuntimeException();
+        }
+        return null;
+    }
 }

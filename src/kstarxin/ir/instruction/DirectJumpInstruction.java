@@ -1,7 +1,9 @@
 package kstarxin.ir.instruction;
 
 import kstarxin.ir.BasicBlock;
+import kstarxin.ir.operand.Address;
 import kstarxin.ir.operand.Operand;
+import kstarxin.ir.operand.VirtualRegister;
 
 import java.util.HashMap;
 
@@ -24,5 +26,15 @@ public class DirectJumpInstruction extends Instruction {
     @Override
     public void replaceOperandForInline(HashMap<Operand, Operand> map) {
         //DO NOTHING
+    }
+
+    @Override
+    public void collectDefUseInfo() {
+        //do nothing
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        return null;
     }
 }

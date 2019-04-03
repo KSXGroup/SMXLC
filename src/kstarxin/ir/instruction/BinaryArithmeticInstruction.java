@@ -62,4 +62,36 @@ public class BinaryArithmeticInstruction extends Instruction {
             else target = a;
         }
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        def.clear();
+        use.clear();
+        if(lhs instanceof Register || lhs instanceof StaticPointer || lhs instanceof StaticString) use.add(lhs);
+        else if(lhs instanceof Memory) use.addAll(((Memory) lhs).collectUseInfo());
+        if(rhs instanceof Register || rhs instanceof StaticPointer || rhs instanceof StaticString) use.add(rhs);
+        else if(rhs instanceof Memory) use.addAll(((Memory) rhs).collectUseInfo());
+        if(target instanceof Register || target instanceof StaticString || target instanceof StaticPointer) def.add(target);
+        else if(target instanceof Memory) use.addAll(((Memory) target).collectUseInfo());
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        if(rhs instanceof StaticString || rhs instanceof StaticPointer){
+            rhs = map.get(rhs);
+            if(rhs == null) throw new RuntimeException();
+        }
+
+        if(lhs instanceof StaticString || lhs instanceof StaticPointer){
+            lhs = map.get(lhs);
+            if(lhs == null) throw new RuntimeException();
+        }
+
+        if(target instanceof StaticString || target instanceof StaticPointer){
+            target = map.get(target);
+            if(target == null) throw new RuntimeException();
+            return (Address) target;
+        }
+        return null;
+    }
 }

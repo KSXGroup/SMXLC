@@ -65,4 +65,31 @@ public class UnaryInstruction extends Instruction{
             }
         }
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        use.clear();
+        def.clear();
+        if(src instanceof Register || src instanceof StaticPointer || src instanceof StaticString) use.add(src);
+        else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+
+        if(dest instanceof Register || src instanceof StaticPointer || src instanceof StaticString) def.add(dest);
+        else if(dest instanceof Memory) use.addAll(((Memory) dest).collectUseInfo());
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        if(src instanceof StaticPointer || src instanceof StaticString){
+            src = map.get(src);
+            if(src == null) throw new RuntimeException();
+        }
+
+        if(dest instanceof StaticPointer || dest instanceof StaticString){
+            Address old = (Address) dest;
+            dest = map.get(dest);
+            if(dest == null) throw new RuntimeException();
+            return old;
+        }
+        return null;
+    }
 }

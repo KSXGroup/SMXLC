@@ -62,4 +62,18 @@ public class CallInstruction extends Instruction{
         }
         parameters = newPara;
     }
+
+    @Override
+    public void collectDefUseInfo() {
+        def.clear();
+        use.clear();
+        if(returnValue != null) def.add(returnValue);
+        parameters.forEach(para-> use.add(para)); //parameters are vregs
+        if(classThisPointer != null) use.add(classThisPointer);
+    }
+
+    @Override
+    public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        return null;
+    }
 }

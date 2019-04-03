@@ -19,12 +19,12 @@ public class Method {
     public ArrayList<VirtualRegister>       parameters;
     public HashMap<String, VirtualRegister> localVariables;
     public HashMap<String, VirtualRegister> tmpLocalRegisters;
-    public HashMap<String, Integer>         localVariableOffset;
+    public HashSet<Address>                 globalVariableUsed;
     public LinkedList<CallInstruction>      nonRecursiveMethodCall;
     public LinkedList<CallInstruction>      recursiveMethodCall;
     public List<ReturnInstruction>          returnInsts;
     public List<LoopSuperBlock>             loops;
-    public List<BasicBlock>                 basicBlockInDFSOrder;
+    public LinkedHashSet<BasicBlock>        basicBlockInDFSOrder;
     public LinkedHashSet<BasicBlock>        basicBlockInBFSOrder;
     public BasicBlock                       startBlock;
     public BasicBlock                       endBlock;
@@ -40,7 +40,7 @@ public class Method {
     public Method(String _hintName, boolean inClass){
         isBuiltin               = false;
         canBeInlined            = false;
-        basicBlockInDFSOrder    = new LinkedList<BasicBlock>();
+        basicBlockInDFSOrder    = new LinkedHashSet<BasicBlock>();
         basicBlockInBFSOrder    = new LinkedHashSet<BasicBlock>();
         returnRegister          = new VirtualRegister(retVal, _hintName + retVal);
         tmpRegisterCounter      = 0;
@@ -51,12 +51,12 @@ public class Method {
         parameters              = new ArrayList<VirtualRegister>();
         localVariables          = new HashMap<String, VirtualRegister>();
         tmpLocalRegisters       = new HashMap<String, VirtualRegister>();
-        localVariableOffset     = new HashMap<String, Integer>();
         returnInsts             = new LinkedList<ReturnInstruction>();
         endBlock                = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret); //block for merge return insts
         visited                 = new HashSet<BasicBlock>();
         nonRecursiveMethodCall  = new LinkedList<CallInstruction>();
         recursiveMethodCall     = new LinkedList<CallInstruction>();
+        globalVariableUsed      = new HashSet<Address>();
 
         if(inClass){
             classThisPointer    = new VirtualRegister(thisPtr, _hintName + thisPtr);
@@ -79,6 +79,7 @@ public class Method {
 
     public void addBasicBlock(BasicBlock bb){
         //basicBlocks.add(bb);
+        //abandoned
     }
 
     public void addParameter(ParameterDeclarationNode n){
@@ -117,21 +118,20 @@ public class Method {
         return "%" + hintName;
     }
 
-    public void dfs(BasicBlock bb, int order){
+    private void dodfs(BasicBlock bb, int order){
+        bb.dfsOrder = order;
+        basicBlockInDFSOrder.add(bb);
+        if(bb.succ.size() == 0) return;
+        bb.succ.forEach(succ -> {
+            if(!basicBlockInDFSOrder.contains(succ)) dodfs(succ, order + 1);
+        });
+    }
+
+    public void dfs(){
         if(isBuiltin) return;
-        else if(visited.contains(bb)) return;
         else{
-            visited.clear();
-            BasicBlock cur = null;
-            if(bb == null) cur = startBlock;
-            else cur = bb;
-            cur.dfsOrder = order;
-            if(cur.succ.size() == 0) return;
-            cur.succ.forEach(succ -> {
-                basicBlockInDFSOrder.add(succ);
-                visited.add(succ);
-                dfs(succ, order + 1);
-            });
+            basicBlockInDFSOrder.clear();
+            dodfs(startBlock, 0);
         }
     }
 
@@ -178,7 +178,7 @@ public class Method {
         basicBlockInBFSOrder.clear();
     }
 
-    private int removeDeplicatedBB(){
+    private int removeRedundantdBB(){
         Queue<BasicBlock> Q = new LinkedList<BasicBlock>();
         visited.clear();
         int count = 0;
@@ -205,11 +205,21 @@ public class Method {
         return count;
     }
 
+
+
     public int cleanUp(){
         //PAY FOR NOT ELEGENT DESIGN, SHIT!!
-        int ret = removeDeplicatedBB();
+        int ret = removeRedundantdBB();
         fixCFG();
-        ret += removeDeplicatedBB();
+        ret += removeRedundantdBB();
         return ret;
     }
+
+    public void collectDefUseInfo(){
+        basicBlockInBFSOrder.clear();
+        bfs();
+        basicBlockInBFSOrder.forEach(BasicBlock::collectDefUseInfo);
+    }
+
+
 }

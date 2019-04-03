@@ -1,17 +1,29 @@
 package kstarxin.ir.instruction;
 
 import kstarxin.ir.BasicBlock;
+import kstarxin.ir.operand.Address;
 import kstarxin.ir.operand.Operand;
+import kstarxin.ir.operand.VirtualRegister;
 
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 
 public abstract class Instruction {
     public String hintName;
     public Instruction next;
     public Instruction prev;
     public BasicBlock basicBlockBelongTo;
+    public HashSet<Operand> def;
+    public HashSet<Operand> use;
+    public HashSet<Operand> liveIn;
+    public HashSet<Operand> liveOut;
     public Instruction(String _hintName){
-        hintName = _hintName;
+        hintName    = _hintName;
+        def         = new HashSet<Operand>();
+        use         = new HashSet<Operand>();
+        liveIn      = new HashSet<Operand>();
+        liveOut     = new HashSet<Operand>();
     }
 
     public void insertBeforeThis(Instruction inst){
@@ -60,4 +72,8 @@ public abstract class Instruction {
     public abstract Instruction copy();
 
     public abstract void replaceOperandForInline(HashMap<Operand, Operand> map);
+
+    public abstract void collectDefUseInfo();
+
+    public abstract Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map);
 }

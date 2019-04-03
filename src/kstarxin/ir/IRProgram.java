@@ -86,6 +86,7 @@ public class IRProgram {
         if(ret != null) return ret;
         String tmpHintName = stringConstantPrefix + stringConstantCounter.toString();
         StaticString tmp = new StaticString(tmpHintName,s);
+        tmp.isConstantAllocatedByCompiler = true;
         globalVariableMap.put(tmpHintName, tmp);
         staticStringMap.put(s, tmp);
         stringConstantCounter++;
