@@ -93,6 +93,10 @@ public class IRProgram {
         return tmp;
     }
 
+    public HashMap<String,Label> getStaticStringMap(){
+        return staticStringMap;
+    }
+
     public Method getMethod(String mangledName){
         return methodMap.get(mangledName);
     }

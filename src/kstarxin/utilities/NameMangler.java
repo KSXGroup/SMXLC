@@ -3,18 +3,42 @@ package kstarxin.utilities;
 import kstarxin.ast.*;
 
 public class NameMangler {
-        public final static String globalPrefix   = "@";
-        public final static String methodPrefix   = "_Z";
-        public final static String initMethod     = "@_INIT_";
-        public final static String strcmp         = "@_Zstrcmpss";
-        public final static String strcat         = "@_Zstrcatss";
-        public final static String malloc         = "@_Zmalloci";
-        public final static String substring      = "@_Zstring4substringii";
-        public final static String ord            = "@_Zstring4ordi";
-        public final static String parseInt       = "@_Zstring4parseInt";
-        public final static String mainMethodName = "@main";
-        public final static String inlineSuffix   = "#inline";
-        public final static String splitSuffix    = "#split";
+        public final static String globalPrefix     = "@";
+        public final static String methodPrefix     = "_Z";
+        public final static String initMethod       = "@_INIT_";
+        public final static String strcmp           = "@_Zstrcmpss";
+        public final static String strcat           = "@_Zstrcatss";
+        public final static String malloc           = "@_Zmalloci";
+        public final static String substring        = "@_Zstring4substringii";
+        public final static String ord              = "@_Zstring4ordi";
+        public final static String parseInt         = "@_Zstring4parseInt";
+        public final static String mainMethodName   = "@main";
+        public final static String inlineSuffix     = "#inline";
+        public final static String splitSuffix      = "#split";
+        public final static String nasmGlobalPrefix = "_g_";
+        public final static String inlineHashReplace= "_il_";
+
+        public enum PhysicalRegisterName{
+            RAX, RBX, RCX, RDX, RBP, RSP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15,
+            EAX, EBX, ECX, EDX, EBP, ESP, ESI, EDI, R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D,
+            AX, BX, CX, DX,
+            AH, BH, CH, DH, AL, BL, CL, DL
+        }
+
+        //Caller-saved: EAX, ECX, EDX
+
+        //*AX: Accumulator
+        //*BX: Base index (for use with arrays)
+        //*CX: Counter (for use with loops and strings)
+        //*DX: Extend the precision of the accumulator
+        //*SI: Source index for string operations
+
+        //*SP: Stack pointer for top address of the stack
+        //*BP: Stack base pointer for holding the address of the current stack frame
+
+        //Parameters: *DI,*SI,*DX,*CX,*R8D​,*R9D
+
+        //register can be allocated: R10, R11, R12, R13, R14, R15 ????
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;
@@ -99,5 +123,11 @@ public class NameMangler {
 
         public static String mangleName(ConditionNode n){
             return n.getName();
+        }
+
+        public static String convertToASMName(String s){
+            s = s.replace("@", nasmGlobalPrefix);
+            s = s.replace("#", inlineHashReplace);
+            return s;
         }
 }

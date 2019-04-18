@@ -3,6 +3,7 @@ package kstarxin.ir;
 import kstarxin.ast.ParameterDeclarationNode;
 import kstarxin.ir.instruction.*;
 import kstarxin.ir.operand.*;
+import kstarxin.ir.operand.physical.PhysicalRegister;
 import kstarxin.ir.superblock.*;
 import kstarxin.utilities.NameMangler;
 
@@ -22,6 +23,7 @@ public class Method {
     public HashSet<Address>                 globalVariableUsed;
     public LinkedList<CallInstruction>      nonRecursiveMethodCall;
     public LinkedList<CallInstruction>      recursiveMethodCall;
+    public LinkedList<PhysicalRegister>     usedCalleeSavedRegister;
     public List<ReturnInstruction>          returnInsts;
     public List<LoopSuperBlock>             loops;
     public LinkedHashSet<BasicBlock>        basicBlockInDFSOrder;
@@ -31,7 +33,7 @@ public class Method {
     public String                           hintName;
     public VirtualRegister                  returnRegister;
     public VirtualRegister                  classThisPointer; // as parameter;
-
+    public int                              stackAligned;
 
 
     private Integer                         tmpLabelCounter;
@@ -45,6 +47,7 @@ public class Method {
         returnRegister          = new VirtualRegister(retVal, _hintName + retVal);
         tmpRegisterCounter      = 0;
         tmpLabelCounter         = 0;
+        stackAligned            = 0;
         hintName                = _hintName;
         startBlock              = null;
         loops                   = new LinkedList<LoopSuperBlock>();
@@ -52,6 +55,7 @@ public class Method {
         localVariables          = new HashMap<String, VirtualRegister>();
         tmpLocalRegisters       = new HashMap<String, VirtualRegister>();
         returnInsts             = new LinkedList<ReturnInstruction>();
+        usedCalleeSavedRegister = new LinkedList<PhysicalRegister>();
         endBlock                = new BasicBlock(this,null, null, _hintName + IRBuilderVisitor.ret); //block for merge return insts
         visited                 = new HashSet<BasicBlock>();
         nonRecursiveMethodCall  = new LinkedList<CallInstruction>();
@@ -205,6 +209,9 @@ public class Method {
         return count;
     }
 
+    public void setStackAligned(int sz){
+        stackAligned  = sz;
+    }
 
 
     public int cleanUp(){

@@ -1,5 +1,7 @@
 package kstarxin.ir.operand;
 
+import kstarxin.ir.IRBaseVisitor;
+
 public class StaticPointer extends Label {
     public int spaceSize;
     public int value;
@@ -24,5 +26,15 @@ public class StaticPointer extends Label {
     @Override
     public String getDisplayName(){
        return spaceSize + "[" + hintName + "]";
+    }
+
+    @Override
+    public Operand accept(IRBaseVisitor visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public String getNASMName() {
+        return null;
     }
 }

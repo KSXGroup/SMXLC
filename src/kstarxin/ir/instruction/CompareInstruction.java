@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 
 import java.util.HashMap;
@@ -53,10 +54,10 @@ public class CompareInstruction extends Instruction {
     public void collectDefUseInfo() {
         use.clear();
         def.clear();
-        if(lhs instanceof VirtualRegister || lhs instanceof StaticPointer || lhs instanceof StaticString) use.add(lhs);
+        if(lhs instanceof VirtualRegister) use.add((VirtualRegister) lhs);
         else if(lhs instanceof Memory) use.addAll(((Memory) lhs).collectUseInfo());
 
-        if(rhs instanceof VirtualRegister || rhs instanceof StaticPointer || rhs instanceof StaticString) use.add(rhs);
+        if(rhs instanceof VirtualRegister) use.add((VirtualRegister) rhs);
         else if(rhs instanceof Memory) use.addAll(((Memory) rhs).collectUseInfo());
     }
 
@@ -72,5 +73,10 @@ public class CompareInstruction extends Instruction {
             if(rhs == null) throw new RuntimeException();
         }
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

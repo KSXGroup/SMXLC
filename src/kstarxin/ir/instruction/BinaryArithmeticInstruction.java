@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 import kstarxin.utilities.*;
 
@@ -67,11 +68,11 @@ public class BinaryArithmeticInstruction extends Instruction {
     public void collectDefUseInfo() {
         def.clear();
         use.clear();
-        if(lhs instanceof Register || lhs instanceof StaticPointer || lhs instanceof StaticString) use.add(lhs);
+        if(lhs instanceof VirtualRegister) use.add((VirtualRegister) lhs);
         else if(lhs instanceof Memory) use.addAll(((Memory) lhs).collectUseInfo());
-        if(rhs instanceof Register || rhs instanceof StaticPointer || rhs instanceof StaticString) use.add(rhs);
+        if(rhs instanceof VirtualRegister) use.add((VirtualRegister) rhs);
         else if(rhs instanceof Memory) use.addAll(((Memory) rhs).collectUseInfo());
-        if(target instanceof Register || target instanceof StaticString || target instanceof StaticPointer) def.add(target);
+        if(target instanceof VirtualRegister) def.add((VirtualRegister) target);
         else if(target instanceof Memory) use.addAll(((Memory) target).collectUseInfo());
     }
 
@@ -93,5 +94,10 @@ public class BinaryArithmeticInstruction extends Instruction {
             return (Address) target;
         }
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

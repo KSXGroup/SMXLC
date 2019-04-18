@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 
 import java.util.HashMap;
@@ -32,8 +33,8 @@ public class ReturnInstruction extends JumpInstruction {
     public void collectDefUseInfo() {
         def.clear();
         use.clear();
-        if (returnValue instanceof Register || returnValue instanceof StaticPointer || returnValue instanceof StaticString)
-            use.add(returnValue);
+        if (returnValue instanceof VirtualRegister)
+            use.add((VirtualRegister) returnValue);
         else if (returnValue instanceof Memory) use.addAll(((Memory) returnValue).collectUseInfo());
     }
 
@@ -44,5 +45,10 @@ public class ReturnInstruction extends JumpInstruction {
             if(returnValue == null) throw new RuntimeException();
         }
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

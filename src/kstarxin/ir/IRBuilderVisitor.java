@@ -685,6 +685,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         String          memberName      = node.getMemberMethodName();
         VirtualRegister retReg          = currentMethod.allocateNewTmpRegister();
         VirtualRegister addrReg         = null;
+        VirtualRegister baseAddrReg     = null;
         CallInstruction tcall           = null;
         //Process some special dotmember;
         if(astExpr.getType().getEnumType().equals(MxType.TypeEnum.STRING)){
@@ -695,6 +696,16 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 case ord:
                     tcall = new CallInstruction(ir.ord, retReg);
                     break;
+                    /*if(classPointer instanceof Address){
+                        baseAddrReg = currentMethod.allocateNewTmpRegister();
+                        currentBasicBlock.insertEnd(new LoadInstruction(baseAddrReg, (Address) classPointer));
+                    }else if(classPointer instanceof VirtualRegister) baseAddrReg = (VirtualRegister) classPointer;
+                    else throw new RuntimeException();
+                    if(node.getParameterExpressionList().size() != 1) throw new RuntimeException();
+                    VirtualRegister indexReg = (VirtualRegister) resolveParameter(node.getParameterExpressionList().get(0));
+                    currentBasicBlock.insertEnd(new BinaryArithmeticInstruction(MxStarParser.ADD, addrReg, baseAddrReg, new Immediate(Configure.PTR_SIZE)));
+                    currentBasicBlock.insertEnd(new LoadInstruction(retReg, new Memory(baseAddrReg, indexReg, Configure.CHAR_SIZE,Configure.CHAR_SIZE)));
+                    return retReg;*/
                 case substring:
                     tcall = new CallInstruction(ir.substring, retReg);
                     break;

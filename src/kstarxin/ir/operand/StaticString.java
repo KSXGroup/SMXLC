@@ -1,6 +1,7 @@
 package kstarxin.ir.operand;
 
 import kstarxin.compiler.Configure;
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.utilities.*;
 
 public class StaticString extends Label {
@@ -26,4 +27,14 @@ public class StaticString extends Label {
         else return Configure.PTR_SIZE+"["+ hintName + "]";
     }
 
+
+    @Override
+    public Operand accept(IRBaseVisitor visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public String getNASMName() {
+        return null;
+    }
 }

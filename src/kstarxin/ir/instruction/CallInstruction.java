@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.Method;
 import kstarxin.ir.operand.*;
 
@@ -68,12 +69,17 @@ public class CallInstruction extends Instruction{
         def.clear();
         use.clear();
         if(returnValue != null) def.add(returnValue);
-        parameters.forEach(para-> use.add(para)); //parameters are vregs
+        parameters.forEach(para-> use.add((VirtualRegister) para)); //parameters are vregs
         if(classThisPointer != null) use.add(classThisPointer);
     }
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

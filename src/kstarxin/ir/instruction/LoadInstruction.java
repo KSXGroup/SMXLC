@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 
 import java.util.HashMap;
@@ -38,9 +39,8 @@ public class LoadInstruction extends Instruction {
     public void collectDefUseInfo() {
         def.clear();
         use.clear();
-        def.add(dest);
-        if(src instanceof StaticString || src instanceof StaticPointer) use.add(src);
-        else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+        def.add((VirtualRegister) dest);
+        if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
     }
 
     @Override
@@ -51,5 +51,10 @@ public class LoadInstruction extends Instruction {
             replaceThisWith(new MoveInstruction((Register) dest, vreg));
         }
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

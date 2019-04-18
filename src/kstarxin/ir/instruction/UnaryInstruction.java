@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 import kstarxin.utilities.OperatorTranslator;
 
@@ -70,10 +71,10 @@ public class UnaryInstruction extends Instruction{
     public void collectDefUseInfo() {
         use.clear();
         def.clear();
-        if(src instanceof Register || src instanceof StaticPointer || src instanceof StaticString) use.add(src);
+        if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
         else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
 
-        if(dest instanceof Register || src instanceof StaticPointer || src instanceof StaticString) def.add(dest);
+        if(dest instanceof VirtualRegister) def.add((VirtualRegister) dest);
         else if(dest instanceof Memory) use.addAll(((Memory) dest).collectUseInfo());
     }
 
@@ -91,5 +92,10 @@ public class UnaryInstruction extends Instruction{
             return old;
         }
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

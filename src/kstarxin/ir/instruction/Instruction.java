@@ -1,6 +1,7 @@
 package kstarxin.ir.instruction;
 
 import kstarxin.ir.BasicBlock;
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.Address;
 import kstarxin.ir.operand.Operand;
 import kstarxin.ir.operand.VirtualRegister;
@@ -14,14 +15,14 @@ public abstract class Instruction {
     public Instruction next;
     public Instruction prev;
     public BasicBlock basicBlockBelongTo;
-    public HashSet<Operand> def;
-    public HashSet<Operand> use;
+    public HashSet<VirtualRegister> def;
+    public HashSet<VirtualRegister> use;
     public HashSet<Operand> liveIn;
     public HashSet<Operand> liveOut;
     public Instruction(String _hintName){
         hintName    = _hintName;
-        def         = new HashSet<Operand>();
-        use         = new HashSet<Operand>();
+        def         = new HashSet<VirtualRegister>();
+        use         = new HashSet<VirtualRegister>();
         liveIn      = new HashSet<Operand>();
         liveOut     = new HashSet<Operand>();
     }
@@ -76,4 +77,6 @@ public abstract class Instruction {
     public abstract void collectDefUseInfo();
 
     public abstract Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map);
+
+    public abstract <T> T accept(IRBaseVisitor<T> visitor);
 }

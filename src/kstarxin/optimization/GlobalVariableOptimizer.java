@@ -11,18 +11,15 @@ import java.util.*;
 public class GlobalVariableOptimizer {
     IRProgram                           ir;
     HashMap<Address, VirtualRegister>   globalVariableReplacer;
-    HashSet<Address>                    globalVariableModified;
     public GlobalVariableOptimizer(IRProgram _ir){
         ir                      = _ir;
         globalVariableReplacer  = new HashMap<Address, VirtualRegister>();
-        globalVariableModified  = new HashSet<Address>();
     }
 
     public void run(){
         ir.getMethodMap().values().forEach(method -> {
             if(!method.isBuiltin) {
                 globalVariableReplacer.clear();
-                globalVariableModified.clear();
                 method.globalVariableUsed.forEach(gv -> {
                     VirtualRegister vreg = method.allocateNewTmpRegister();
                     globalVariableReplacer.put(gv, vreg);
@@ -38,7 +35,6 @@ public class GlobalVariableOptimizer {
                     for (Instruction i = bb.getBeginInst(); i != null; i = i.next) {
                         if (!(i instanceof CallInstruction)){
                             Address ret = i.replaceOperandForGlobalVariableOptimization(globalVariableReplacer);
-                            if(ret != null) globalVariableModified.add(ret);
                             if ( i instanceof ReturnInstruction) {
                                 if(retInst != null)throw new RuntimeException();
                                 else retInst = (ReturnInstruction) i;
@@ -52,8 +48,7 @@ public class GlobalVariableOptimizer {
                                 v = entry.getValue();
                                 if ((k instanceof StaticString && ((StaticString) k).isConstantAllocatedByCompiler))
                                     continue;
-                                if (globalVariableModified.contains(k))
-                                    i.insertBeforeThis(new StoreInstruction(k, v));
+                                i.insertBeforeThis(new StoreInstruction(k, v));
                                 i.insertInstAfterThis(new LoadInstruction(v, k));
                             }
                         }

@@ -1,5 +1,7 @@
 package kstarxin.utilities;
 
+import kstarxin.ir.operand.StaticString;
+
 public class StringParser {
     public static String parseString(String originString){
         int len = originString.length();
@@ -37,4 +39,17 @@ public class StringParser {
         }
         return ret;
     }
+
+    public static String stringToHex(String s){
+        //this function return string in hex format with its length at begining
+        int len = s.length();
+        String ret = "";
+        ret += "\tDD\t" + s.length() + "\n\tDB\t";
+        for(byte i :s.getBytes()){
+            ret += Integer.toHexString((int)(i & 0xFF)).toUpperCase() + "H, ";
+        }
+        ret += "00H";
+        return ret;
+    }
+
 }

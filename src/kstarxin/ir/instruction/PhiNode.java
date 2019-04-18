@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.Address;
 import kstarxin.ir.operand.Operand;
 import kstarxin.ir.operand.VirtualRegister;
@@ -28,6 +29,11 @@ public class PhiNode extends Instruction{
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
+        return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
         return null;
     }
 }

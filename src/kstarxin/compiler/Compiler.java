@@ -6,6 +6,9 @@ import kstarxin.ir.IRBuilderVisitor;
 import kstarxin.ir.IRInterpreter;
 import kstarxin.ir.IRPrinter;
 import kstarxin.ir.IRProgram;
+import kstarxin.ir.asmir.ASMLevelIRBuilder;
+import kstarxin.ir.asmir.ASMLevelIRProgram;
+import kstarxin.nasm.CodePrinter;
 import kstarxin.optimization.*;
 import kstarxin.parser.*;
 import kstarxin.ast.*;
@@ -50,6 +53,9 @@ public class Compiler {
         IRPrinter               irPrinter       = null;
         PrintStream             irOutputStream  = null;
         IRInterpreter           irIntererter    = null;
+        ASMLevelIRBuilder       asmIrBuilder    = null;
+        ASMLevelIRProgram       asmIr           = null;
+        CodePrinter             codePrinter     = null;
 
         irOutputStream = new PrintStream(new File(irPrintPath));
         if(errorProcessor.size() > 0) {
@@ -103,10 +109,14 @@ public class Compiler {
         irPrinter = new IRPrinter(ir, irOutputStream);
         irPrinter.printIR();
 
-        irIntererter = new IRInterpreter(irPrintPath);
-        irIntererter.runIR();
+        //irIntererter = new IRInterpreter(irPrintPath);
+        //irIntererter.runIR();
 
+        asmIrBuilder = new ASMLevelIRBuilder(ir);
+        asmIr = asmIrBuilder.build();
 
+        codePrinter = new CodePrinter(asmIr, false, System.out);
+        codePrinter.printCode();
         return;
     }
 }

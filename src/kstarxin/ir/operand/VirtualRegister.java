@@ -1,18 +1,22 @@
 package kstarxin.ir.operand;
 
 import kstarxin.ast.*;
+import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.operand.physical.*;
 import kstarxin.utilities.*;
 
 //record variable and tmp variable
 public class VirtualRegister extends Register {
-    public String hintName;
-    public String mangledName;
-    public int tmpId;
+    public String   hintName;
+    public String   mangledName;
+    public int      tmpId;
+    public Operand  spaceAllocatedTo;
 
     public VirtualRegister(String _hintName, String _mangledName){
         super(_hintName);
         hintName = _hintName;
         mangledName = _mangledName;
+        spaceAllocatedTo = null;
         tmpId = -1;
     }
 
@@ -31,5 +35,23 @@ public class VirtualRegister extends Register {
 
     public boolean isTmpRegister(){
         return tmpId < 0;
+    }
+
+    public void allocatedTo(PhysicalRegister preg){
+        spaceAllocatedTo = preg;
+    }
+
+    public void allocatedTo(StackSpace stack){
+        spaceAllocatedTo = stack;
+    }
+
+    @Override
+    public Operand accept(IRBaseVisitor visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public String getNASMName() {
+        return null;
     }
 }

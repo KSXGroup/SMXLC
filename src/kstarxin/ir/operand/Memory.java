@@ -1,5 +1,7 @@
 package kstarxin.ir.operand;
 
+import kstarxin.ir.IRBaseVisitor;
+
 import java.util.HashMap;
 import java.util.HashSet;
 
@@ -89,10 +91,20 @@ public class Memory extends Address {
         return ret;
     }
 
-    public HashSet<Operand> collectUseInfo(){
-        HashSet<Operand> ret = new HashSet<Operand>();
-        ret.add(address);
-        if(index instanceof Register) ret.add(index);
+    public HashSet<VirtualRegister> collectUseInfo(){
+        HashSet<VirtualRegister> ret = new HashSet<VirtualRegister>();
+        ret.add((VirtualRegister) address);
+        if(index instanceof VirtualRegister) ret.add((VirtualRegister) index);
         return ret;
+    }
+
+    @Override
+    public Operand accept(IRBaseVisitor visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
+    public String getNASMName() {
+        return null;
     }
 }

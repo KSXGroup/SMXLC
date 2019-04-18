@@ -1,5 +1,6 @@
 package kstarxin.ir.instruction;
 
+import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.operand.*;
 
 import java.util.HashMap;
@@ -41,12 +42,17 @@ public class MoveInstruction extends Instruction {
     public void collectDefUseInfo() {
         use.clear();
         def.clear();
-        if(src instanceof Register) use.add(src);
-        def.add(dest);
+        if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
+        def.add((VirtualRegister) dest);
     }
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
         return null;
+    }
+
+    @Override
+    public <T> T accept(IRBaseVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 }

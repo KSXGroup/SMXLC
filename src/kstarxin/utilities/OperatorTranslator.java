@@ -3,6 +3,69 @@ package kstarxin.utilities;
 import kstarxin.parser.*;
 
 public class OperatorTranslator {
+
+    public enum NASMInstructionOperator{MOV, MOVZX, CMP, PUSH, POP, ADD, SUB, IDIV, IMUL, AND, JMP, JE ,JNE,
+                                        JNZ, JGE, JG, JLE, JL, LEA, NOT, OR, XOR, DEC, INC, SAR, SHL, LEAVE,
+                                        RET, SETL, SETLE, SETG, SETGE, SETE, SETNE, RESQ, RESD, DQ, DD};
+
+    public static NASMInstructionOperator toNASMOperator(int op){
+        NASMInstructionOperator ret = null;
+        switch (op){
+            case MxStarParser.ADD:
+                ret = NASMInstructionOperator.ADD;
+                break;
+            case MxStarParser.BITAND:
+                ret = NASMInstructionOperator.AND;
+                break;
+            case MxStarParser.AND:
+                ret = NASMInstructionOperator.AND;
+                break;
+            case MxStarParser.BITNOT:
+            case MxStarParser.NOT:
+                ret = NASMInstructionOperator.NOT;
+                break;
+            case MxStarParser.OR:
+            case MxStarParser.BITOR:
+                ret = NASMInstructionOperator.OR;
+                break;
+            case MxStarParser.BITXOR:
+                ret = NASMInstructionOperator.XOR;
+                break;
+            case MxStarParser.EQ:
+            case MxStarParser.NEQ:
+            case MxStarParser.GE:
+            case MxStarParser.GT:
+            case MxStarParser.LE:
+            case MxStarParser.LT:
+                throw new RuntimeException("never try to translate compare operand");
+            case MxStarParser.DEC:
+                ret = NASMInstructionOperator.DEC;
+                break;
+            case MxStarParser.DIV:
+                throw new RuntimeException("never try to translate div operand");
+            case MxStarParser.INC:
+                ret = NASMInstructionOperator.INC;
+                break;
+            case MxStarParser.MOD:
+                throw new RuntimeException("never try to translate mod operand");
+            case MxStarParser.MUL:
+                ret = NASMInstructionOperator.IMUL;
+                break;
+            case MxStarParser.SFTL:
+                ret = NASMInstructionOperator.SHL;
+                break;
+            case MxStarParser.SFTR:
+                ret = NASMInstructionOperator.SAR;
+                break;
+            case MxStarParser.SUB:
+                ret = NASMInstructionOperator.SUB;
+                break;
+            default:
+                throw new RuntimeException("unknown operand!!");
+        }
+        return ret;
+    }
+
     public static String operatorToLiteralName(int op){
         String ret = "";
         switch (op){
@@ -166,4 +229,5 @@ public class OperatorTranslator {
                 return false;
         }
     }
+
 }
