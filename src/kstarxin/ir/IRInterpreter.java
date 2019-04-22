@@ -398,6 +398,10 @@ public class IRInterpreter {
         memory[addr + 1] = (byte) ((data >> 8) & 0xff);
         memory[addr + 2] = (byte) ((data >> 16) & 0xff);
         memory[addr + 3] = (byte) ((data >> 24) & 0xff);
+        /*memory[addr + 4] = (byte) ((data >> 32) & 0xff);
+        memory[addr + 5] = (byte) ((data >> 40) & 0xff);
+        memory[addr + 6] = (byte) ((data >> 48) & 0xff);
+        memory[addr + 7] = (byte) ((data >> 56) & 0xff);*/
     }
 
     private int readMemory(int addr) {

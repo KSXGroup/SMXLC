@@ -1,6 +1,8 @@
 package kstarxin.ir.operand;
 
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
+import kstarxin.utilities.NameMangler;
 
 public class StaticPointer extends Label {
     public int spaceSize;
@@ -10,6 +12,7 @@ public class StaticPointer extends Label {
         super(_hintName);
         spaceSize = _spaceSize;
         initialized = false;
+        nasmName = NameMangler.convertToASMName(_hintName);
         value = 0;
     }
 
@@ -34,7 +37,12 @@ public class StaticPointer extends Label {
     }
 
     @Override
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
     public String getNASMName() {
-        return null;
+        return "[" + nasmName + "]";
     }
 }

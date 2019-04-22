@@ -17,14 +17,14 @@ public abstract class Instruction {
     public BasicBlock basicBlockBelongTo;
     public HashSet<VirtualRegister> def;
     public HashSet<VirtualRegister> use;
-    public HashSet<Operand> liveIn;
-    public HashSet<Operand> liveOut;
+    public HashSet<VirtualRegister> liveIn;
+    public HashSet<VirtualRegister> liveOut;
     public Instruction(String _hintName){
         hintName    = _hintName;
         def         = new HashSet<VirtualRegister>();
         use         = new HashSet<VirtualRegister>();
-        liveIn      = new HashSet<Operand>();
-        liveOut     = new HashSet<Operand>();
+        liveIn      = new HashSet<VirtualRegister>();
+        liveOut     = new HashSet<VirtualRegister>();
     }
 
     public void insertBeforeThis(Instruction inst){

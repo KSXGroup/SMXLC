@@ -1,6 +1,7 @@
 package kstarxin.ir.operand;
 
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
 
 abstract public class Operand {
     public String hintName;
@@ -17,4 +18,6 @@ abstract public class Operand {
     public abstract String getNASMName();
 
     public abstract Operand accept(IRBaseVisitor visitor);
+
+    public abstract <T> T accept(ASMLevelIRVisitor<T> visitor);
 }

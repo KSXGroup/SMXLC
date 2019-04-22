@@ -45,7 +45,7 @@ public class LoadInstruction extends Instruction {
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
-        if(src instanceof StaticPointer || src instanceof StaticString){
+        if(src instanceof StaticPointer || (src instanceof StaticString && !((StaticString) src).isConstantAllocatedByCompiler)){
             VirtualRegister vreg = map.get(src);
             if(vreg == null) throw new RuntimeException();
             replaceThisWith(new MoveInstruction((Register) dest, vreg));

@@ -8,9 +8,11 @@ import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
 public class ASMSetInstruction extends ASMInstruction{
     public VirtualRegister dst;
+    public NASMInstructionOperator operator;
     public ASMSetInstruction(NASMInstructionOperator op, ASMBasicBlock bb, VirtualRegister _dst){
         super(op.toString(), bb);
         dst = _dst;
+        operator = op;
     }
 
     @Override

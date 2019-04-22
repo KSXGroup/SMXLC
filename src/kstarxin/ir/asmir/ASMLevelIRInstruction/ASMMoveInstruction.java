@@ -7,12 +7,14 @@ import kstarxin.ir.operand.*;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
 public class ASMMoveInstruction extends ASMInstruction {
+    public NASMInstructionOperator op;
     public Operand src;
     public Operand dst;
-    public ASMMoveInstruction(NASMInstructionOperator op, ASMBasicBlock bb, Operand _dst, Operand _src){
-        super(op.toString(), bb);
+    public ASMMoveInstruction(NASMInstructionOperator _op, ASMBasicBlock bb, Operand _dst, Operand _src){
+        super(_op.toString(), bb);
         src = _src;
         dst = _dst;
+        op  = _op;
     }
 
     @Override

@@ -4,9 +4,12 @@ import kstarxin.ir.instruction.*;
 import kstarxin.ir.operand.*;
 import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.OperatorTranslator;
+import kstarxin.compiler.Configure;
 
 import java.io.*;
 import java.util.*;
+
+import static kstarxin.compiler.Configure.PRINT_LIVEINOUT;
 
 public class IRPrinter {
     public final static String           labelHeader             = "%";
@@ -43,9 +46,8 @@ public class IRPrinter {
     }
 
     public void printMethod(Method m){
-        //m.basicBlockInDFSOrder.clear();
-        m.dfs();
         if(!m.isBuiltin) {
+            m.dfs();
             irPrintStream.println("\n" + methodHeader + m.hintName);
             m.parameters.forEach(this::printParameter);
             if(m.classThisPointer != null) irPrintStream.println(classThisPointerHeader + m.classThisPointer.getDisplayName());
@@ -73,25 +75,36 @@ public class IRPrinter {
     }
 
     private void printBinaryInstruction(BinaryArithmeticInstruction inst){
-        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.target.getDisplayName()  + "\t" +  inst.lhs.getDisplayName() + "\t"+ inst.rhs.getDisplayName());
+        String s = OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.target.getDisplayName()  + "\t" +  inst.lhs.getDisplayName() + "\t"+ inst.rhs.getDisplayName();
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printUnaryInstruction(UnaryInstruction inst){
-        irPrintStream.println(OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName());
+        String s = OperatorTranslator.operatorToSymbolicName(inst.op) + "\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName();
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printLoadInstruction(LoadInstruction inst){
-        irPrintStream.println("LOA\t\t" +  inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" );
+        String s = "LOA\t\t" +  inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t";
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printStoreInstruction(StoreInstruction inst){
-        irPrintStream.println("STO\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t" );
+        String s = "STO\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName() + "\t";
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printReturnInstruction(ReturnInstruction ret){
+        String s = "";
         if(ret.returnValue != null) {
-            irPrintStream.println("RET\t\t" + ret.returnValue.getDisplayName());
-        } else irPrintStream.println("RET");
+            s += "RET\t\t" + ret.returnValue.getDisplayName();
+        } else s += "RET";
+        if(PRINT_LIVEINOUT) s += livenessInfo(ret);
+        irPrintStream.println(s);
     }
 
     private void printConditionJump(ConditionJumpInstruction inst){
@@ -118,19 +131,27 @@ public class IRPrinter {
             default:
                 throw new RuntimeException("what shit opeator do you in conditional jump ??????");
         }
-        irPrintStream.println(instName + "\t\t%" + inst.trueTarget.blockLabel + "\t%" + inst.falseTarget.blockLabel);
+        String s = instName + "\t\t%" + inst.trueTarget.blockLabel + "\t%" + inst.falseTarget.blockLabel;
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printCompareInstruction(CompareInstruction inst){
-        irPrintStream.println("CMP\t\t" + inst.lhs.getDisplayName() + "\t" + inst.rhs.getDisplayName());
+        String s = "CMP\t\t" + inst.lhs.getDisplayName() + "\t" + inst.rhs.getDisplayName();
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printMoveInstruciton(MoveInstruction inst){
-        irPrintStream.println("MOV\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName());
+        String s = "MOV\t\t" + inst.dest.getDisplayName() + "\t" + inst.src.getDisplayName();
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printDirectJump(DirectJumpInstruction inst){
-        irPrintStream.println("JMP\t\t%" + inst.target.blockLabel);
+        String s = "JMP\t\t%" + inst.target.blockLabel;
+        if(PRINT_LIVEINOUT) s += livenessInfo(inst);
+        irPrintStream.println(s);
     }
 
     private void printMethodCall(CallInstruction inst){
@@ -142,6 +163,7 @@ public class IRPrinter {
         for (Operand parameter : inst.parameters) {
             toPrint += parameter.getDisplayName() + "\t";
         }
+        if(PRINT_LIVEINOUT) toPrint += livenessInfo(inst);
         irPrintStream.println(toPrint);
     }
 
@@ -151,5 +173,13 @@ public class IRPrinter {
 
     private void printParameter(VirtualRegister para){
         irPrintStream.println(parameterHeader + para.getDisplayName());
+    }
+
+    private String livenessInfo(Instruction i){
+        String s = "\t\tLIVEIN:";
+        for(VirtualRegister vreg : i.liveIn) s += vreg.getDisplayName() + "\t";
+        s += "\t\tLIVEOUT:";
+        for(VirtualRegister vreg : i.liveOut)s += vreg.getDisplayName() + "\t";
+        return s;
     }
 }

@@ -1,6 +1,9 @@
 package kstarxin.ir.operand;
 
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
+import kstarxin.ir.operand.physical.PhysicalRegister;
+import kstarxin.ir.operand.physical.StackSpace;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -104,7 +107,26 @@ public class Memory extends Address {
     }
 
     @Override
-    public String getNASMName() {
-        return null;
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
     }
+
+    @Override
+    public String getNASMName() {
+        String addrString = ((VirtualRegister)address).spaceAllocatedTo.getNASMName();
+        String ret = "[" + addrString;
+        if(sizePerData == -1){
+            if(offsetInClass == 0) ret += "]";
+            else ret = ret + "+" + offsetInClass + "]";
+        }
+        else{
+            if(index instanceof Immediate) {
+                int sz = ((Immediate) index).value * sizePerData;
+                if(sz == 0) ret += "]";
+                else ret += "+" + sz + "]";
+            } else  ret = ret + "+" + sizePerData + "*" +((VirtualRegister)index).spaceAllocatedTo.getNASMName()+ "]";
+        }
+        return ret;
+    }
+
 }

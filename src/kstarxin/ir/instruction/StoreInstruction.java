@@ -58,7 +58,7 @@ public class StoreInstruction extends Instruction{
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
-        if(dest instanceof StaticPointer || dest instanceof StaticString) {
+        if(dest instanceof StaticPointer || (dest instanceof StaticString && !((StaticString) dest).isConstantAllocatedByCompiler)) {
             VirtualRegister vreg = map.get(dest);
             if(vreg == null)
                 throw new RuntimeException();

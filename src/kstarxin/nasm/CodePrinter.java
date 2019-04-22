@@ -17,30 +17,33 @@ import kstarxin.utilities.OperatorTranslator.*;
 import kstarxin.utilities.StringParser;
 
 import java.io.PrintStream;
+import java.util.Queue;
 
-public class CodePrinter implements ASMLevelIRVisitor<Void> {
+public class CodePrinter implements ASMLevelIRVisitor<String> {
 
-    public static final String              DEFALUT_REL         = "default rel\n";
-    public static final String              SECTION_TEXT        = "SECTION\t.text\n";
-    public static final String              SECTION_DATA        = "SECTION\t.data\n";
-    public static final String              SECTION_BSS         = "SECTION\t.bss\n";
-    public static final String              SECTION_RODATA      = "SECTION\t.rodata\n";
-    public static final String              SECTION_INIT_ARRAY  = "SECTION\t.init_array\n";
+    public static final String              DEFALUT_REL         = "\ndefault rel\n";
+    public static final String              SECTION_TEXT        = "\nSECTION\t.text\n";
+    public static final String              SECTION_DATA        = "\nSECTION\t.data\n";
+    public static final String              SECTION_BSS         = "\nSECTION\t.bss\n";
+    public static final String              SECTION_RODATA      = "\nSECTION\t.rodata\n";
+    public static final String              SECTION_INIT_ARRAY  = "\nSECTION\t.init_array\n";
     public static final String              GLOBAL              = "global";
-    public static final String              DWORD               = "DWORD ";
-    public static final String              EXTERN              = "extern printf, scanf, malloc, strcmp, sscanf, puts\n"; //extern some c functions
+    public static final String              QWORD               = "QWORD ";
+    public static final String              EXTERN              = "extern printf, scanf, malloc, strcmp, sscanf, puts, memcpy, __isoc99_scanf\n"; //extern some c functions
     public static final String              INT_PRINT_FORMAT    = "\'%d\\\n'";
 
     private             ASMLevelIRProgram   lir;
     private             String              nasm;
     private             PrintStream         asmPrintStream;
     private             boolean             ifAllocated;
+    private             boolean             inLEA;
 
-    public CodePrinter(ASMLevelIRProgram _ir, boolean _ifAllocated, PrintStream _asmPrintStream){
+    public CodePrinter(ASMLevelIRProgram _ir, PrintStream _asmPrintStream){
         nasm            = "";
         lir             = _ir;
-        ifAllocated     = _ifAllocated;
+        ifAllocated     = _ir.ifAllocated;
         asmPrintStream  = _asmPrintStream;
+        inLEA           = false;
     }
 
     //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack if callee want to use) (callee saved register)
@@ -49,16 +52,31 @@ public class CodePrinter implements ASMLevelIRVisitor<Void> {
     //I decide to use EAX and ECX as tmp register now
     //naviely, registers can be used now are EBX, EDX, EDI, ESI, R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D
 
-
     public void printCode(){
-        nasm += DEFALUT_REL;
+        printStartInfo();
         printTextPart();
         printNonTextPart();
         asmPrintStream.print(nasm);
     }
 
+    public void printStartInfo(){
+        lir.getMethodMap().values().forEach(method -> {
+            nasm += GLOBAL + "\t" + method.name + "\n";
+        });
+        nasm += "\n";
+        nasm += EXTERN + "\n";
+    }
+
     public void printTextPart(){
-        return;
+        lir.getMethodMap().values().forEach(method -> {
+            if(!method.isBuiltIn) {
+                method.basicBlocks.forEach(asmBasicBlock -> {
+                    if (asmBasicBlock.nasmLabel != null)
+                        nasm += "\n" + asmBasicBlock.nasmLabel + ":\n";
+                    asmBasicBlock.insts.forEach(this::visit);
+                });
+            }
+        });
     }
 
     public void printNonTextPart(){
@@ -68,108 +86,185 @@ public class CodePrinter implements ASMLevelIRVisitor<Void> {
         lir.getDataSection().forEach(this::visit);
         nasm += SECTION_RODATA;
         lir.getRomDataSection().forEach(this::visit);
-        nasm += SECTION_INIT_ARRAY + "dq\t" + lir.getGlobalInit().name;
+        nasm += SECTION_INIT_ARRAY + "\tDQ\t" + lir.getGlobalInit().name;
     }
 
     @Override
-    public Void visit(ASMInstruction inst) {
+    public String visit(ASMInstruction inst) {
         return inst.accept(this);
     }
 
     @Override
-    public Void visit(ASMBinaryInstruction inst) {
+    public String visit(ASMBinaryInstruction inst) {
+        nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMCallInstruction inst) {
+    public String visit(ASMCallInstruction inst) {
+        nasm += "CALL\t\t"  + inst.callee.name + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMCDQInstruction inst) {
-        nasm += "CDQ\n";
+    public String visit(ASMCDQInstruction inst) {
+        nasm += "CQO\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMCompareInstruction inst) {
+    public String visit(ASMCompareInstruction inst) {
+        nasm += "CMP\t\t" + visit(inst.lhs) + ", " + visit(inst.rhs) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMConditionalJumpInstruction inst) {
+    public String visit(ASMConditionalJumpInstruction inst) {
+        nasm += inst.op.toString() + "\t\t" + inst.falseTarget.nasmLabel + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMDInstruction inst) {
-        nasm += inst.nasmName + ":\n\tdd\t" + inst.value + "\n";
+    public String visit(ASMDInstruction inst) {
+        nasm += inst.nasmName + ":\n\tDQ\t\t" + inst.value + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMDirectJumpInstruction inst) {
+    public String visit(ASMDirectJumpInstruction inst) {
+        nasm += "JMP\t\t" + inst.target.nasmLabel + "\n";
+        return null;
+    }
+
+
+    @Override
+    public String visit(ASMLEAInstruction inst) {
+        inLEA = true;
+        nasm += "LEA\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
+        inLEA = false;
         return null;
     }
 
     @Override
-    public Void visit(ASMLabelInstruction inst) {
-        nasm += inst.nasmName + "\n";
-        return null;
-    }
-
-    @Override
-    public Void visit(ASMLEAInstruction inst) {
-        return null;
-    }
-
-    @Override
-    public Void visit(ASMLeaveInstruction inst) {
+    public String visit(ASMLeaveInstruction inst) {
         nasm += "LEAVE\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMMoveInstruction inst) {
+    public String visit(ASMMoveInstruction inst) {
+        nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMPopInstruction inst) {
+    public String visit(ASMPopInstruction inst) {
+        nasm += "POP\t\t" + visit(inst.op) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMPushInstruction inst) {
+    public String visit(ASMPushInstruction inst) {
+        nasm += "PUSH\t\t" + visit(inst.src) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMRESInstruction inst) {
-        nasm += inst.nasmName + ":\n\tRESB\t" + inst.size + "\n";
+    public String visit(ASMRESInstruction inst) {
+        nasm += inst.nasmName + ":\n\tRESB\t\t" + inst.size + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMReturnInstruction inst) {
+    public String visit(ASMReturnInstruction inst) {
         nasm += "RET\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMRomDataInstruction inst) {
+    public String visit(ASMRomDataInstruction inst) {
         nasm += inst.nasmName + ":\n" + StringParser.stringToHex(inst.content) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMSetInstruction inst) {
+    public String visit(ASMSetInstruction inst) {
+        nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + "\n";
         return null;
     }
 
     @Override
-    public Void visit(ASMUnaryInstruction inst) {
+    public String visit(ASMUnaryInstruction inst) {
+        nasm += inst.operator.toString() + "\t\t" + visit(inst.src) + "\n";
         return null;
+    }
+
+    @Override
+    public String visit(Operand op) {
+        return op.accept(this);
+    }
+
+    @Override
+    public String visit(Address op) {
+        return op.accept(this);
+    }
+
+    @Override
+    public String visit(Constant op) {
+        return op.accept(this);
+    }
+
+    @Override
+    public String visit(Immediate op) {
+        return op.value + "";
+    }
+
+    @Override
+    public String visit(Label op) {
+        return op.accept(this);
+    }
+
+    @Override
+    public String visit(Memory op) {
+        if(!ifAllocated) return op.getDisplayName();
+        else{
+            if(inLEA) return op.getNASMName();
+            else return QWORD + op.getNASMName();
+        }
+    }
+
+    @Override
+    public String visit(Register op) {
+        return op.accept(this);
+    }
+
+    @Override
+    public String visit(StaticPointer op) {
+        if(!ifAllocated) return op.getDisplayName();
+        else return QWORD + op.getNASMName();
+    }
+
+    @Override
+    public String visit(StaticString op) {
+        if(!ifAllocated) return op.getDisplayName();
+        else{
+            if(inLEA) return op.getNASMName();
+            else return QWORD + op.getNASMName();
+        }
+    }
+
+    @Override
+    public String visit(StringLiteral op) {
+        if(inLEA) return op.getNASMName();
+        else return op.nasmName;
+    }
+
+    @Override
+    public String visit(VirtualRegister op) {
+        if(!ifAllocated) return op.getDisplayName();
+        else{
+            if(op.spaceAllocatedTo instanceof StackSpace) return QWORD + op.spaceAllocatedTo.getNASMName();
+            else return op.spaceAllocatedTo.getNASMName();
+        }
     }
 }

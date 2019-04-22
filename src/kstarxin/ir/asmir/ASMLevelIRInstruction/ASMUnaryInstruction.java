@@ -7,9 +7,12 @@ import kstarxin.ir.operand.Operand;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
 public class ASMUnaryInstruction extends ASMInstruction {
+    public NASMInstructionOperator operator;
     public Operand src;
     public ASMUnaryInstruction(NASMInstructionOperator op, ASMBasicBlock bb, Operand _src){
         super(op.toString(), bb);
+        src = _src;
+        operator = op;
     }
 
     @Override

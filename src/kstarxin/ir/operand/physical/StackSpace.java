@@ -1,18 +1,27 @@
 package kstarxin.ir.operand.physical;
 
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.*;
 
 public class StackSpace extends Address {
-    int offset;
-    public StackSpace(int _offset){
+    public PhysicalRegister base;
+    public int offset;
+    public StackSpace(PhysicalRegister _base, int _offset){
         super("stack");
+        base = _base;
         offset = _offset;
     }
 
     @Override
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
     public String getNASMName(){
-        return "[RBP" + "-" + offset + "]";
+        if(offset > 0) return "[" + base.getNASMName() + "+" + offset + "]";
+        return "[" + base.getNASMName() + "-" + (-offset) + "]";
     }
 
     @Override

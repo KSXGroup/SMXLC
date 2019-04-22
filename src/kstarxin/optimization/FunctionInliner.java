@@ -270,7 +270,7 @@ public class FunctionInliner {
 
         LinkedList<String> toRemove = new LinkedList<String>();
         ir.getMethodMap().forEach((k, v)->{
-            if(!called.contains(v)) toRemove.add(k);
+            if(!v.isBuiltin && !called.contains(v)) toRemove.add(k);
         });
         toRemove.forEach(item -> ir.getMethodMap().remove(item));
     }

@@ -4,10 +4,12 @@ import kstarxin.ir.asmir.*;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
 public class ASMConditionalJumpInstruction extends ASMInstruction {
-    public ASMBasicBlock trueTarget;
-    public ASMBasicBlock falseTarget;
-    public ASMConditionalJumpInstruction(NASMInstructionOperator op, ASMBasicBlock bb, ASMBasicBlock _t, ASMBasicBlock _f){
-        super(op.toString(), bb);
+    public NASMInstructionOperator  op;
+    public ASMBasicBlock            trueTarget;
+    public ASMBasicBlock            falseTarget;
+    public ASMConditionalJumpInstruction(NASMInstructionOperator _op, ASMBasicBlock bb, ASMBasicBlock _t, ASMBasicBlock _f){
+        super(_op.toString(), bb);
+        op = _op;
         trueTarget = _t;
         falseTarget = _f;
     }

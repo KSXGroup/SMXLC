@@ -3,20 +3,21 @@ package kstarxin.utilities;
 import kstarxin.ast.*;
 
 public class NameMangler {
-        public final static String globalPrefix     = "@";
-        public final static String methodPrefix     = "_Z";
-        public final static String initMethod       = "@_INIT_";
-        public final static String strcmp           = "@_Zstrcmpss";
-        public final static String strcat           = "@_Zstrcatss";
-        public final static String malloc           = "@_Zmalloci";
-        public final static String substring        = "@_Zstring4substringii";
-        public final static String ord              = "@_Zstring4ordi";
-        public final static String parseInt         = "@_Zstring4parseInt";
-        public final static String mainMethodName   = "@main";
-        public final static String inlineSuffix     = "#inline";
-        public final static String splitSuffix      = "#split";
-        public final static String nasmGlobalPrefix = "_g_";
-        public final static String inlineHashReplace= "_il_";
+        public final static String globalPrefix         = "@";
+        public final static String methodPrefix         = "_Z";
+        public final static String initMethod           = "@_INIT_";
+        public final static String strcmp               = "@_Zstrcmpss";
+        public final static String strcat               = "@_Zstrcatss";
+        public final static String malloc               = "@_Zmalloci";
+        public final static String substring            = "@_Zstring4substringii";
+        public final static String ord                  = "@_Zstring4ordi";
+        public final static String parseInt             = "@_Zstring4parseInt";
+        public final static String mainMethodName       = "@main";
+        public final static String inlineSuffix         = "#inline";
+        public final static String splitSuffix          = "#split";
+        public final static String nasmGlobalPrefix     = "_g_";
+        public final static String inlineHashReplace    = "_il_";
+        public static final String STRING_LITERAL_PRE   = "_str_literal_";
 
         public enum PhysicalRegisterName{
             RAX, RBX, RCX, RDX, RBP, RSP, RSI, RDI, R8, R9, R10, R11, R12, R13, R14, R15,
@@ -126,6 +127,7 @@ public class NameMangler {
         }
 
         public static String convertToASMName(String s){
+            if(s.equals(mainMethodName)) return "main";
             s = s.replace("@", nasmGlobalPrefix);
             s = s.replace("#", inlineHashReplace);
             return s;

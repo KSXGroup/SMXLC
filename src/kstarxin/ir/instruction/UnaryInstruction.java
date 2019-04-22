@@ -80,12 +80,12 @@ public class UnaryInstruction extends Instruction{
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
-        if(src instanceof StaticPointer || src instanceof StaticString){
+        if(src instanceof StaticPointer || (src instanceof StaticString && !((StaticString) src).isConstantAllocatedByCompiler)){
             src = map.get(src);
             if(src == null) throw new RuntimeException();
         }
 
-        if(dest instanceof StaticPointer || dest instanceof StaticString){
+        if(dest instanceof StaticPointer || (dest instanceof StaticString && !((StaticString) dest).isConstantAllocatedByCompiler)){
             Address old = (Address) dest;
             dest = map.get(dest);
             if(dest == null) throw new RuntimeException();

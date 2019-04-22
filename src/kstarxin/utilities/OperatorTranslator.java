@@ -4,7 +4,7 @@ import kstarxin.parser.*;
 
 public class OperatorTranslator {
 
-    public enum NASMInstructionOperator{MOV, MOVZX, CMP, PUSH, POP, ADD, SUB, IDIV, IMUL, AND, JMP, JE ,JNE,
+    public enum NASMInstructionOperator{MOV, MOVZX, CMP, PUSH, POP, ADD, SUB, IDIV, IMUL,NEG, AND, JMP, JE ,JNE,
                                         JNZ, JGE, JG, JLE, JL, LEA, NOT, OR, XOR, DEC, INC, SAR, SHL, LEAVE,
                                         RET, SETL, SETLE, SETG, SETGE, SETE, SETNE, RESQ, RESD, DQ, DD};
 

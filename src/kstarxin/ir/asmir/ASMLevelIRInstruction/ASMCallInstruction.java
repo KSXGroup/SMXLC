@@ -3,8 +3,10 @@ package kstarxin.ir.asmir.ASMLevelIRInstruction;
 import kstarxin.ir.asmir.*;
 
 public class ASMCallInstruction extends ASMInstruction {
-    public ASMCallInstruction(ASMBasicBlock bb){
+    public ASMLevelIRMethod callee;
+    public ASMCallInstruction(ASMBasicBlock bb, ASMLevelIRMethod _callee){
         super("CALL", bb);
+        callee = _callee;
     }
 
     @Override

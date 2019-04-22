@@ -21,8 +21,10 @@ public class GlobalVariableOptimizer {
             if(!method.isBuiltin) {
                 globalVariableReplacer.clear();
                 method.globalVariableUsed.forEach(gv -> {
-                    VirtualRegister vreg = method.allocateNewTmpRegister();
-                    globalVariableReplacer.put(gv, vreg);
+                    if(!(gv instanceof StaticString && ((StaticString) gv).isConstantAllocatedByCompiler)) {
+                        VirtualRegister vreg = method.allocateNewTmpRegister();
+                        globalVariableReplacer.put(gv, vreg);
+                    }
                 });
                 ReturnInstruction retInst = null;
                 method.basicBlockInBFSOrder.clear();

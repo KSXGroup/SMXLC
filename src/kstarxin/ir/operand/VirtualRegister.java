@@ -2,6 +2,7 @@ package kstarxin.ir.operand;
 
 import kstarxin.ast.*;
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.physical.*;
 import kstarxin.utilities.*;
 
@@ -43,6 +44,11 @@ public class VirtualRegister extends Register {
 
     public void allocatedTo(StackSpace stack){
         spaceAllocatedTo = stack;
+    }
+
+    @Override
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override

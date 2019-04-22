@@ -1,6 +1,8 @@
 package kstarxin.ir.asmir;
 
+import kstarxin.ir.Method;
 import kstarxin.ir.asmir.ASMLevelIRInstruction.*;
+import java.util.*;
 
 import java.util.LinkedList;
 
@@ -8,14 +10,19 @@ public class ASMLevelIRProgram {
     private LinkedList<ASMRESInstruction>       BSSSection;
     private LinkedList<ASMDInstruction>         DataSection;
     private LinkedList<ASMRomDataInstruction>   romDataSection;
-    private LinkedList<ASMLevelIRMethod>        method;
+    private HashMap<Method, ASMLevelIRMethod>   methodMap;
     private ASMLevelIRMethod                    globalInit;
+    public  boolean                             ifAllocated;
 
     public ASMLevelIRProgram(){
         BSSSection      = new LinkedList<ASMRESInstruction>();
         DataSection     = new LinkedList<ASMDInstruction>();
         romDataSection  = new LinkedList<ASMRomDataInstruction>();
-        method          = new LinkedList<ASMLevelIRMethod>();
+        methodMap       = new HashMap<Method, ASMLevelIRMethod>();
+    }
+
+    public void addASMMethod(Method mirMethod,ASMLevelIRMethod _method){
+        methodMap.put(mirMethod, _method);
     }
 
     public void addBSSData(ASMRESInstruction inst){
@@ -42,8 +49,8 @@ public class ASMLevelIRProgram {
         return BSSSection;
     }
 
-    public LinkedList<ASMLevelIRMethod> getMethod() {
-        return method;
+    public HashMap<Method, ASMLevelIRMethod> getMethodMap() {
+        return methodMap;
     }
 
     public ASMLevelIRMethod getGlobalInit() {

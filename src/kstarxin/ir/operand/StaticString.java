@@ -2,6 +2,7 @@ package kstarxin.ir.operand;
 
 import kstarxin.compiler.Configure;
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.utilities.*;
 
 public class StaticString extends Label {
@@ -10,6 +11,7 @@ public class StaticString extends Label {
     public boolean  isConstantAllocatedByCompiler;
     public StaticString(String _hintName, String _value){
         super(_hintName);
+        nasmName = NameMangler.convertToASMName(_hintName);
         value       = _value;
         isConstantAllocatedByCompiler = false;
         if(_value != null)
@@ -34,7 +36,12 @@ public class StaticString extends Label {
     }
 
     @Override
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
+    }
+
+    @Override
     public String getNASMName() {
-        return null;
+        return "[" + nasmName + "]";
     }
 }

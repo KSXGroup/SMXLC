@@ -78,17 +78,17 @@ public class BinaryArithmeticInstruction extends Instruction {
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
-        if(rhs instanceof StaticString || rhs instanceof StaticPointer){
+        if((rhs instanceof StaticString  && !((StaticString) rhs).isConstantAllocatedByCompiler) || rhs instanceof StaticPointer){
             rhs = map.get(rhs);
             if(rhs == null) throw new RuntimeException();
         }
 
-        if(lhs instanceof StaticString || lhs instanceof StaticPointer){
+        if((lhs instanceof StaticString && !((StaticString) lhs).isConstantAllocatedByCompiler) || lhs instanceof StaticPointer){
             lhs = map.get(lhs);
             if(lhs == null) throw new RuntimeException();
         }
 
-        if(target instanceof StaticString || target instanceof StaticPointer){
+        if((target instanceof StaticString && ! ((StaticString) target).isConstantAllocatedByCompiler) || target instanceof StaticPointer){
             target = map.get(target);
             if(target == null) throw new RuntimeException();
             return (Address) target;

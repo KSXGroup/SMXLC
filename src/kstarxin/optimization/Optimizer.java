@@ -11,12 +11,13 @@ public class Optimizer {
     CFGSimplifier           simplifier;
     FunctionInliner         inliner;
     GlobalVariableOptimizer globalVariableOptimizer;
-
+    LivenessAnalyzer        livenessAnalyzer;
     public Optimizer(IRProgram _ir){
         ir                      = _ir;
         simplifier              = new CFGSimplifier(_ir);
         inliner                 = new FunctionInliner(_ir, 4);
         globalVariableOptimizer = new GlobalVariableOptimizer(_ir);
+        livenessAnalyzer        = new LivenessAnalyzer(_ir);
     }
 
     public void run(){
@@ -24,5 +25,6 @@ public class Optimizer {
         inliner.run();
         simplifier.run();
         globalVariableOptimizer.run();
+       // livenessAnalyzer.run();
     }
 }

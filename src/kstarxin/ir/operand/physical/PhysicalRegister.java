@@ -1,6 +1,7 @@
 package kstarxin.ir.operand.physical;
 
 import kstarxin.ir.IRBaseVisitor;
+import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.*;
 import kstarxin.utilities.NameMangler;
 
@@ -77,6 +78,11 @@ public class PhysicalRegister extends Register {
     @Override
     public String getNASMName(){
         return enumName.toString();
+    }
+
+    @Override
+    public <T> T accept(ASMLevelIRVisitor<T> visitor) {
+        return visitor.visit(this);
     }
 
     @Override

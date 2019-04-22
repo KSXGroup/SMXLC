@@ -40,7 +40,7 @@ public class ReturnInstruction extends JumpInstruction {
 
     @Override
     public Address replaceOperandForGlobalVariableOptimization(HashMap<Address, VirtualRegister> map) {
-        if(returnValue instanceof StaticString || returnValue instanceof StaticPointer){
+        if((returnValue instanceof StaticString && !((StaticString) returnValue).isConstantAllocatedByCompiler) || returnValue instanceof StaticPointer){
             returnValue = map.get(returnValue);
             if(returnValue == null) throw new RuntimeException();
         }

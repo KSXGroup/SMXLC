@@ -47,7 +47,6 @@ public class Method {
         returnRegister          = new VirtualRegister(retVal, _hintName + retVal);
         tmpRegisterCounter      = 0;
         tmpLabelCounter         = 0;
-        stackAligned            = 0;
         hintName                = _hintName;
         startBlock              = null;
         loops                   = new LinkedList<LoopSuperBlock>();
@@ -209,11 +208,6 @@ public class Method {
         return count;
     }
 
-    public void setStackAligned(int sz){
-        stackAligned  = sz;
-    }
-
-
     public int cleanUp(){
         //PAY FOR NOT ELEGENT DESIGN, SHIT!!
         int ret = removeRedundantdBB();
@@ -227,6 +221,7 @@ public class Method {
         bfs();
         basicBlockInBFSOrder.forEach(BasicBlock::collectDefUseInfo);
     }
+
 
 
 }
