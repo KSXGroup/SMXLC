@@ -1,5 +1,5 @@
 
-SECTION .text   6
+SECTION .text 
 
 _g__Zstrcatss:
         push    r15
@@ -109,7 +109,7 @@ _g__ZgetString:
         push    rbx
         sub     rsp, 8
         call    malloc
-        lea     rdi, [rel .LC0]
+        lea     rdi, [rel LC0]
         lea     rbp, [rax+8H]
         mov     rbx, rax
         xor     eax, eax
@@ -143,7 +143,7 @@ L_002:  mov     ecx, dword [rdx]
 
 _g__ZgetInt:
         sub     rsp, 24
-        lea     rdi, [rel .LC1]
+        lea     rdi, [rel LC1]
         xor     eax, eax
         lea     rsi, [rsp+8H]
         call    __isoc99_scanf
@@ -195,7 +195,7 @@ ALIGN   16
 printInt:
         mov     rsi, rdi
         xor     eax, eax
-        lea     rdi, [rel .LC1]
+        lea     rdi, [rel LC1]
         jmp     printf
 
 
@@ -210,82 +210,77 @@ ALIGN   8
 _g__Zprints:
         lea     rsi, [rdi+8H]
         xor     eax, eax
-        lea     rdi, [rel .LC0]
+        lea     rdi, [rel LC0]
         jmp     printf
 
 
 ALIGN   16
 
 _g__ZtoStringi:
-        push    r12
-        push    rbp
-        mov     rbp, rdi
         push    rbx
-        cmp     rdi, 9
-        jle     L_010
-        xor     r12d, r12d
-        mov     ebx, 1
-ALIGN   8
-L_007:  mov     rax, rbp
-        lea     rbx, [rbx+rbx*4]
-        add     r12d, 1
-        add     rbx, rbx
-        cqo
-        idiv    rbx
-        cmp     rax, 9
-        jg      L_007
-        movsx   edi, r12w
-        movsx   r12, r12w
-        add     edi, 9
-        movsxd  rdi, edi
+        mov     rbx, rdi
+        mov     edi, 30
         call    malloc
-        mov     qword [rax], r12
-        mov     rdi, rax
-L_008:  mov     r8, qword 0CCCCCCCCCCCCCCCDH
+        xor     r10d, r10d
+        mov     rsi, rax
+        lea     rdi, [rax+8H]
+        test    rbx, rbx
+        jns     L_007
+        neg     rbx
+        mov     r10d, 1
+L_007:  mov     r9, qword 0CCCCCCCCCCCCCCCDH
         xor     ecx, ecx
 
+
+
+
 ALIGN   8
-L_009:  mov     rax, rbp
-        movsx   rsi, cx
+L_008:  mov     rax, rbx
+        movsx   r8, cx
+        mul     r9
+        shr     rdx, 3
+        lea     rax, [rdx+rdx*4]
+        add     rax, rax
+        sub     rbx, rax
+        mov     eax, ecx
         add     ecx, 1
-        cqo
-        idiv    rbx
-        add     eax, 48
-        mov     rbp, rdx
-        mov     byte [rdi+rsi+8H], al
-        mov     rax, rbx
-        mul     r8
+        add     ebx, 48
+        mov     byte [rdi+r8+8H], bl
         mov     rbx, rdx
-        shr     rbx, 3
-        test    rbp, rbp
-        jnz     L_009
-        movsx   rcx, cx
-        mov     rax, rdi
-        add     rcx, 8
-        mov     byte [rdi+rcx], 0
-        pop     rbx
-        pop     rbp
-        pop     r12
-        ret
+        test    rdx, rdx
+        jnz     L_008
+        movsx   r9, cx
+        lea     r11, [rdi+r9+8H]
+        test    r10b, r10b
+        jz      L_009
+        lea     ecx, [rax+2H]
+        mov     byte [r11], 45
+        movsx   r9, cx
+        lea     r11, [rdi+r9+8H]
+L_009:  movsx   ecx, cx
+        xor     eax, eax
+        sub     ecx, 1
+        movsxd  rdx, ecx
+        test    ecx, ecx
+        jle     L_011
+
+
+
 
 ALIGN   8
-L_010:  mov     edi, 9
-        call    malloc
-        mov     rdi, rax
-        mov     qword [rax], 0
-        test    rbp, rbp
-        jg      L_011
-        mov     ecx, 8
+L_010:  movzx   ecx, byte [rsi+rax+10H]
+        movzx   r8d, byte [rsi+rdx+10H]
+        mov     byte [rsi+rax+10H], r8b
+        add     rax, 1
+        mov     byte [rsi+rdx+10H], cl
+        sub     rdx, 1
+        cmp     edx, eax
+        jg      L_010
+L_011:  mov     byte [r11], 0
         mov     rax, rdi
-        mov     byte [rdi+rcx], 0
+        mov     qword [rsi+8H], r9
         pop     rbx
-        pop     rbp
-        pop     r12
         ret
-
-L_011:
-        mov     ebx, 1
-        jmp     L_008
 
 
 SECTION .data   
@@ -296,18 +291,8 @@ SECTION .bss
 
 SECTION .rodata.str1.1 
 
-.LC0:
+LC0:
         db 25H, 73H, 00H
 
-.LC1:
-        db 25H, 6CH, 64H, 00H
-
-.LC2:
-        db 25H, 6CH, 64H, 2CH, 20H, 25H, 73H, 0AH
-        db 00H
-
-.LC3:
-        db 25H, 6CH, 64H, 0AH, 00H
-
-.LC4:
-        db 25H, 6CH, 64H, 2CH, 25H, 73H, 0AH, 00H
+LC1:
+        db 25H, 6CH, 6CH, 64H, 00H

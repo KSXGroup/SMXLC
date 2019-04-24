@@ -19,6 +19,7 @@ import org.antlr.v4.runtime.*;
 public class Compiler {
     private static final    String              compileTerminateInfo = "compliation terminated";
     private static final    String              irPrintPath = "/home/kstarxin/code/compiler/ir.txt";
+    private static final    String              nasmPrintPath = "/home/kstarxin/nasm.asm";
     private                 MxStarParser        parser;
     private                 String              fileName;
     private                 MxErrorProcessor    errorProcessor;
@@ -53,6 +54,7 @@ public class Compiler {
         IRProgram               ir              = null;
         IRPrinter               irPrinter       = null;
         PrintStream             irOutputStream  = null;
+        PrintStream             nasmOutputStream= null;
         IRInterpreter           irIntererter    = null;
         ASMLevelIRBuilder       asmIrBuilder    = null;
         ASMLevelIRProgram       asmIr           = null;
@@ -60,6 +62,8 @@ public class Compiler {
         CodePrinter             codePrinter     = null;
 
         irOutputStream = new PrintStream(new File(irPrintPath));
+        nasmOutputStream = new PrintStream(new File(nasmPrintPath));
+
         if(errorProcessor.size() > 0) {
             errorProcessor.printError();
             throw new MxCompileException(compileTerminateInfo);
@@ -108,7 +112,7 @@ public class Compiler {
         Optimizer optimizer = new Optimizer(ir);
         optimizer.run();
 
-        irPrinter = new IRPrinter(ir, irOutputStream);
+        irPrinter = new IRPrinter(ir, System.err);
         irPrinter.printIR();
 
         /*irIntererter = new IRInterpreter(irPrintPath);
@@ -120,7 +124,7 @@ public class Compiler {
         naiveAllocator = new NaiveAllocator(asmIr);
         naiveAllocator.run();
 
-        codePrinter = new CodePrinter(asmIr,System.out);
+        codePrinter = new CodePrinter(asmIr,nasmOutputStream);
         codePrinter.printCode();
         return;
     }

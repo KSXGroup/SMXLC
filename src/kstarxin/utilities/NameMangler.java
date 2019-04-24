@@ -9,10 +9,12 @@ public class NameMangler {
         public final static String strcmp               = "@_Zstrcmpss";
         public final static String strcat               = "@_Zstrcatss";
         public final static String malloc               = "@_Zmalloci";
+        public final static String mallocTrue           = "malloc";
         public final static String substring            = "@_Zstring4substringii";
         public final static String ord                  = "@_Zstring4ordi";
         public final static String parseInt             = "@_Zstring4parseInt";
         public final static String mainMethodName       = "@main";
+        public final static String mainTrue             = "main";
         public final static String inlineSuffix         = "#inline";
         public final static String splitSuffix          = "#split";
         public final static String nasmGlobalPrefix     = "_g_";
@@ -54,7 +56,7 @@ public class NameMangler {
         }
 
         public static String mangleName(MethodDeclarationNode n){
-            if(n.getIdentifier().equals("main")) return globalPrefix + "main"; // ignore all parameters of main method
+            if(n.getIdentifier().equals(NameMangler.mainTrue)) return globalPrefix + NameMangler.mainTrue; // ignore all parameters of main method
             String mangledName =globalPrefix + methodPrefix + n.getIdentifier();
             for(MxType t : n.getReturnType().getParameterTypeList()) {
                 if(t.isPrimitiveType()) mangledName += t.toString().charAt(0);
@@ -127,7 +129,8 @@ public class NameMangler {
         }
 
         public static String convertToASMName(String s){
-            if(s.equals(mainMethodName)) return "main";
+            if(s.equals(mainMethodName)) return mainTrue;
+            if(s.equals(malloc)) return mallocTrue;
             s = s.replace("@", nasmGlobalPrefix);
             s = s.replace("#", inlineHashReplace);
             return s;

@@ -16,8 +16,7 @@ import kstarxin.utilities.OperatorTranslator;
 import kstarxin.utilities.OperatorTranslator.*;
 import kstarxin.utilities.StringParser;
 
-import java.io.PrintStream;
-import java.util.Queue;
+import java.io.*;
 
 public class CodePrinter implements ASMLevelIRVisitor<String> {
 
@@ -26,15 +25,17 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     public static final String              SECTION_DATA        = "\nSECTION\t.data\n";
     public static final String              SECTION_BSS         = "\nSECTION\t.bss\n";
     public static final String              SECTION_RODATA      = "\nSECTION\t.rodata\n";
-    public static final String              SECTION_INIT_ARRAY  = "\nSECTION\t.init_array\n";
+  //  public static final String              SECTION_INIT_ARRAY  = "\nSECTION\t.init_array\n";
     public static final String              GLOBAL              = "global";
     public static final String              QWORD               = "QWORD ";
     public static final String              EXTERN              = "extern printf, scanf, malloc, strcmp, sscanf, puts, memcpy, __isoc99_scanf\n"; //extern some c functions
     public static final String              INT_PRINT_FORMAT    = "\'%d\\\n'";
+    public static final String              BUILTIN_FUNCTION    = "/home/kstarxin/code/compiler/lib/lib.asm";
 
     private             ASMLevelIRProgram   lir;
     private             String              nasm;
     private             PrintStream         asmPrintStream;
+    private             BufferedReader      reader;
     private             boolean             ifAllocated;
     private             boolean             inLEA;
 
@@ -42,6 +43,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         nasm            = "";
         lir             = _ir;
         ifAllocated     = _ir.ifAllocated;
+        //ifAllocated = false;
         asmPrintStream  = _asmPrintStream;
         inLEA           = false;
     }
@@ -52,16 +54,24 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     //I decide to use EAX and ECX as tmp register now
     //naviely, registers can be used now are EBX, EDX, EDI, ESI, R8D, R9D, R10D, R11D, R12D, R13D, R14D, R15D
 
-    public void printCode(){
+    public void printCode() throws Exception{
         printStartInfo();
         printTextPart();
         printNonTextPart();
+        nasm += "\n\n";
+        reader = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kstarxin/code/compiler/lib/lib.asm")));
+        String line = null;
+        while((line = reader.readLine())!= null){
+            nasm += line + "\n";
+        }
         asmPrintStream.print(nasm);
     }
 
     public void printStartInfo(){
         lir.getMethodMap().values().forEach(method -> {
-            nasm += GLOBAL + "\t" + method.name + "\n";
+            if(!method.name.equals(NameMangler.mallocTrue)) {
+                nasm += GLOBAL + "\t" + method.name + "\n";
+            }
         });
         nasm += "\n";
         nasm += EXTERN + "\n";
@@ -86,7 +96,6 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         lir.getDataSection().forEach(this::visit);
         nasm += SECTION_RODATA;
         lir.getRomDataSection().forEach(this::visit);
-        nasm += SECTION_INIT_ARRAY + "\tDQ\t" + lir.getGlobalInit().name;
     }
 
     @Override

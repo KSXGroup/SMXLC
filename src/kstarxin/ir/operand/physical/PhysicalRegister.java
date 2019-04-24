@@ -82,7 +82,7 @@ public class PhysicalRegister extends Register {
 
     @Override
     public <T> T accept(ASMLevelIRVisitor<T> visitor) {
-        return visitor.visit(this);
+        throw new RuntimeException();
     }
 
     @Override

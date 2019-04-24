@@ -44,9 +44,12 @@ public class StringParser {
         //this function return string in hex format with its length at begining
         int len = s.length();
         String ret = "";
-        ret += "\tDD\t" + s.length() + "\n\tDB\t";
+        String tmp = null;
+        ret += "\tDQ\t" + s.length() + "\n\tDB\t";
         for(byte i :s.getBytes()){
-            ret += Integer.toHexString((int)(i & 0xFF)).toUpperCase() + "H, ";
+            tmp = Integer.toHexString((int)(i & 0xFF)).toUpperCase();
+            if(tmp.length() == 1) tmp = "0" + tmp;
+            ret += tmp + "H, ";
         }
         ret += "00H";
         return ret;

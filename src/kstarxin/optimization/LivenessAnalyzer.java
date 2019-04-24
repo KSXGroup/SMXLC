@@ -107,7 +107,7 @@ public class LivenessAnalyzer {
                                 changed = true;
                                 continue;
                             }
-                        } else if (i instanceof CallInstruction) {
+                        } /*else if (i instanceof CallInstruction) {
                             if (!((CallInstruction) i).callee.isBuiltin && !i.liveOut.contains(((CallInstruction) i).returnValue)) {
                                 toRemove = i;
                                 i = i.next;
@@ -116,7 +116,7 @@ public class LivenessAnalyzer {
                                 changed = true;
                                 continue;
                             }
-                        }
+                        }*/
                     }
                 }
             }
@@ -128,6 +128,7 @@ public class LivenessAnalyzer {
     }
 
     public void run(){
-        deadCodeEliminate();
+        //something wrong with these opt
+        //deadCodeEliminate();
     }
 }

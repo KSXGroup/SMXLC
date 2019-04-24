@@ -26,7 +26,6 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
     ASMLevelIRMethod                        currentMethod;
     ASMLevelIRProgram                       lir;
     ArrayList<PhysicalRegister>             parameterPassingPhysicalRegister;
-    HashMap<String, ASMBasicBlock>          jumpMap;
     HashMap<BasicBlock, ASMBasicBlock>      visited;
 
     public ASMLevelIRBuilder(IRProgram _ir){
@@ -130,13 +129,12 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
                 virtualPhysicalReg.spaceAllocatedTo = new StackSpace(PhysicalRegisterSet.RBP, 8 + (j - 5) * 8);
                 firstBB.insts.addFirst(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, firstBB, method.parameters.get(j), virtualPhysicalReg));
             }
-        }
+        }else if(method == mir.getMethod(NameMangler.mainMethodName)) firstBB.insts.addFirst(new ASMCallInstruction(firstBB, lir.getMethodMap().get(mir.getInitMethod())));
         return null;
     }
 
     @Override
     public Void visit(BinaryArithmeticInstruction inst) {
-        VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
         switch (inst.op){
             case MxStarParser.EQ:
             case MxStarParser.NEQ:
@@ -145,6 +143,7 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             case MxStarParser.LE:
             case MxStarParser.LT:
                 if(inst.lhs instanceof Address && inst.rhs instanceof  Address) {
+                    VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
                     currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.lhs)));
                     currentBasicBlock.insertEnd(new ASMCompareInstruction(currentBasicBlock, tmp, visit(inst.rhs)));
                 }else currentBasicBlock.insertEnd(new ASMCompareInstruction(currentBasicBlock, visit(inst.lhs), visit(inst.rhs)));
@@ -178,18 +177,21 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
                 virtualEAX.spaceAllocatedTo = PhysicalRegisterSet.RAX;
                 currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, visit(inst.lhs)));
                 currentBasicBlock.insertEnd(new ASMCDQInstruction(currentBasicBlock));
-                currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock, visit(inst.rhs)));
+                if(inst.rhs instanceof Immediate) {
+                    VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
+                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.rhs)));
+                    currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock,tmp));
+                }else currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock, visit(inst.rhs)));
                 if(inst.op == MxStarParser.DIV) currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEAX));
                 else{
                     VirtualRegister virtualEDX = currentMethod.asmAllocateVirtualRegister();
-                    virtualEDX.spaceAllocatedTo = PhysicalRegisterSet.EDX;
+                    virtualEDX.spaceAllocatedTo = PhysicalRegisterSet.RDX;
                     currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEDX));
                 }
                 break;
             default:
-                currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.lhs)));
-                currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.toNASMOperator(inst.op), currentBasicBlock, tmp, visit(inst.rhs)));
-                currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), tmp));
+                currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), visit(inst.lhs)));
+                currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.toNASMOperator(inst.op), currentBasicBlock, visit(inst.target), visit(inst.rhs)));
                 break;
         }
         return null;
@@ -206,7 +208,10 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             tmp.spaceAllocatedTo = parameterPassingPhysicalRegister.get(i);
             currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.parameters.get(i))));
         }
-        if(isClassMember == 1) currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, parameterPassingPhysicalRegister.get(0), visit(inst.classThisPointer)));
+        if(isClassMember == 1){
+            VirtualRegister tmpClassPtr = currentMethod.asmAllocateVirtualRegister(parameterPassingPhysicalRegister.get(0));
+            currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmpClassPtr, visit(inst.classThisPointer)));
+        }
         currentBasicBlock.insertEnd(new ASMCallInstruction(currentBasicBlock, lir.getMethodMap().get(inst.callee)));
         if(inst.returnValue != null) {
             VirtualRegister veax = currentMethod.asmAllocateVirtualRegister();
@@ -227,22 +232,22 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
         OperatorTranslator.NASMInstructionOperator asmOp = null;
         switch (inst.op){
             case MxStarParser.EQ:
-                asmOp = OperatorTranslator.NASMInstructionOperator.JE;
-                break;
-            case MxStarParser.NEQ:
                 asmOp = OperatorTranslator.NASMInstructionOperator.JNE;
                 break;
+            case MxStarParser.NEQ:
+                asmOp = OperatorTranslator.NASMInstructionOperator.JE;
+                break;
             case MxStarParser.GT:
-                asmOp = OperatorTranslator.NASMInstructionOperator.JG;
-                break;
-            case MxStarParser.LT:
-                asmOp = OperatorTranslator.NASMInstructionOperator.JL;
-                break;
-            case MxStarParser.LE:
                 asmOp = OperatorTranslator.NASMInstructionOperator.JLE;
                 break;
-            case MxStarParser.GE:
+            case MxStarParser.LT:
                 asmOp = OperatorTranslator.NASMInstructionOperator.JGE;
+                break;
+            case MxStarParser.LE:
+                asmOp = OperatorTranslator.NASMInstructionOperator.JG;
+                break;
+            case MxStarParser.GE:
+                asmOp = OperatorTranslator.NASMInstructionOperator.JL;
                 break;
             default:
                 throw new RuntimeException("what shit opeator do you in conditional jump ??????");
@@ -332,6 +337,7 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
                 case MxStarParser.NOT:
                     currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.dest), visit(inst.src)));
                     currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.NOT, currentBasicBlock, visit(inst.dest)));
+                    if(inst.op == MxStarParser.NOT) currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.AND,currentBasicBlock, visit(inst.dest), new Immediate(1)));
                     break;
                 case MxStarParser.INC:
                     currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.dest), visit(inst.src)));
