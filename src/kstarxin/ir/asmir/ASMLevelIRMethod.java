@@ -11,6 +11,7 @@ public class ASMLevelIRMethod {
 
     public String                       name;
     public LinkedList<ASMBasicBlock>    basicBlocks;
+    public VirtualRegister              thisPointer;
     public int                          ASMTmpRegisterCounter;
     public boolean                      isBuiltIn;
     public ASMLevelIRMethod(String _name, int _ASMTmpRegisterCounter) {
@@ -18,6 +19,7 @@ public class ASMLevelIRMethod {
         ASMTmpRegisterCounter   = _ASMTmpRegisterCounter;
         basicBlocks             = new LinkedList<ASMBasicBlock>();
         isBuiltIn               = false;
+        thisPointer             = null;
     }
 
     public VirtualRegister asmAllocateVirtualRegister(){

@@ -29,7 +29,7 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
     private static PhysicalRegister             tmpRegA = PhysicalRegisterSet.RAX;
     private static PhysicalRegister             tmpRegB = PhysicalRegisterSet.RDX;
     private static PhysicalRegister             tmpBase =PhysicalRegisterSet.RBX;
-    private static PhysicalRegister             tmpIndex = PhysicalRegisterSet.RCX;
+    private static PhysicalRegister             tmpIndex = PhysicalRegisterSet.R10;
 
     public NaiveAllocator(ASMLevelIRProgram _lir){
         lir = _lir;
@@ -66,6 +66,7 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
         for(ASMLevelIRMethod m : lir.getMethodMap().values()) {
             if (!m.isBuiltIn) {
                 currentMethod = m;
+                if(m.thisPointer != null) m.thisPointer.spaceAllocatedTo = allocateStackSpace();
                 for (ASMBasicBlock ab : m.basicBlocks) {
                     allocatedInstList.clear();
                     currentBasicBlock = ab;
@@ -197,7 +198,14 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
             allocatedInstList.add(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, pvreg, inst.src));
             inst.src = pvreg;
             allocatedInstList.add(inst);
-        }else allocatedInstList.add(inst);
+        }else if(inst.op.equals(OperatorTranslator.NASMInstructionOperator.MOVZX) && isMemory(inst.dst)){
+            if(!(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo == PhysicalRegisterSet.AL)) throw new RuntimeException();
+            VirtualRegister vrax = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX);
+            Operand ddst = inst.dst;
+            inst.dst = vrax;
+            allocatedInstList.add(inst);
+            allocatedInstList.add(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, ddst, vrax));
+        } else allocatedInstList.add(inst);
         return null;
     }
 
@@ -236,6 +244,7 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
         visit(inst.dst);
         if(inst.dst instanceof VirtualRegister){
             if(!(inst.dst.spaceAllocatedTo instanceof PhysicalRegister)) throw new RuntimeException();
+            allocatedInstList.add(inst);
         }
         else throw new RuntimeException();
         return null;
@@ -275,12 +284,12 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
 
     @Override
     public Void visit(Memory op) {
-        if(((VirtualRegister)(op.address)).spaceAllocatedTo == null) throw new RuntimeException();
+        if(((VirtualRegister)(op.address)).spaceAllocatedTo == null)visit(op.address);
         VirtualRegister tbase = currentMethod.asmAllocateVirtualRegister(tmpBase);
         allocatedInstList.add(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tbase, op.address));
         op.address = tbase;
         if(op.index != null && op.index instanceof VirtualRegister){
-            if(((VirtualRegister) op.index).spaceAllocatedTo == null) throw new RuntimeException();
+            if(((VirtualRegister) op.index).spaceAllocatedTo == null) visit(op.index);
             VirtualRegister tindex = currentMethod.asmAllocateVirtualRegister(tmpIndex);
             allocatedInstList.add(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tindex, op.index));
             op.index = tindex;

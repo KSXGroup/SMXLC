@@ -124,7 +124,15 @@ public class Method {
     private void dodfs(BasicBlock bb, int order){
         bb.dfsOrder = order;
         basicBlockInDFSOrder.add(bb);
-        if(bb.succ.size() == 0) return;
+        if(bb.succ.size() == 0){
+           // System.err.println(bb.blockLabel + " has no succ");
+            return;
+        }
+        /*System.err.print(bb.blockLabel + " has succ: ");
+        bb.succ.forEach(succ -> {
+            System.err.print(succ.blockLabel + " ");
+        });
+        System.err.println();*/
         bb.succ.forEach(succ -> {
             if(!basicBlockInDFSOrder.contains(succ)) dodfs(succ, order + 1);
         });
@@ -158,7 +166,6 @@ public class Method {
     private void fixCFG(){
         //holy shit, never try to maintain the cfg when build it
         if(isBuiltin) return;
-        basicBlockInBFSOrder.clear();
         bfs();
         LinkedList<BasicBlock> predToRemove = new LinkedList<BasicBlock>();
         for (BasicBlock bb : basicBlockInBFSOrder) {
@@ -166,19 +173,24 @@ public class Method {
             Instruction endInst = bb.getEndInst();
             bb.succ.forEach(dsucc->{dsucc.addPred(bb);});
             bb.pred.forEach(dpred->{
-                Instruction end = dpred.getEndInst();
-                if(end instanceof DirectJumpInstruction){
-                    if(((DirectJumpInstruction) end).target != bb) predToRemove.add(dpred);
+                if(dpred == null) throw new RuntimeException();
+                if(dpred.size() == 0) predToRemove.add(dpred);
+                else {
+                    Instruction end = dpred.getEndInst();
+                    if (end instanceof DirectJumpInstruction) {
+                        if (((DirectJumpInstruction) end).target != bb) predToRemove.add(dpred);
+                    } else if (end instanceof ConditionJumpInstruction) {
+                        if (((ConditionJumpInstruction) end).trueTarget != bb && ((ConditionJumpInstruction) end).falseTarget != bb)
+                            predToRemove.add(dpred);
+                    } else if (!(end instanceof ReturnInstruction))
+                        throw new RuntimeException();
                 }
-                else if(end instanceof ConditionJumpInstruction){
-                    if(((ConditionJumpInstruction) end).trueTarget != bb && ((ConditionJumpInstruction) end).falseTarget != bb) predToRemove.add(dpred);
-                }
-                else if(!(end instanceof ReturnInstruction))
-                    throw new RuntimeException();
             });
-            predToRemove.forEach(rm -> bb.removePred(rm));
+            predToRemove.forEach(rm ->{
+                //System.err.println(bb.blockLabel + " remove " + rm.blockLabel);
+                bb.removePred(rm);
+            });
         }
-        basicBlockInBFSOrder.clear();
     }
 
     private int removeRedundantdBB(){
@@ -195,6 +207,7 @@ public class Method {
                 });
                 count++;
                 cur.setRemoved();
+                //System.err.println("remove " + cur.blockLabel );
                 visited.add(cur);
             }else{
                 cur.pred.forEach(bb->{
@@ -210,6 +223,7 @@ public class Method {
 
     public int cleanUp(){
         //PAY FOR NOT ELEGENT DESIGN, SHIT!!
+        dfs();
         int ret = removeRedundantdBB();
         fixCFG();
         ret += removeRedundantdBB();

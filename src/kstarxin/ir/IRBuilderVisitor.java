@@ -331,6 +331,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     @Override
     public Operand visit(Node node) {
+        if(node == null) return null;
         return node.accept(this);
     }
 
@@ -1263,7 +1264,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             currentSuperBlock = loop;
             BasicBlock cond = new BasicBlock(currentMethod, currentSuperBlock, currentBasicBlock, currentMethod.generateTmpLabel() + "_cond");
             BasicBlock body = new BasicBlock(currentMethod, currentSuperBlock, cond, currentMethod.generateTmpLabel() + "_body");
-            BasicBlock step = new BasicBlock(currentMethod, currentSuperBlock, body, currentMethod.generateTmpLabel() + "_step");
+            BasicBlock step = new BasicBlock(currentMethod, currentSuperBlock, null, currentMethod.generateTmpLabel() + "_step");
             BasicBlock after= new BasicBlock(currentMethod, null, cond, currentMethod.generateTmpLabel() + "_after");
             CondBasicBlockOfCurrentLoop = cond;
             BodyStartBasicBlockOfCurrentLoop = body;
@@ -1293,6 +1294,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
             currentBasicBlock.insertEnd(new DirectJumpInstruction(step));
 
+            currentBasicBlock.addSucc(step);
             bkp.restore();
             after.superBlockBelongTo = currentSuperBlock;
             currentBasicBlock = after;

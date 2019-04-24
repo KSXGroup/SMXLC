@@ -28,6 +28,9 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
   //  public static final String              SECTION_INIT_ARRAY  = "\nSECTION\t.init_array\n";
     public static final String              GLOBAL              = "global";
     public static final String              QWORD               = "QWORD ";
+    public static final String              DWORD               = "DWORD ";
+    public static final String              WORD                = "WORD ";
+    public static final String              BYTE                = "BYTE ";
     public static final String              EXTERN              = "extern printf, scanf, malloc, strcmp, sscanf, puts, memcpy, __isoc99_scanf\n"; //extern some c functions
     public static final String              INT_PRINT_FORMAT    = "\'%d\\\n'";
     public static final String              BUILTIN_FUNCTION    = "/home/kstarxin/code/compiler/lib/lib.asm";
@@ -38,6 +41,15 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     private             BufferedReader      reader;
     private             boolean             ifAllocated;
     private             boolean             inLEA;
+    private             String              currentMemorySizeFlag;
+
+    private boolean isMemory(Operand op){
+        if(op instanceof StackSpace || op instanceof PhysicalRegister) throw new RuntimeException();
+        if(op instanceof Memory || op instanceof StaticString || op instanceof StaticPointer) return true;
+        else if(op instanceof VirtualRegister && ((VirtualRegister) op).spaceAllocatedTo instanceof StackSpace) return true;
+        else return false;
+    }
+
 
     public CodePrinter(ASMLevelIRProgram _ir, PrintStream _asmPrintStream){
         nasm            = "";
@@ -46,6 +58,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         //ifAllocated = false;
         asmPrintStream  = _asmPrintStream;
         inLEA           = false;
+        currentMemorySizeFlag = QWORD;
     }
 
     //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack if callee want to use) (callee saved register)
@@ -162,7 +175,10 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMMoveInstruction inst) {
-        nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
+        String opsrc = visit(inst.src);
+        if(inst.dst instanceof VirtualRegister && ((VirtualRegister) inst.dst).spaceAllocatedTo == PhysicalRegisterSet.CL && isMemory(inst.src))
+            opsrc = opsrc.replace(QWORD, BYTE);
+        nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + opsrc + "\n";
         return null;
     }
 

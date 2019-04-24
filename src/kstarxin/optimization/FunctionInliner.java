@@ -36,13 +36,13 @@ public class FunctionInliner {
 
     //function return the start bb and end bb pair
     private copiedMethodInfo copyAndReplace(Method m, Method into, CallInstruction callInst){
-        m.basicBlockInBFSOrder.clear();
         m.bfs();
         ReturnInstruction ret = null;
         //direct copy old one and map old one to new one
         HashMap<BasicBlock, BasicBlock> basicBlockReplaceMap = new HashMap<BasicBlock, BasicBlock>();
         m.basicBlockInBFSOrder.forEach(bb->{
             BasicBlock copiedBB = bb.copy();
+            //System.err.println("copy" + copiedBB.blockLabel);
             if(copiedBB.blockLabel != null) copiedBB.blockLabel += (NameMangler.inlineSuffix + inlineCounter);
             basicBlockReplaceMap.put(bb, copiedBB);
         });
@@ -52,11 +52,17 @@ public class FunctionInliner {
             LinkedHashSet<BasicBlock> newPred = new LinkedHashSet<BasicBlock>();
             LinkedHashSet<BasicBlock> newSucc = new LinkedHashSet<BasicBlock>();
             bb.succ.forEach(dsucc->{
-                newSucc.add(basicBlockReplaceMap.get(dsucc));
+                BasicBlock tmp = basicBlockReplaceMap.get(dsucc);
+                if(tmp == null)
+                    throw new RuntimeException();
+                newSucc.add(tmp);
             });
 
             bb.pred.forEach(dpred ->{
-                newPred.add(basicBlockReplaceMap.get(dpred));
+                BasicBlock tmp = basicBlockReplaceMap.get(dpred);
+                if(tmp == null)
+                    throw new RuntimeException();
+                newPred.add(tmp);
             });
 
             bb.succ = newSucc;

@@ -62,7 +62,9 @@ public class CFGSimplifier {
             if(((LoopSuperBlock) b.superBlockBelongTo).stepBB == b) ((LoopSuperBlock) b.superBlockBelongTo).stepBB = null; //stepBB can always be merged
             else if(((LoopSuperBlock) b.superBlockBelongTo).condBB == b) throw new RuntimeException("why cond bb only have one prev!"); //cond BB always have two or more pred, can not be merged
             else if(((LoopSuperBlock) b.superBlockBelongTo).bodyBBStart == b){
-                if(a != ((LoopSuperBlock) b.superBlockBelongTo).condBB) throw new RuntimeException("merge non cond block to body ????"); //can only merge condBB to body
+                if(a != ((LoopSuperBlock) b.superBlockBelongTo).condBB) {
+                    System.err.println("merge non cond to body");
+                } //can only merge condBB to body
                 ((LoopSuperBlock) b.superBlockBelongTo).bodyBBStart = a;
                 ((LoopSuperBlock) b.superBlockBelongTo).condBB = null;
             }
@@ -94,6 +96,8 @@ public class CFGSimplifier {
                             bb.succ = dsucc.succ; //set the merger's succ as mergee's succ
                             for (BasicBlock succbb : dsucc.succ) {
                                 //for every mergee's succ, update it's pred
+                                if(succbb.pred == null)
+                                    throw new RuntimeException();
                                 succbb.pred.remove(dsucc);
                                 succbb.pred.add(bb);
                             }
@@ -110,7 +114,12 @@ public class CFGSimplifier {
 
     private BasicBlock doCompressRoute(BasicBlock bb, BasicBlock target){
         BasicBlock originTarget = target;
-        while(target.size() == 1 && target.getBeginInst() instanceof DirectJumpInstruction) target = ((DirectJumpInstruction) target.getBeginInst()).target;
+        BasicBlock tmp = target;
+        while(target.size() == 1 &&  target.getBeginInst() instanceof DirectJumpInstruction && target != bb){
+            tmp = ((DirectJumpInstruction) target.getBeginInst()).target;
+            if(tmp == target) break;
+            else target = tmp;
+        }
         if(target != originTarget){
             originTarget.removePred(bb);
             target.addPred(bb);
@@ -175,9 +184,8 @@ public class CFGSimplifier {
         int tmp = 0;
 
         mergeInstructions();
-
+        cleanUpAll();
         total = 0;
-
         do{
             mergeBlocks();
             total += cleanUpAll();
