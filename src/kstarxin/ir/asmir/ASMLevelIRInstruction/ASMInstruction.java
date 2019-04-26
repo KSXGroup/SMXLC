@@ -48,4 +48,6 @@ public abstract class ASMInstruction extends Instruction {
     }
 
     abstract public <T> T accept(ASMLevelIRVisitor<T> asmVisitor);
+
+    abstract public void collectInfo();
 }

@@ -224,13 +224,13 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     private Operand addHeapAlloc(VirtualRegister ret, Operand size){
         CallInstruction call    = new CallInstruction(ir.malloc, ret);
-        VirtualRegister tmpReg  = null;
+        VirtualRegister tmpReg = currentMethod.allocateNewTmpRegister();
         if(size instanceof Address){
-            tmpReg = currentMethod.allocateNewTmpRegister();
             currentBasicBlock.insertEnd(new LoadInstruction(tmpReg, (Address) size));
             call.addParameter(tmpReg);
         } else if(size instanceof Immediate){
-            call.addParameter((Immediate) size);
+            currentBasicBlock.insertEnd(new MoveInstruction(tmpReg, (Immediate) size));
+            call.addParameter(tmpReg);
         } else if(size instanceof VirtualRegister){
             call.addParameter((VirtualRegister) size);
         } else throw new RuntimeException("what shit size want you allocate???");
@@ -307,7 +307,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                 });
             }
         });
-        System.err.println("IR BUILD FIN!");
+        System.err.println("IR BUILD FINISHED!");
         //ir.getMethod().dfs(null, 0);
         //ir.getMethod().dfs(null, 0);
         //ir.getMethodMap().values().forEach(method -> method.dfs(null, 0));

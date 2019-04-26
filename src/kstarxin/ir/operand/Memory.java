@@ -80,7 +80,8 @@ public class Memory extends Address {
         String ret = scale + "[" + addrString;
         if(sizePerData == -1){
             if(offsetInClass == 0) ret += "]";
-            else ret = ret + "+" + offsetInClass + "]";
+            else if(offsetInClass > 0) ret = ret + "+" + offsetInClass + "]";
+            else ret = ret + "-" + (-offsetInClass) + "]";
         }
         else{
             if(index instanceof Immediate) {
@@ -117,7 +118,8 @@ public class Memory extends Address {
         String ret = "[" + addrString;
         if(sizePerData == -1){
             if(offsetInClass == 0) ret += "]";
-            else ret = ret + "+" + offsetInClass + "]";
+            else if(offsetInClass > 0) ret = ret + "+" + offsetInClass + "]";
+            else ret = ret + "-" + (-offsetInClass) + "]";
         }
         else{
             if(index instanceof Immediate) {

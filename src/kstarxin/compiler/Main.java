@@ -26,7 +26,7 @@ public class Main{
             }
         }*/
 
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler-offline-judge/compiler-testcases/TestCases/testcase_587.txt"); //17, 28, 67
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler-offline-judge/compiler-testcases/TestCases/testcase_579.txt"); //17, 28, 67
         //Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/my.txt");
         compiler.compileStart();
     }

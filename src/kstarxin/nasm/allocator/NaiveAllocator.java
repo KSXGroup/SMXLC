@@ -199,7 +199,8 @@ public class NaiveAllocator implements ASMLevelIRVisitor<Void> {
             inst.src = pvreg;
             allocatedInstList.add(inst);
         }else if(inst.op.equals(OperatorTranslator.NASMInstructionOperator.MOVZX) && isMemory(inst.dst)){
-            if(!(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo == PhysicalRegisterSet.AL)) throw new RuntimeException();
+            if(!(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo == PhysicalRegisterSet.RAX))
+                throw new RuntimeException();
             VirtualRegister vrax = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX);
             Operand ddst = inst.dst;
             inst.dst = vrax;

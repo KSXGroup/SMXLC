@@ -1,6 +1,8 @@
 package kstarxin.utilities;
 
+import kstarxin.ir.operand.physical.PhysicalRegister;
 import kstarxin.parser.*;
+import kstarxin.nasm.PhysicalRegisterSet;
 
 public class OperatorTranslator {
 
@@ -227,6 +229,21 @@ public class OperatorTranslator {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public static PhysicalRegister to8bitLowRegister(PhysicalRegister preg){
+        switch (preg.enumName){
+            case RAX:
+                return PhysicalRegisterSet.AL;
+            case RBX:
+                return PhysicalRegisterSet.BL;
+            case RCX:
+                return PhysicalRegisterSet.CL;
+            case RDX:
+                return PhysicalRegisterSet.DL;
+            default:
+                throw new RuntimeException();
         }
     }
 

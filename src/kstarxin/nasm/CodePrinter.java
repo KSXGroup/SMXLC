@@ -1,5 +1,6 @@
 package kstarxin.nasm;
 
+import kstarxin.compiler.Configure;
 import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.IRProgram;
 import kstarxin.ir.Method;
@@ -72,10 +73,12 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         printTextPart();
         printNonTextPart();
         nasm += "\n\n";
-        reader = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kstarxin/code/compiler/lib/lib.asm")));
-        String line = null;
-        while((line = reader.readLine())!= null){
-            nasm += line + "\n";
+        if(ifAllocated) {
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kstarxin/code/compiler/lib/lib.asm")));
+            String line = null;
+            while ((line = reader.readLine()) != null) {
+                nasm += line + "\n";
+            }
         }
         asmPrintStream.print(nasm);
     }
@@ -97,6 +100,17 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
                     if (asmBasicBlock.nasmLabel != null)
                         nasm += "\n" + asmBasicBlock.nasmLabel + ":\n";
                     asmBasicBlock.insts.forEach(this::visit);
+                    if(Configure.PRINT_REG_ALLOC_LIVEOUT){
+                        nasm += "\n\nlive out ot bb " + asmBasicBlock.nasmLabel + " is:\n";
+                        int cnt = 0;
+                        for(VirtualRegister vreg : asmBasicBlock.liveOut){
+                            nasm += vreg.getDisplayName() + "\t";
+                            cnt++;
+                            if(cnt % 5 == 0) nasm += "\n";
+                        }
+                        nasm += "\n\n";
+
+                    }
                 });
             }
         });
@@ -118,7 +132,11 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMBinaryInstruction inst) {
-        nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
+        if(inst.operator.equals(NASMInstructionOperator.SHL) || inst.operator.equals(NASMInstructionOperator.SAR)){
+            if(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo instanceof PhysicalRegister){
+                nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + ", " + OperatorTranslator.to8bitLowRegister((PhysicalRegister) ((VirtualRegister) inst.src).spaceAllocatedTo).getNASMName() + "\n";
+            }else nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
+        } else nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src) + "\n";
         return null;
     }
 
@@ -175,10 +193,14 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMMoveInstruction inst) {
-        String opsrc = visit(inst.src);
-        if(inst.dst instanceof VirtualRegister && ((VirtualRegister) inst.dst).spaceAllocatedTo == PhysicalRegisterSet.CL && isMemory(inst.src))
-            opsrc = opsrc.replace(QWORD, BYTE);
-        nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + opsrc + "\n";
+        if(inst.op.equals(NASMInstructionOperator.MOV)) {
+            nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + visit(inst.src)+ "\n";
+        } else if(inst.op.equals(NASMInstructionOperator.MOVZX)){
+            String ssrc = "";
+            if(!(inst.src instanceof VirtualRegister)){}
+            else ssrc += OperatorTranslator.to8bitLowRegister((PhysicalRegister) ((VirtualRegister) inst.src).spaceAllocatedTo).getNASMName();
+            nasm += inst.op.toString() + "\t\t" + visit(inst.dst) + ", " + ssrc + "\n";
+        }
         return null;
     }
 
@@ -214,7 +236,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMSetInstruction inst) {
-        nasm += inst.operator.toString() + "\t\t" + visit(inst.dst) + "\n";
+        nasm += inst.operator.toString() + "\t\t" + (OperatorTranslator.to8bitLowRegister((PhysicalRegister) inst.dst.spaceAllocatedTo)).getNASMName() + "\n";
         return null;
     }
 

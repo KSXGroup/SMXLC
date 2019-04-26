@@ -22,6 +22,8 @@ public class CallInstruction extends Instruction{
     }
 
     public void addParameter(Operand para){
+        if(!(para instanceof VirtualRegister))
+            throw new RuntimeException();
         parameters.add(para);
     }
 
@@ -69,7 +71,11 @@ public class CallInstruction extends Instruction{
         def.clear();
         use.clear();
         if(returnValue != null) def.add(returnValue);
-        parameters.forEach(para-> use.add((VirtualRegister) para)); //parameters are vregs
+        parameters.forEach(para->{
+            if(!(para instanceof VirtualRegister))
+                throw new RuntimeException();
+            use.add((VirtualRegister) para);
+        }); //parameters are vregs
         if(classThisPointer != null) use.add(classThisPointer);
     }
 

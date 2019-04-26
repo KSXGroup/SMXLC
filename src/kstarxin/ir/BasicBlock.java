@@ -1,6 +1,7 @@
 package kstarxin.ir;
 
 import kstarxin.ir.instruction.*;
+import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.ir.superblock.*;
 
 import java.util.*;
@@ -9,6 +10,9 @@ public class BasicBlock {
     public  SuperBlock                  superBlockBelongTo;
     public  LinkedHashSet<BasicBlock>   pred;
     public  LinkedHashSet<BasicBlock>   succ;
+    public  HashSet<VirtualRegister>    def;
+    public  HashSet<VirtualRegister>    use;
+    public  HashSet<VirtualRegister>    liveOut;
     public  String                      blockLabel;
     public  int                         dfsOrder;
 
@@ -25,6 +29,9 @@ public class BasicBlock {
         endInst             = null;
         pred                = new LinkedHashSet<BasicBlock>();
         succ                = new LinkedHashSet<BasicBlock>();
+        def                 = new HashSet<VirtualRegister>();
+        use                 = new HashSet<VirtualRegister>();
+        liveOut             = new HashSet<VirtualRegister>();
         isRemoved           = false;
         dfsOrder            = -1;
 

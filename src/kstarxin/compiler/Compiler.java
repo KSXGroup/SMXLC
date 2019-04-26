@@ -9,6 +9,7 @@ import kstarxin.ir.IRProgram;
 import kstarxin.ir.asmir.ASMLevelIRBuilder;
 import kstarxin.ir.asmir.ASMLevelIRProgram;
 import kstarxin.nasm.CodePrinter;
+import kstarxin.nasm.allocator.GraphAllocator;
 import kstarxin.nasm.allocator.NaiveAllocator;
 import kstarxin.optimization.*;
 import kstarxin.parser.*;
@@ -59,6 +60,7 @@ public class Compiler {
         ASMLevelIRBuilder       asmIrBuilder    = null;
         ASMLevelIRProgram       asmIr           = null;
         NaiveAllocator          naiveAllocator  = null;
+        GraphAllocator          graphAllocator  = null;
         CodePrinter             codePrinter     = null;
 
         irOutputStream = new PrintStream(new File(irPrintPath));
@@ -112,8 +114,8 @@ public class Compiler {
         Optimizer optimizer = new Optimizer(ir);
         optimizer.run();
 
-        irPrinter = new IRPrinter(ir, System.err);
-        irPrinter.printIR();
+        /*irPrinter = new IRPrinter(ir, System.out);
+        irPrinter.printIR();*/
 
         /*irIntererter = new IRInterpreter(irPrintPath);
         irIntererter.runIR();*/
@@ -123,6 +125,9 @@ public class Compiler {
 
         naiveAllocator = new NaiveAllocator(asmIr);
         naiveAllocator.run();
+
+        /*graphAllocator = new GraphAllocator(asmIr);
+        graphAllocator.run();*/
 
         codePrinter = new CodePrinter(asmIr,nasmOutputStream);
         codePrinter.printCode();

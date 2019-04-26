@@ -3,7 +3,9 @@ package kstarxin.ir.asmir.ASMLevelIRInstruction;
 import kstarxin.ir.asmir.ASMBasicBlock;
 import kstarxin.ir.asmir.ASMLevelIRMethod;
 import kstarxin.ir.asmir.ASMLevelIRVisitor;
+import kstarxin.ir.operand.Memory;
 import kstarxin.ir.operand.Operand;
+import kstarxin.ir.operand.VirtualRegister;
 
 public class ASMLEAInstruction extends ASMInstruction {
     public Operand dst;
@@ -17,5 +19,15 @@ public class ASMLEAInstruction extends ASMInstruction {
     @Override
     public <T> T accept(ASMLevelIRVisitor<T> asmVisitor) {
         return asmVisitor.visit(this);
+    }
+
+    @Override
+    public void collectInfo() {
+        def.clear();
+        use.clear();
+        if(dst instanceof VirtualRegister) def.add((VirtualRegister)dst);
+        else if(dst instanceof Memory) use.addAll(((Memory) dst).collectUseInfo());
+        if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
+        else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
     }
 }

@@ -5,6 +5,7 @@ import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.*;
 
 public class StackSpace extends Address {
+    //this is shit design
     public PhysicalRegister base;
     public int offset;
     public StackSpace(PhysicalRegister _base, int _offset){

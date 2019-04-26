@@ -17,4 +17,14 @@ public class ASMCompareInstruction extends ASMInstruction{
     public <T> T accept(ASMLevelIRVisitor<T> asmVisitor) {
         return asmVisitor.visit(this);
     }
+
+    @Override
+    public void collectInfo() {
+        use.clear();
+        def.clear();
+        if(lhs instanceof VirtualRegister) use.add((VirtualRegister) lhs);
+        else if(lhs instanceof Memory) use.addAll(((Memory) lhs).collectUseInfo());
+        if(rhs instanceof VirtualRegister) use.add((VirtualRegister) rhs);
+        else if(rhs instanceof Memory) use.addAll(((Memory) rhs).collectUseInfo());
+    }
 }

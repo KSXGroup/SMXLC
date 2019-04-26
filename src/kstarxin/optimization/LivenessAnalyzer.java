@@ -7,7 +7,9 @@ import java.util.*;
 
 public class LivenessAnalyzer {
     private IRProgram ir;
+    IRPrinter ptr;
     public LivenessAnalyzer(IRProgram _ir){
+        ptr = new IRPrinter(_ir, System.err);
         ir = _ir;
     }
 
@@ -16,12 +18,16 @@ public class LivenessAnalyzer {
             if(m.isBuiltin) continue;
             m.dfs();
             m.basicBlockInDFSOrder.forEach(bb->{
-                for(Instruction i = bb.getBeginInst(); i != null; i = i.next) i.collectDefUseInfo();
+                for(Instruction i = bb.getBeginInst(); i != null; i = i.next){
+                    i.collectDefUseInfo();
+                    bb.def.addAll(i.def);
+                    bb.use.addAll(i.use);
+                }
             });
         }
     }
 
-    private void anlysis(Method m){
+    private void anlysisByInstruction(Method m){
         collectDefUseInfo();
         boolean changed = true;
         int cnt = 0;
@@ -43,7 +49,7 @@ public class LivenessAnalyzer {
                     i.liveOut.clear();
                     if (i instanceof ConditionJumpInstruction) {
                         Instruction n1 = ((ConditionJumpInstruction) i).trueTarget.getBeginInst();
-                        Instruction n2 = ((ConditionJumpInstruction) i).falseTarget.getEndInst();
+                        Instruction n2 = ((ConditionJumpInstruction) i).falseTarget.getBeginInst();
                         i.liveOut.addAll(n1.liveIn);
                         i.liveOut.addAll(n2.liveIn);
                     } else if (i instanceof DirectJumpInstruction) {
@@ -52,10 +58,30 @@ public class LivenessAnalyzer {
                     } else {
                         if(i.next != null) i.liveOut.addAll(i.next.liveIn);
                     }
-                    if(!(oriLiveIn.equals(i.liveIn) && oriLiveOut.equals(i.liveOut))) changed = true;
+                    if(!(oriLiveIn.equals(i.liveIn) && oriLiveOut.equals(i.liveOut))){
+                        //ptr.printInst(i);
+                        changed = true;
+                    }
                 }
             }
             cnt++;
+        }
+    }
+
+    public void analysisByBasicBlock(Method m){
+        collectDefUseInfo();
+        ArrayList<BasicBlock> bbs = new ArrayList<>(m.basicBlockInDFSOrder);
+        boolean changed = true;
+        HashSet<VirtualRegister> newLiveOut = new HashSet<VirtualRegister>();
+        while(changed) {
+            changed = false;
+            int i = bbs.size() - 1;
+            for (; i >= 0; --i) {
+                BasicBlock cur = bbs.get(i);
+                cur.succ.forEach(bb->{
+                    //new
+                });
+            }
         }
     }
 
@@ -68,11 +94,11 @@ public class LivenessAnalyzer {
             changed = true;
             while(changed) {
                 changed = false;
-                anlysis(method);
+                anlysisByInstruction(method);
                 for (BasicBlock bb : method.basicBlockInDFSOrder) {
                     for (Instruction i = bb.getBeginInst(); i != null; i = i.next) {
                         if (i instanceof BinaryArithmeticInstruction) {
-                            if (!i.liveOut.contains(((BinaryArithmeticInstruction) i).target)) {
+                            if (((BinaryArithmeticInstruction) i).target instanceof VirtualRegister && !i.liveOut.contains(((BinaryArithmeticInstruction) i).target)) {
                                 toRemove = i;
                                 i = i.next;
                                 toRemove.removeThisInst();
@@ -81,7 +107,7 @@ public class LivenessAnalyzer {
                                 continue;
                             }
                         } else if (i instanceof UnaryInstruction) {
-                            if (!i.liveOut.contains(((UnaryInstruction) i).dest)) {
+                            if (((UnaryInstruction) i).dest instanceof  VirtualRegister && !i.liveOut.contains(((UnaryInstruction) i).dest)) {
                                 toRemove = i;
                                 i = i.next;
                                 toRemove.removeThisInst();
@@ -128,7 +154,6 @@ public class LivenessAnalyzer {
     }
 
     public void run(){
-        //something wrong with these opt
-        //deadCodeEliminate();
+        deadCodeEliminate();
     }
 }

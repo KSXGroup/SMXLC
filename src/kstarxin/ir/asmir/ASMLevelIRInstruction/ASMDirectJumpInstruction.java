@@ -15,4 +15,10 @@ public class ASMDirectJumpInstruction extends ASMInstruction{
     public <T> T accept(ASMLevelIRVisitor<T> asmVisitor) {
         return asmVisitor.visit(this);
     }
+
+    @Override
+    public void collectInfo() {
+        def.clear();
+        use.clear();
+    }
 }

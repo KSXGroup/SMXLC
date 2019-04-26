@@ -6,8 +6,8 @@ import kstarxin.ir.operand.*;
 import kstarxin.utilities.NameMangler;
 
 public class PhysicalRegister extends Register {
-    private NameMangler.PhysicalRegisterName enumName;
-    private NameMangler.PhysicalRegisterName trueName;
+    public NameMangler.PhysicalRegisterName enumName;
+    public NameMangler.PhysicalRegisterName trueName;
     public PhysicalRegister(NameMangler.PhysicalRegisterName _enumName){
         super(_enumName.toString());
         enumName = _enumName;

@@ -1,5 +1,6 @@
 package kstarxin.nasm;
 
+import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.ir.operand.physical.*;
 import kstarxin.utilities.NameMangler.PhysicalRegisterName;
 
