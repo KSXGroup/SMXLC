@@ -46,6 +46,8 @@ public class LivenessAnalyzerForAllocator {
                 originLiveOut.addAll(bb.liveOut);
                 bb.liveOut.clear();
                 succSet.forEach(succ->{
+                    if(succ == null)
+                        throw new RuntimeException();
                     bb.liveOut.addAll(succ.UEVAR);
                     succ.liveOut.forEach(vreg->{
                         if(!succ.VARKILL.contains(vreg)) bb.liveOut.add(vreg);

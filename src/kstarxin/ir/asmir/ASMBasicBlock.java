@@ -30,9 +30,13 @@ public class ASMBasicBlock {
     }
 
     public void collectInfo(){
+        UEVAR.clear();
+        VARKILL.clear();
         for(ASMInstruction inst : insts){
             inst.collectInfo();
-            UEVAR.addAll(inst.use);
+            inst.use.forEach(op->{
+                if(!VARKILL.contains(op)) UEVAR.add(op);
+            });
             VARKILL.addAll(inst.def);
         }
     }

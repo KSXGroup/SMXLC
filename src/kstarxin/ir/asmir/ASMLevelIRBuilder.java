@@ -69,7 +69,7 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             ASMConditionalJumpInstruction cj = (ASMConditionalJumpInstruction)currentBasicBlock.insts.getLast();
             if(visited.containsKey(((ConditionJumpInstruction) irInst).trueTarget))
                 currentBasicBlock.insertEnd(new ASMDirectJumpInstruction(currentBasicBlock, visited.get(((ConditionJumpInstruction) irInst).trueTarget)));
-            else cj.trueTarget = processBasicBlock(((ConditionJumpInstruction) irInst).trueTarget);
+            cj.trueTarget = processBasicBlock(((ConditionJumpInstruction) irInst).trueTarget);
             cj.falseTarget = processBasicBlock(((ConditionJumpInstruction) irInst).falseTarget);
         }
         else if(irInst instanceof DirectJumpInstruction){
@@ -131,7 +131,7 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
                 Memory mem = new Memory(virtualPhysicalReg, Configure.PTR_SIZE + (j - 5) * Configure.PTR_SIZE, Configure.PTR_SIZE);
                 firstBB.insts.addFirst(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, firstBB, method.parameters.get(j), mem));
             }
-        } else if(method == mir.getMethod(NameMangler.mainMethodName)) firstBB.insts.addFirst(new ASMCallInstruction(firstBB, lir.getMethodMap().get(mir.getInitMethod())));
+        } else if(method == mir.getMethod(NameMangler.mainMethodName)) firstBB.insts.addFirst(new ASMCallInstruction(firstBB, lir.getMethodMap().get(mir.getInitMethod()), currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX)));
         return null;
     }
 
@@ -226,7 +226,7 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             VirtualRegister tmpClassPtr = currentMethod.asmAllocateVirtualRegister(parameterPassingPhysicalRegister.get(0));
             currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmpClassPtr, visit(inst.classThisPointer)));
         }
-        currentBasicBlock.insertEnd(new ASMCallInstruction(currentBasicBlock, lir.getMethodMap().get(inst.callee)));
+        currentBasicBlock.insertEnd(new ASMCallInstruction(currentBasicBlock, lir.getMethodMap().get(inst.callee), currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX)));
         if(inst.returnValue != null) {
             VirtualRegister veax = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX);
             currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, inst.returnValue, veax));

@@ -8,6 +8,8 @@ import kstarxin.ir.operand.Operand;
 import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
+import java.util.HashMap;
+
 public class ASMBinaryInstruction extends ASMInstruction {
     public NASMInstructionOperator operator;
     public Operand src;
@@ -34,5 +36,13 @@ public class ASMBinaryInstruction extends ASMInstruction {
             use.add((VirtualRegister) dst);
             def.add((VirtualRegister) dst);
         }else if(dst instanceof Memory) use.addAll(((Memory) dst).collectUseInfo());
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        if(src instanceof VirtualRegister && map.containsKey(src)) src = map.get(src);
+        if(dst instanceof VirtualRegister && map.containsKey(dst)) dst = map.get(dst);
+        if(src instanceof Memory) ((Memory) src).replaceForSpill(map);
+        if(dst instanceof Memory) ((Memory) dst).replaceForSpill(map);
     }
 }

@@ -1,7 +1,10 @@
 package kstarxin.ir.asmir.ASMLevelIRInstruction;
 
 import kstarxin.ir.asmir.ASMLevelIRVisitor;
+import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.utilities.NameMangler;
+
+import java.util.HashMap;
 
 public class ASMDInstruction extends ASMInstruction {
     public int value;
@@ -21,5 +24,10 @@ public class ASMDInstruction extends ASMInstruction {
     public void collectInfo() {
         def.clear();
         use.clear();
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        return;
     }
 }

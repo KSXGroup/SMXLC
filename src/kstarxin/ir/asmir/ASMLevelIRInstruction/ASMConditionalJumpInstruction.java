@@ -1,7 +1,10 @@
 package kstarxin.ir.asmir.ASMLevelIRInstruction;
 
 import kstarxin.ir.asmir.*;
+import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
+
+import java.util.HashMap;
 
 public class ASMConditionalJumpInstruction extends ASMInstruction {
     public NASMInstructionOperator  op;
@@ -23,5 +26,10 @@ public class ASMConditionalJumpInstruction extends ASMInstruction {
     public void collectInfo() {
         def.clear();
         use.clear();
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        return;
     }
 }

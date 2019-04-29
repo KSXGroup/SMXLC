@@ -6,6 +6,8 @@ import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.VirtualRegister;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
+import java.util.HashMap;
+
 public class ASMSetInstruction extends ASMInstruction{
     public VirtualRegister dst;
     public NASMInstructionOperator operator;
@@ -25,5 +27,10 @@ public class ASMSetInstruction extends ASMInstruction{
         def.clear();
         use.clear();
         def.add(dst);
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        if(dst instanceof VirtualRegister && map.containsKey(dst)) dst = map.get(dst);
     }
 }

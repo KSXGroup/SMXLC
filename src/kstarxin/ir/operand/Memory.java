@@ -4,6 +4,7 @@ import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.physical.PhysicalRegister;
 import kstarxin.ir.operand.physical.StackSpace;
+import kstarxin.nasm.PhysicalRegisterSet;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,6 +75,11 @@ public class Memory extends Address {
         }
     }
 
+    public void replaceForSpill(HashMap<VirtualRegister, VirtualRegister> map){
+        if(address instanceof VirtualRegister && map.containsKey(address)) address = map.get(address);
+        if(index instanceof VirtualRegister && map.containsKey(index)) index = map.get(index);
+    }
+
     @Override
     public String getDisplayName() {
         String addrString = address.getDisplayName();
@@ -97,7 +103,7 @@ public class Memory extends Address {
 
     public HashSet<VirtualRegister> collectUseInfo(){
         HashSet<VirtualRegister> ret = new HashSet<VirtualRegister>();
-        ret.add((VirtualRegister) address);
+        if(address instanceof VirtualRegister && !(((VirtualRegister) address).spaceAllocatedTo == PhysicalRegisterSet.RBP || ((VirtualRegister) address).spaceAllocatedTo == PhysicalRegisterSet.RSP ) )ret.add((VirtualRegister) address);
         if(index instanceof VirtualRegister) ret.add((VirtualRegister) index);
         return ret;
     }

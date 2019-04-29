@@ -5,6 +5,8 @@ import kstarxin.ir.asmir.ASMLevelIRMethod;
 import kstarxin.ir.asmir.ASMLevelIRVisitor;
 import kstarxin.ir.operand.*;
 
+import java.util.HashMap;
+
 public class ASMCompareInstruction extends ASMInstruction{
     public Operand lhs, rhs;
     public ASMCompareInstruction(ASMBasicBlock bb, Operand _lhs, Operand _rhs){
@@ -26,5 +28,13 @@ public class ASMCompareInstruction extends ASMInstruction{
         else if(lhs instanceof Memory) use.addAll(((Memory) lhs).collectUseInfo());
         if(rhs instanceof VirtualRegister) use.add((VirtualRegister) rhs);
         else if(rhs instanceof Memory) use.addAll(((Memory) rhs).collectUseInfo());
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        if(lhs instanceof VirtualRegister && map.containsKey(lhs)) lhs = map.get(lhs);
+        if(rhs instanceof VirtualRegister && map.containsKey(rhs)) rhs = map.get(rhs);
+        if(lhs instanceof Memory) ((Memory) lhs).replaceForSpill(map);
+        if(rhs instanceof Memory) ((Memory) rhs).replaceForSpill(map);
     }
 }

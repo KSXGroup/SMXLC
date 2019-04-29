@@ -7,6 +7,8 @@ import kstarxin.ir.operand.Memory;
 import kstarxin.ir.operand.Operand;
 import kstarxin.ir.operand.VirtualRegister;
 
+import java.util.HashMap;
+
 public class ASMPopInstruction extends ASMInstruction{
     public Operand op;
     public ASMPopInstruction(ASMBasicBlock bb, Operand _op){
@@ -25,5 +27,11 @@ public class ASMPopInstruction extends ASMInstruction{
         use.clear();
         if(op instanceof VirtualRegister) def.add((VirtualRegister)op);
         else if(op instanceof Memory) use.addAll(((Memory) op).collectUseInfo());
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        if(op instanceof VirtualRegister && map.containsKey(op)) op = map.get(op);
+        if(op instanceof Memory) ((Memory) op).replaceForSpill(map);
     }
 }

@@ -7,6 +7,8 @@ import kstarxin.ir.operand.Memory;
 import kstarxin.ir.operand.Operand;
 import kstarxin.ir.operand.VirtualRegister;
 
+import java.util.HashMap;
+
 public class ASMLEAInstruction extends ASMInstruction {
     public Operand dst;
     public Operand src;
@@ -29,5 +31,10 @@ public class ASMLEAInstruction extends ASMInstruction {
         else if(dst instanceof Memory) use.addAll(((Memory) dst).collectUseInfo());
         if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
         else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        return;
     }
 }

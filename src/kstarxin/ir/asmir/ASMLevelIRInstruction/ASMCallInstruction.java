@@ -1,12 +1,17 @@
 package kstarxin.ir.asmir.ASMLevelIRInstruction;
 
 import kstarxin.ir.asmir.*;
+import kstarxin.ir.operand.VirtualRegister;
+
+import java.util.HashMap;
 
 public class ASMCallInstruction extends ASMInstruction {
     public ASMLevelIRMethod callee;
-    public ASMCallInstruction(ASMBasicBlock bb, ASMLevelIRMethod _callee){
+    public VirtualRegister ret;
+    public ASMCallInstruction(ASMBasicBlock bb, ASMLevelIRMethod _callee, VirtualRegister _ret){
         super("CALL", bb);
         callee = _callee;
+        ret = _ret;
     }
 
     @Override
@@ -18,5 +23,11 @@ public class ASMCallInstruction extends ASMInstruction {
     public void collectInfo() {
         def.clear();
         use.clear();
+        def.add(ret);
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        return;
     }
 }

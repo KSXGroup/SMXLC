@@ -38,11 +38,14 @@ public class GraphAllocator {
     private HashSet<ASMMoveInstruction>     workListMoves       = new HashSet<ASMMoveInstruction>();
     private HashSet<ASMMoveInstruction>     activeMoves         = new HashSet<ASMMoveInstruction>();
 
+    private HashMap<VirtualRegister, Integer>                               degree              = new HashMap<VirtualRegister, Integer>();
     private HashMap<VirtualRegister, PhysicalRegister>                      colorMap            = new HashMap<VirtualRegister, PhysicalRegister>();
     private HashMap<VirtualRegister, HashSet<VirtualRegister>>              interferenceGraph   = new HashMap<VirtualRegister, HashSet<VirtualRegister>>();
     private HashMap<VirtualRegister, HashSet<VirtualRegister>>              adjacentGraph       = new HashMap<VirtualRegister, HashSet<VirtualRegister>>();
     private HashMap<VirtualRegister, HashSet<ASMMoveInstruction>>           moveList            = new HashMap<VirtualRegister, HashSet<ASMMoveInstruction>>();
     private HashMap<VirtualRegister, VirtualRegister>                       alias               = new HashMap<VirtualRegister, VirtualRegister>();
+
+    private ProgramRewriter                                                 rewriter            = new ProgramRewriter();
 
     class Pair<K, V>{
         public K first;
@@ -54,10 +57,17 @@ public class GraphAllocator {
     }
 
     private int degree(VirtualRegister vreg){
+        Integer ret = 0;
         if(precolored.contains(vreg)){
-            if(vreg.spaceAllocatedTo != null) return inf;
+            if(vreg.spaceAllocatedTo != null) ret = inf;
             else throw new RuntimeException();
-        }else return interferenceGraph.get(vreg).size();
+        }else ret  = degree.get(vreg);
+        //System.err.println("deg" + vreg.getDisplayName() +":\t"+ret);
+        if(ret == null){
+            degree.put(vreg, 0);
+            ret = 0;
+        }
+        return ret;
     }
 
     public GraphAllocator(ASMLevelIRProgram _ir){
@@ -73,23 +83,47 @@ public class GraphAllocator {
                 doAllocate();
             }
         });
+        ir.ifAllocated = true;
+    }
+
+
+    private boolean isSelfMove(ASMMoveInstruction inst){
+        PhysicalRegister srcColor = colorMap.get(inst.src);
+        PhysicalRegister dstColor = colorMap.get(inst.dst);
+        if(srcColor != null && srcColor == dstColor) return true;
+        else return false;
+
+    }
+
+    private boolean isSimpleMove(ASMInstruction inst){
+        if(inst instanceof ASMMoveInstruction
+                && ((ASMMoveInstruction) inst).src instanceof VirtualRegister
+                && ((ASMMoveInstruction) inst).dst instanceof VirtualRegister) return true;
+        else return false;
     }
 
     private void doAllocate(){
-        clearAll();
-        analyzer.analyze(currentMethod);
-        initialize();
-        buildInterferenceGraph();
-        printInterferenceGraph();
-        makeWorkList();
-        while(!(simplifyWorkList.isEmpty() && workListMoves.isEmpty() && freezeWorkList.isEmpty() && spillWorkList.isEmpty())) {
-            if (!simplifyWorkList.isEmpty()) simplify();
-            else if (!workListMoves.isEmpty()) coalesce();
-            else if (!freezeWorkList.isEmpty()) freeze();
-            else if (!spillWorkList.isEmpty()) selectSpill();
+        for(int i = 0; i < 10; ++i){
+            clearAll();
+            analyzer.analyze(currentMethod);
+            initialize();
+            buildInterferenceGraph();
+            //printInterferenceGraph();
+            makeWorkList();
+            while (!(simplifyWorkList.isEmpty() && workListMoves.isEmpty() && freezeWorkList.isEmpty() && spillWorkList.isEmpty())) {
+                if (!simplifyWorkList.isEmpty()) simplify();
+                else if (!workListMoves.isEmpty()) coalesce();
+                else if (!freezeWorkList.isEmpty()) freeze();
+                else if (!spillWorkList.isEmpty()) selectSpill();
+            }
+            assignColor();
+            printResult();
+            if(spilled.isEmpty()) break;
+            else{
+                rewriter.rewrite(currentMethod, spilled);
+            }
         }
-        assignColor();
-        printResult();
+        assignAndRemove();
     }
 
     private void clearAll(){
@@ -108,6 +142,7 @@ public class GraphAllocator {
         frozenMoves.clear();
         workListMoves.clear();
         activeMoves.clear();
+        degree.clear();
         adjacentGraph.clear();
         interferenceGraph.clear();
         moveList.clear();
@@ -119,45 +154,57 @@ public class GraphAllocator {
             asmBasicBlock.insts.forEach(inst->{
                 inst.def.forEach(vreg->{
                     if(vreg.spaceAllocatedTo == null) initial.add(vreg);
-                    else if(!(vreg.spaceAllocatedTo instanceof StackSpace)) precolored.add(vreg);
+                    else if(vreg.spaceAllocatedTo instanceof PhysicalRegister){
+                        precolored.add(vreg);
+                        colorMap.put(vreg, (PhysicalRegister) vreg.spaceAllocatedTo);
+                    }
                 });
                 inst.use.forEach(vreg->{
                     if(vreg.spaceAllocatedTo == null) initial.add(vreg);
-                    else if(!(vreg.spaceAllocatedTo instanceof StackSpace)) precolored.add(vreg);
+                    else if(vreg.spaceAllocatedTo instanceof PhysicalRegister){
+                        precolored.add(vreg);
+                        colorMap.put(vreg, (PhysicalRegister) vreg.spaceAllocatedTo);
+                    }
                 });
             });
         });
     }
 
     private void addEdge(VirtualRegister u, VirtualRegister v){
-        if(adjacentGraph.containsKey(u)) adjacentGraph.get(u).add(v);
-        else{
-            HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
-            tmp.add(v);
-            adjacentGraph.put(u, tmp);
-        }
-        if(adjacentGraph.containsKey(v)) adjacentGraph.get(v).add(u);
-        else{
-            HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
-            tmp.add(u);
-            adjacentGraph.put(v, tmp);
-        }
-
-        if(!precolored.contains(u)){
-            if(interferenceGraph.containsKey(u)) interferenceGraph.get(u).add(v);
-            else{
+        if(!ifAdjacent(u, v) && u != v) {
+            if (adjacentGraph.containsKey(u)) adjacentGraph.get(u).add(v);
+            else {
                 HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
                 tmp.add(v);
-                interferenceGraph.put(u, tmp);
+                adjacentGraph.put(u, tmp);
             }
-        }
-
-        if(!precolored.contains(v)){
-            if(interferenceGraph.containsKey(v)) interferenceGraph.get(v).add(u);
-            else{
+            if (adjacentGraph.containsKey(v)) adjacentGraph.get(v).add(u);
+            else {
                 HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
                 tmp.add(u);
-                interferenceGraph.put(v, tmp);
+                adjacentGraph.put(v, tmp);
+            }
+
+            if (!precolored.contains(u)) {
+                if (interferenceGraph.containsKey(u)) interferenceGraph.get(u).add(v);
+                else {
+                    HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
+                    tmp.add(v);
+                    interferenceGraph.put(u, tmp);
+                }
+                if (degree.containsKey(u)) degree.replace(u, degree.get(u) + 1);
+                else degree.put(u, 1);
+            }
+
+            if (!precolored.contains(v)) {
+                if (interferenceGraph.containsKey(v)) interferenceGraph.get(v).add(u);
+                else {
+                    HashSet<VirtualRegister> tmp = new HashSet<VirtualRegister>();
+                    tmp.add(u);
+                    interferenceGraph.put(v, tmp);
+                }
+                if (degree.containsKey(v)) degree.replace(v, degree.get(v) + 1);
+                else degree.put(v, 1);
             }
         }
     }
@@ -169,13 +216,14 @@ public class GraphAllocator {
     }
 
     private boolean ifAdjacent(VirtualRegister u, VirtualRegister v){
-        if(!adjacentGraph.containsKey(u)) throw new RuntimeException();
+        if(!adjacentGraph.containsKey(u)) return false;
         else return adjacentGraph.get(u).contains(v);
     }
 
     private void buildInterferenceGraph(){
         HashSet<VirtualRegister> live = new HashSet<>();
         for(ASMBasicBlock bb : currentMethod.basicBlocks){
+            live.clear();
             live.addAll(bb.liveOut);
             Iterator<ASMInstruction> iter = bb.insts.descendingIterator();
             while(iter.hasNext()){
@@ -206,11 +254,6 @@ public class GraphAllocator {
                         addEdge(lvreg, vreg);
                     });
                 });
-                curInst.use.forEach(vreg->{
-                    live.forEach(lvreg->{
-                        addEdge(lvreg, vreg);
-                    });
-                });
                 live.removeAll(curInst.def);
                 live.addAll(curInst.use);
             }
@@ -234,13 +277,26 @@ public class GraphAllocator {
     }
 
     private HashSet<VirtualRegister> adjacent(VirtualRegister vreg){
-        return new HashSet<>(interferenceGraph.get(vreg));
+        HashSet<VirtualRegister> ret = null;
+        if(!precolored.contains(vreg)) {
+            ret = interferenceGraph.get(vreg);
+            if(ret == null) {
+                ret = new HashSet<VirtualRegister>();
+                interferenceGraph.put(vreg, ret);
+            }else {
+                ret = new HashSet<VirtualRegister>(ret);
+            }
+            ret.removeAll(selectedStack);
+            ret.removeAll(coalesced);
+        }else ret = new HashSet<VirtualRegister>();
+        return ret;
     }
 
     private void makeWorkList(){
         initial.forEach(vreg ->{
             if(degree(vreg) >= K) spillWorkList.add(vreg);
-            else if(moveRelated(vreg)) freezeWorkList.add(vreg);
+            else if(moveRelated(vreg))
+                freezeWorkList.add(vreg);
             else simplifyWorkList.add(vreg);
         });
         initial.clear();
@@ -266,6 +322,21 @@ public class GraphAllocator {
         }
     }
 
+    private void decreaseDegree(VirtualRegister m){
+        if(precolored.contains(m)) return;
+        int d = degree.get(m);
+        degree.replace(m, d - 1);
+        //System.err.println(d-1);
+        if(d == K){
+            HashSet<VirtualRegister> adj = adjacent(m);
+            adj.add(m);
+            enableMoves(adj);
+            spillWorkList.remove(m);
+            if(moveRelated(m)) freezeWorkList.add(m);
+            else simplifyWorkList.add(m);
+        }
+    }
+
     private void simplify(){
         Iterator<VirtualRegister> iter = simplifyWorkList.iterator();
         VirtualRegister cur = null;
@@ -273,31 +344,8 @@ public class GraphAllocator {
             cur = iter.next();
             iter.remove();
         }else return;
-        LinkedList<Pair<HashSet<VirtualRegister>, VirtualRegister>> toRemove = new LinkedList<Pair<HashSet<VirtualRegister>, VirtualRegister>>();
-        if(cur != null) selectedStack.push(cur);
-        for(VirtualRegister vreg : interferenceGraph.get(cur)){
-            HashSet<VirtualRegister> neighbour = interferenceGraph.get(vreg);
-            /*if(neighbour == null || !neighbour.contains(cur)) {
-                if (precolored.contains(vreg) || precolored.contains(cur)) continue;
-                else
-                    throw new RuntimeException();
-            }*/
-            int d = degree(vreg);
-            if(neighbour != null) {
-                toRemove.add(new Pair<HashSet<VirtualRegister>, VirtualRegister>(neighbour, cur));
-            }
-            if(d == K){
-                HashSet<VirtualRegister> tmp = new HashSet<>(interferenceGraph.get(vreg));
-                tmp.add(vreg);
-                enableMoves(tmp);
-                spillWorkList.remove(vreg);
-                if(moveRelated(vreg)) freezeWorkList.add(vreg);
-                else simplifyWorkList.add(vreg);
-            }
-        }
-        toRemove.forEach(pair->{
-            pair.first.remove(pair.second);
-        });
+        selectedStack.push(cur);
+        for(VirtualRegister vreg : adjacent(cur)) decreaseDegree(vreg);
     }
 
     private void addWorkList(VirtualRegister u){
@@ -314,15 +362,13 @@ public class GraphAllocator {
 
     private boolean conservative(HashSet<VirtualRegister> nodes){
         int k = 0;
-        for(VirtualRegister vreg : nodes) if(degree(vreg) > K) ++k;
+        for(VirtualRegister vreg : nodes) if(degree(vreg) >= K) ++k;
         return (k < K);
     }
 
     private VirtualRegister getAlias(VirtualRegister n){
         if(coalesced.contains(n)) {
-            VirtualRegister ret = getAlias(alias.get(n));
-            alias.replace(n, ret);
-            return ret;
+            return getAlias(alias.get(n));
         }else return n;
     }
 
@@ -357,7 +403,7 @@ public class GraphAllocator {
         }
         workListMoves.remove(mov);
         if(u == v){
-            constrainedMoves.add(mov);
+            coalescedMoves.add(mov);
             addWorkList(u);
         }else if(precolored.contains(v) || ifAdjacent(u, v)){
             constrainedMoves.add(mov);
@@ -365,7 +411,7 @@ public class GraphAllocator {
             addWorkList(v);
         }else if((precolored.contains(u) && ifPreColoredNodeCanBeCombined(u, v)) ||
                 (!precolored.contains(u) && ifNodePreColoredNodeCanBeCombined(u, v))){
-            constrainedMoves.add(mov);
+            coalescedMoves.add(mov);
             combine(u, v);
             addWorkList(u);
         }else activeMoves.add(mov);
@@ -383,17 +429,7 @@ public class GraphAllocator {
         enableMoves(v);
         for(VirtualRegister t : adjacent(v)){
             addEdge(t, u);
-            HashSet<VirtualRegister> neighbours = interferenceGraph.get(t);
-            int d = neighbours.size();
-            neighbours.remove(v);
-            if(d == K){
-                HashSet<VirtualRegister> tmp = new HashSet<>(adjacent(t));
-                tmp.add(t);
-                enableMoves(tmp);
-                spillWorkList.remove(t);
-                if(moveRelated(t)) freezeWorkList.add(t);
-                else simplifyWorkList.add(t);
-            }
+            decreaseDegree(t);
         }
         if(degree(u) >= K && freezeWorkList.contains(u)){
             freezeWorkList.remove(u);
@@ -426,11 +462,22 @@ public class GraphAllocator {
 
     private VirtualRegister getFromSpillWorkList(){
         //maybe use better strategy
+        Iterator<VirtualRegister> iter = spillWorkList.iterator();
+        VirtualRegister ret = iter.next();
+        while(iter.hasNext()){
+            VirtualRegister tmp = iter.next();
+            if(degree(tmp) >= degree(ret)) ret = tmp;
+        }
+        spillWorkList.remove(ret);
+        return ret;
+    }
+
+    private VirtualRegister getFromSpillWorkListSimple(){
         return spillWorkList.iterator().next();
     }
 
     private void selectSpill(){
-        VirtualRegister m = getFromSpillWorkList();
+        VirtualRegister m = getFromSpillWorkListSimple();
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);
@@ -451,28 +498,35 @@ public class GraphAllocator {
             else {
                 colored.add(n);
                 PhysicalRegister c = okColor.iterator().next();
+                if(c == null)
+                     throw new RuntimeException();
                 colorMap.put(n, c);
             }
         }
-        for(VirtualRegister n : coalesced) colorMap.put(n, colorMap.get(getAlias(n)));
+        for(VirtualRegister n : coalesced) {
+            PhysicalRegister preg = colorMap.get(getAlias(n));
+            colorMap.put(n, preg);
+        }
     }
 
     private void printResult(){
         System.err.println("\n\n===================Register Allocation Result after one iteration of method " + currentMethod.name + "=========================");
         System.err.println("[Color Map]:");
         colorMap.forEach((k,v)->{
+            if(v == null)
+                throw new RuntimeException("2");
             System.err.println(k.getDisplayName() + " ----> " + v.getNASMName());
         });
 
         System.err.println("\n\n[Spilled]:");
         spilled.forEach(vreg->{
-            System.err.print(vreg.getDisplayName() + "\t");
+            System.err.println(vreg.getDisplayName() + "\t" + degree(vreg));
         });
         System.err.print("\n\n");
 
         System.err.println("\n\n[Coalesced]:");
         coalesced.forEach(vreg->{
-            System.err.print(vreg.getDisplayName() + "\t");
+            System.err.println(vreg.getDisplayName() + "\t");
         });
         System.err.print("\n\n");
 
@@ -490,5 +544,19 @@ public class GraphAllocator {
             }
         });
         System.err.print("\n\n");
+    }
+
+    private void assignAndRemove(){
+        for(Map.Entry<VirtualRegister, PhysicalRegister> entry: colorMap.entrySet()) entry.getKey().spaceAllocatedTo = entry.getValue();
+        LinkedList<ASMInstruction> cleanedBB = new LinkedList<ASMInstruction>();
+        for(ASMBasicBlock bb: currentMethod.basicBlocks){
+            cleanedBB.clear();
+            for(ASMInstruction inst : bb.insts){
+                if(isSimpleMove(inst) && isSelfMove((ASMMoveInstruction) inst)) continue;
+                else cleanedBB.add(inst);
+            }
+            bb.insts.clear();
+            bb.insts.addAll(cleanedBB);
+        }
     }
 }

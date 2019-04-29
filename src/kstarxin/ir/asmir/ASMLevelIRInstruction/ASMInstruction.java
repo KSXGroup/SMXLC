@@ -34,7 +34,7 @@ public abstract class ASMInstruction extends Instruction {
 
     @Override
     public void collectDefUseInfo() {
-        //TODO
+        return;
     }
 
     @Override
@@ -46,6 +46,8 @@ public abstract class ASMInstruction extends Instruction {
     public final <T> T accept(IRBaseVisitor<T> visitor) {
         throw new RuntimeException();
     }
+
+    public abstract void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map);
 
     abstract public <T> T accept(ASMLevelIRVisitor<T> asmVisitor);
 

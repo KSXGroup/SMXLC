@@ -8,6 +8,8 @@ import kstarxin.ir.operand.physical.PhysicalRegister;
 import kstarxin.ir.operand.physical.StackSpace;
 import kstarxin.utilities.OperatorTranslator.NASMInstructionOperator;
 
+import java.util.HashMap;
+
 public class ASMMoveInstruction extends ASMInstruction {
     public NASMInstructionOperator op;
     public Operand src;
@@ -26,9 +28,19 @@ public class ASMMoveInstruction extends ASMInstruction {
 
     @Override
     public void collectInfo() {
-        if(src instanceof VirtualRegister && (((VirtualRegister) src).spaceAllocatedTo == null || ((VirtualRegister) src).spaceAllocatedTo instanceof PhysicalRegister)) use.add((VirtualRegister)src);
+        def.clear();
+        use.clear();
+        if(src instanceof VirtualRegister) use.add((VirtualRegister)src);
         else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
         if(dst instanceof VirtualRegister) def.add((VirtualRegister)dst);
         else if(dst instanceof Memory) use.addAll(((Memory) dst).collectUseInfo());
+    }
+
+    @Override
+    public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
+        if(src instanceof VirtualRegister && map.containsKey(src)) src = map.get(src);
+        if(dst instanceof VirtualRegister && map.containsKey(dst)) dst = map.get(dst);
+        if(src instanceof Memory) ((Memory) src).replaceForSpill(map);
+        if(dst instanceof Memory) ((Memory) dst).replaceForSpill(map);
     }
 }
