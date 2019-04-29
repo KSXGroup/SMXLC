@@ -45,7 +45,8 @@ public class GraphAllocator {
     private HashMap<VirtualRegister, HashSet<ASMMoveInstruction>>           moveList            = new HashMap<VirtualRegister, HashSet<ASMMoveInstruction>>();
     private HashMap<VirtualRegister, VirtualRegister>                       alias               = new HashMap<VirtualRegister, VirtualRegister>();
 
-    private ProgramRewriter                                                 rewriter            = new ProgramRewriter();
+    private ProgramRewriter                                                 rewriter;
+    private StackBuilder                                                    stackBuilder;
 
     class Pair<K, V>{
         public K first;
@@ -72,7 +73,9 @@ public class GraphAllocator {
 
     public GraphAllocator(ASMLevelIRProgram _ir){
         ir = _ir;
-        analyzer = new LivenessAnalyzerForAllocator(_ir);
+        analyzer        = new LivenessAnalyzerForAllocator(_ir);
+        rewriter        = new ProgramRewriter();
+        stackBuilder    = new StackBuilder(_ir);
     }
 
     public void run(){
@@ -83,6 +86,7 @@ public class GraphAllocator {
                 doAllocate();
             }
         });
+        stackBuilder.buildStackFrame();
         ir.ifAllocated = true;
     }
 
@@ -547,7 +551,10 @@ public class GraphAllocator {
     }
 
     private void assignAndRemove(){
-        for(Map.Entry<VirtualRegister, PhysicalRegister> entry: colorMap.entrySet()) entry.getKey().spaceAllocatedTo = entry.getValue();
+        for(Map.Entry<VirtualRegister, PhysicalRegister> entry: colorMap.entrySet()){
+            currentMethod.addColorUsed(entry.getValue());
+            entry.getKey().spaceAllocatedTo = entry.getValue();
+        }
         LinkedList<ASMInstruction> cleanedBB = new LinkedList<ASMInstruction>();
         for(ASMBasicBlock bb: currentMethod.basicBlocks){
             cleanedBB.clear();

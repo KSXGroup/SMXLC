@@ -40,7 +40,7 @@ public class ProgramRewriter implements ASMLevelIRVisitor<Void> {
     //2. create tmp reg for spilled reg
     //3. add load before use and store after def
 
-    public void     rewrite(ASMLevelIRMethod method, HashSet<VirtualRegister> _spilledRegisters){
+    public void rewrite(ASMLevelIRMethod method, HashSet<VirtualRegister> _spilledRegisters){
         spilledVirtualRegisterToStackSpace.clear();
         offsetInStack       = 0;
         currentMethod       = method;
@@ -56,6 +56,7 @@ public class ProgramRewriter implements ASMLevelIRVisitor<Void> {
             bb.insts.clear();
             bb.insts.addAll(rewritedInsts);
         }
+        currentMethod.stackAligned = offsetInStack;
     }
 
     private Memory allocateStackSpace(){

@@ -77,4 +77,24 @@ public class PhysicalRegisterSet {
     }
     };
 
+    public static HashSet<PhysicalRegister> CallerSavedRegister = new HashSet<PhysicalRegister>(){{
+        add(RAX);
+        add(RCX);
+        add(RDX);
+        add(RDI);
+        add(RSI);
+        add(R8);
+        add(R9);
+        add(R10);
+        add(R11);
+    }};
+
+    public static HashSet<PhysicalRegister> CalleeSavedRegister = new HashSet<PhysicalRegister>(){{
+        add(RBX);
+        add(R12);
+        add(R13);
+        add(R14);
+        add(R15);
+    }};
+
 }
