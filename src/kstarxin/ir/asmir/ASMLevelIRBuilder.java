@@ -236,7 +236,19 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
 
     @Override
     public Void visit(CompareInstruction inst) {
-        currentBasicBlock.insertEnd(new ASMCompareInstruction(currentBasicBlock, visit(inst.lhs), visit(inst.rhs)));
+        Operand ilhs = visit(inst.lhs);
+        Operand irhs = visit(inst.rhs);
+        if(ilhs instanceof Memory && irhs instanceof Memory){
+            VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
+            currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, irhs));
+            irhs = tmp;
+        }
+        if(ilhs instanceof Immediate){
+            VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
+            currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, ilhs));
+            ilhs = tmp;
+        }
+        currentBasicBlock.insertEnd(new ASMCompareInstruction(currentBasicBlock, ilhs, irhs));
         return null;
     }
 

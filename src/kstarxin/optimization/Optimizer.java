@@ -22,7 +22,7 @@ public class Optimizer {
 
     public void run(){
         simplifier.cleanUp();
-        inliner.run();
+        //inliner.run();
         simplifier.run();
         globalVariableOptimizer.run();
         //livenessAnalyzer.run();

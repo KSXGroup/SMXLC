@@ -21,7 +21,7 @@ public class Compiler {
     private static final    String              compileTerminateInfo = "compliation terminated";
     private static final    String              irPrintPath = "/home/kstarxin/code/compiler/ir.txt";
     private static final    String              nasmPrintPath = "/home/kstarxin/Desktop/nasm.asm";
-    private static final    String              nasmPrintPathAfter = "/home/kstarxin/Desktop/nasmafter.asm";
+    private static final    String              nasmPrintPathAfter = "/home/kstarxin/nasmafter.asm";
     private                 MxStarParser        parser;
     private                 String              fileName;
     private                 MxErrorProcessor    errorProcessor;
@@ -117,8 +117,8 @@ public class Compiler {
         Optimizer optimizer = new Optimizer(ir);
         optimizer.run();
 
-        irPrinter = new IRPrinter(ir, irOutputStream);
-        irPrinter.printIR();
+        /*irPrinter = new IRPrinter(ir, irOutputStream);
+        irPrinter.printIR();*/
 
         /*irIntererter = new IRInterpreter(irPrintPath);
         irIntererter.runIR();*/
@@ -129,8 +129,8 @@ public class Compiler {
         /*naiveAllocator = new NaiveAllocator(asmIr);
         naiveAllocator.run();*/
 
-        codePrinter = new CodePrinter(asmIr,nasmOutputStream);
-        codePrinter.printCode();
+        /*codePrinter = new CodePrinter(asmIr,nasmOutputStream);
+        codePrinter.printCode();*/
 
         graphAllocator = new GraphAllocator(asmIr);
         graphAllocator.run();

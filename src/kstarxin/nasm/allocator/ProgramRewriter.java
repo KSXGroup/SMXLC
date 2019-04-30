@@ -42,9 +42,11 @@ public class ProgramRewriter implements ASMLevelIRVisitor<Void> {
 
     public void rewrite(ASMLevelIRMethod method, HashSet<VirtualRegister> _spilledRegisters){
         spilledVirtualRegisterToStackSpace.clear();
-        offsetInStack       = 0;
-        currentMethod       = method;
-        virtualRBP          = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RBP);
+        if(method != currentMethod) {
+            offsetInStack = 0;
+            currentMethod = method;
+            virtualRBP = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RBP);
+        }
         spilledRegisters    = _spilledRegisters;
         spilledRegisters.forEach(spilled->{
             spilledVirtualRegisterToStackSpace.put(spilled, allocateStackSpace());

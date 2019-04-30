@@ -23,7 +23,8 @@ public class ASMCallInstruction extends ASMInstruction {
     public void collectInfo() {
         def.clear();
         use.clear();
-        def.add(ret);
+        def.addAll(basicBlockBelongTo.methodBelongTo.virtualCallerSavedRegister);
+        use.addAll(basicBlockBelongTo.methodBelongTo.virtualParameterPassingRegister);
     }
 
     @Override

@@ -21,6 +21,7 @@ public class ASMReturnInstruction extends ASMInstruction {
     public void collectInfo() {
         def.clear();
         use.clear();
+        use.addAll(basicBlockBelongTo.methodBelongTo.virtualCalleeSavedRegister);
     }
 
     @Override

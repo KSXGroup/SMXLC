@@ -55,8 +55,8 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     public CodePrinter(ASMLevelIRProgram _ir, PrintStream _asmPrintStream){
         nasm            = "";
         lir             = _ir;
-        ifAllocated     = _ir.ifAllocated;
-        //ifAllocated = false;
+        //ifAllocated     = _ir.ifAllocated;
+        ifAllocated = false;
         asmPrintStream  = _asmPrintStream;
         inLEA           = false;
         currentMemorySizeFlag = QWORD;
@@ -74,7 +74,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         printNonTextPart();
         nasm += "\n\n";
         if(ifAllocated) {
-            reader = new BufferedReader(new InputStreamReader(new FileInputStream("/home/kstarxin/code/compiler/lib/lib.asm")));
+            reader = new BufferedReader(new InputStreamReader(new FileInputStream(BUILTIN_FUNCTION)));
             String line = null;
             while ((line = reader.readLine()) != null) {
                 nasm += line + "\n";

@@ -1,8 +1,10 @@
 package kstarxin.nasm.allocator;
 
 import kstarxin.ir.asmir.ASMBasicBlock;
+import kstarxin.ir.asmir.ASMLevelIRInstruction.ASMCallInstruction;
 import kstarxin.ir.asmir.ASMLevelIRInstruction.ASMInstruction;
 import kstarxin.ir.asmir.ASMLevelIRInstruction.ASMMoveInstruction;
+import kstarxin.ir.asmir.ASMLevelIRInstruction.ASMReturnInstruction;
 import kstarxin.ir.asmir.ASMLevelIRMethod;
 import kstarxin.ir.asmir.ASMLevelIRProgram;
 import kstarxin.ir.operand.Operand;
@@ -64,10 +66,8 @@ public class GraphAllocator {
             else throw new RuntimeException();
         }else ret  = degree.get(vreg);
         //System.err.println("deg" + vreg.getDisplayName() +":\t"+ret);
-        if(ret == null){
-            degree.put(vreg, 0);
-            ret = 0;
-        }
+        if(ret == null)
+           ret = 0;
         return ret;
     }
 
@@ -107,7 +107,8 @@ public class GraphAllocator {
     }
 
     private void doAllocate(){
-        for(int i = 0; i < 10; ++i){
+        int cnt = 0;
+        while (true){
             clearAll();
             analyzer.analyze(currentMethod);
             initialize();
@@ -122,8 +123,13 @@ public class GraphAllocator {
             }
             assignColor();
             printResult();
-            if(spilled.isEmpty()) break;
+            if(spilled.isEmpty()){
+                cnt++;
+                System.err.println("run for " + cnt + " turn");
+                break;
+            }
             else{
+                cnt++;
                 rewriter.rewrite(currentMethod, spilled);
             }
         }
@@ -552,15 +558,25 @@ public class GraphAllocator {
 
     private void assignAndRemove(){
         for(Map.Entry<VirtualRegister, PhysicalRegister> entry: colorMap.entrySet()){
-            currentMethod.addColorUsed(entry.getValue());
             entry.getKey().spaceAllocatedTo = entry.getValue();
         }
+
         LinkedList<ASMInstruction> cleanedBB = new LinkedList<ASMInstruction>();
         for(ASMBasicBlock bb: currentMethod.basicBlocks){
             cleanedBB.clear();
             for(ASMInstruction inst : bb.insts){
                 if(isSimpleMove(inst) && isSelfMove((ASMMoveInstruction) inst)) continue;
                 else cleanedBB.add(inst);
+                if(!(inst instanceof ASMReturnInstruction || inst instanceof ASMCallInstruction)){
+                    inst.def.forEach(vreg->{
+                        if(vreg.spaceAllocatedTo != null) currentMethod.addColorUsed((PhysicalRegister) vreg.spaceAllocatedTo);
+                        else System.err.println(vreg.getDisplayName() + "shit!");
+                    });
+                    inst.use.forEach(vreg->{
+                        if(vreg.spaceAllocatedTo != null) currentMethod.addColorUsed((PhysicalRegister) vreg.spaceAllocatedTo);
+                        else System.err.println(vreg.getDisplayName() + "shit!!");
+                    });
+                }
             }
             bb.insts.clear();
             bb.insts.addAll(cleanedBB);

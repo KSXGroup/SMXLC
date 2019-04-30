@@ -34,16 +34,24 @@ public class StackBuilder {
             usedCallee.clear();
             usedCallee.addAll(method.usedCalleeSavedRegister);
             ASMBasicBlock start = method.basicBlocks.getFirst();
-            ASMBasicBlock end = method.basicBlocks.getLast();
+            ASMBasicBlock end = null;
+            for(ASMBasicBlock bb : method.basicBlocks){
+                if(bb.insts.getLast() instanceof ASMReturnInstruction){
+                    end = bb;
+                    break;
+                }
+            }
+            if(end == null) return; //that means the program will never terminated because of 'while(true)' like loop
             ASMReturnInstruction ret = (ASMReturnInstruction) end.insts.getLast();
             end.insts.removeLast();
             ASMLeaveInstruction leave = (ASMLeaveInstruction) end.insts.getLast();
             end.insts.removeLast();
-            start.insts.addFirst(new ASMPushInstruction(start, method.asmAllocateVirtualRegister(PhysicalRegisterSet.RBP)));
             int sz = usedCallee.size();
             if(!isMain) for(int i = sz - 1; i >= 0; --i) start.insts.addFirst(new ASMPushInstruction(start, method.asmAllocateVirtualRegister(usedCallee.get(i))));
             start.insts.addFirst(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.SUB, start, method.asmAllocateVirtualRegister(PhysicalRegisterSet.RSP), new Immediate(-trueStackAlign)));
-            if(!isMain) for(int i = 0; i < sz; ++i) end.insts.addLast(new ASMPopInstruction(end, method.asmAllocateVirtualRegister(usedCallee.get(i))));
+            start.insts.addFirst(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, start, method.asmAllocateVirtualRegister(PhysicalRegisterSet.RBP), method.asmAllocateVirtualRegister(PhysicalRegisterSet.RSP)));
+            start.insts.addFirst(new ASMPushInstruction(start, method.asmAllocateVirtualRegister(PhysicalRegisterSet.RBP)));
+            if(!isMain) for(int i = sz - 1; i >= 0; --i) end.insts.addLast(new ASMPopInstruction(end, method.asmAllocateVirtualRegister(usedCallee.get(i))));
             end.insts.addLast(leave);
             end.insts.addLast(ret);
         }

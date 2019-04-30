@@ -19,19 +19,38 @@ public class ASMLevelIRMethod {
     public boolean                                      isBuiltIn;
     public HashSet<PhysicalRegister>                    usedCalleeSavedRegister;
     public HashSet<PhysicalRegister>                    usedCallerSavedRegister;
+    public HashSet<VirtualRegister>                     virtualCalleeSavedRegister;
+    public HashSet<VirtualRegister>                     virtualCallerSavedRegister;
+    public HashSet<VirtualRegister>                     virtualParameterPassingRegister;
     public int                                          stackAligned;
 
     private HashMap<PhysicalRegister, VirtualRegister>  pvMap;
 
     public ASMLevelIRMethod(String _name, int _ASMTmpRegisterCounter) {
-        name                    = NameMangler.convertToASMName(_name);
-        ASMTmpRegisterCounter   = _ASMTmpRegisterCounter;
-        basicBlocks             = new LinkedList<ASMBasicBlock>();
-        isBuiltIn               = false;
-        thisPointer             = null;
-        pvMap                   = new HashMap<PhysicalRegister, VirtualRegister>();
-        usedCalleeSavedRegister = new HashSet<PhysicalRegister>();
-        usedCallerSavedRegister = new HashSet<PhysicalRegister>();
+        name                            = NameMangler.convertToASMName(_name);
+        ASMTmpRegisterCounter           = _ASMTmpRegisterCounter;
+        basicBlocks                     = new LinkedList<ASMBasicBlock>();
+        isBuiltIn                       = false;
+        thisPointer                     = null;
+        pvMap                           = new HashMap<PhysicalRegister, VirtualRegister>();
+        usedCalleeSavedRegister         = new HashSet<PhysicalRegister>();
+        usedCallerSavedRegister         = new HashSet<PhysicalRegister>();
+        virtualCalleeSavedRegister      = new HashSet<VirtualRegister>();
+        virtualCallerSavedRegister      = new HashSet<VirtualRegister>();
+        virtualParameterPassingRegister = new HashSet<VirtualRegister>();
+
+        for(PhysicalRegister preg : PhysicalRegisterSet.CallerSavedRegister){
+            virtualCallerSavedRegister.add(asmAllocateVirtualRegister(preg));
+        }
+
+        for(PhysicalRegister preg : PhysicalRegisterSet.CalleeSavedRegister){
+            virtualCalleeSavedRegister.add(asmAllocateVirtualRegister(preg));
+        }
+
+        for(PhysicalRegister preg : PhysicalRegisterSet.ParameterPassingPhysicalRegister){
+            virtualParameterPassingRegister.add(asmAllocateVirtualRegister(preg));
+        }
+
     }
 
     public VirtualRegister asmAllocateVirtualRegister(){
@@ -66,6 +85,5 @@ public class ASMLevelIRMethod {
     public void addColorUsed(PhysicalRegister preg){
         if(PhysicalRegisterSet.CalleeSavedRegister.contains(preg)) usedCalleeSavedRegister.add(preg);
         else if(PhysicalRegisterSet.CallerSavedRegister.contains(preg)) usedCallerSavedRegister.add(preg);
-        else throw new RuntimeException();
     }
 }

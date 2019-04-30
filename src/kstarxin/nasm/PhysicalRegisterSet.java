@@ -59,7 +59,7 @@ public class PhysicalRegisterSet {
 
     //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack) (callee saved register)
     //caller saved: RAX, RCX, RDX, RDI, RSI, RSP, R8, R9, R10, R11
-    public static LinkedHashSet<PhysicalRegister> PhysicalRegisterForAllocation = new LinkedHashSet<PhysicalRegister>(){{
+    public final static LinkedHashSet<PhysicalRegister> PhysicalRegisterForAllocation = new LinkedHashSet<PhysicalRegister>(){{
         add(RAX);
         add(RCX);
         add(RDX);
@@ -77,7 +77,7 @@ public class PhysicalRegisterSet {
     }
     };
 
-    public static HashSet<PhysicalRegister> CallerSavedRegister = new HashSet<PhysicalRegister>(){{
+    public final static HashSet<PhysicalRegister> CallerSavedRegister = new HashSet<PhysicalRegister>(){{
         add(RAX);
         add(RCX);
         add(RDX);
@@ -89,12 +89,23 @@ public class PhysicalRegisterSet {
         add(R11);
     }};
 
-    public static HashSet<PhysicalRegister> CalleeSavedRegister = new HashSet<PhysicalRegister>(){{
+    public final static HashSet<PhysicalRegister> CalleeSavedRegister = new HashSet<PhysicalRegister>(){{
         add(RBX);
         add(R12);
         add(R13);
         add(R14);
         add(R15);
+    }};
+
+    //paramter passed via RDI, RSI, RDX, RCX, R8, R9
+
+    public final static HashSet<PhysicalRegister> ParameterPassingPhysicalRegister = new HashSet<PhysicalRegister>(){{
+        add(RDI);
+        add(RSI);
+        add(RDX);
+        add(RCX);
+        add(R8);
+        add(R9);
     }};
 
 }

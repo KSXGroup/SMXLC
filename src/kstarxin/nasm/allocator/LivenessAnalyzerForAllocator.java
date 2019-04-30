@@ -34,12 +34,14 @@ public class LivenessAnalyzerForAllocator {
                     succSet.add(((ASMConditionalJumpInstruction) endInst).falseTarget);
                     succSet.add(((ASMConditionalJumpInstruction) endInst).trueTarget);
                 }
-                endInst = bb.insts.get(bb.insts.size() - 2);
-                if(endInst instanceof ASMDirectJumpInstruction)
-                    succSet.add(((ASMDirectJumpInstruction) endInst).target);
-                else if(endInst instanceof ASMConditionalJumpInstruction) {
-                    succSet.add(((ASMConditionalJumpInstruction) endInst).falseTarget);
-                    succSet.add(((ASMConditionalJumpInstruction) endInst).trueTarget);
+                if(bb.insts.size() >= 2) {
+                    endInst = bb.insts.get(bb.insts.size() - 2);
+                    if (endInst instanceof ASMDirectJumpInstruction)
+                        succSet.add(((ASMDirectJumpInstruction) endInst).target);
+                    else if (endInst instanceof ASMConditionalJumpInstruction) {
+                        succSet.add(((ASMConditionalJumpInstruction) endInst).falseTarget);
+                        succSet.add(((ASMConditionalJumpInstruction) endInst).trueTarget);
+                    }
                 }
 
                 originLiveOut.clear();

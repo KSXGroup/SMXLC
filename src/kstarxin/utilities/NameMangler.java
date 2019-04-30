@@ -39,9 +39,7 @@ public class NameMangler {
         //*SP: Stack pointer for top address of the stack
         //*BP: Stack base pointer for holding the address of the current stack frame
 
-        //Parameters: *DI,*SI,*DX,*CX,*R8D​,*R9D
-
-        //register can be allocated: R10, R11, R12, R13, R14, R15 ????
+        //register can be allocated: R10, R11, R12, R13, R14, R15
 
         public static boolean isGlobal(String scopeName){
             if(scopeName.equals(ASTBuilderVisitor.globalScopeName)) return true;
