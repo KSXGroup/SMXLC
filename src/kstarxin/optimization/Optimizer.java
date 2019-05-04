@@ -1,5 +1,6 @@
 package kstarxin.optimization;
 
+import kstarxin.compiler.Configure;
 import kstarxin.ir.*;
 import kstarxin.ir.instruction.ConditionJumpInstruction;
 import kstarxin.ir.instruction.DirectJumpInstruction;
@@ -12,17 +13,20 @@ public class Optimizer {
     FunctionInliner         inliner;
     GlobalVariableOptimizer globalVariableOptimizer;
     LivenessAnalyzer        livenessAnalyzer;
+    Memorization            memorization;
     public Optimizer(IRProgram _ir){
         ir                      = _ir;
         simplifier              = new CFGSimplifier(_ir);
-        inliner                 = new FunctionInliner(_ir, 4);
+        memorization            = new Memorization(_ir);
+        inliner                 = new FunctionInliner(_ir, Configure.INLINE_LEVEL, Configure.RECURSIVE_INLINE_LEVEL);
         globalVariableOptimizer = new GlobalVariableOptimizer(_ir);
         livenessAnalyzer        = new LivenessAnalyzer(_ir);
     }
 
     public void run(){
         simplifier.cleanUp();
-        //inliner.run();
+        memorization.run();
+        inliner.run();
         simplifier.run();
         globalVariableOptimizer.run();
         //livenessAnalyzer.run();

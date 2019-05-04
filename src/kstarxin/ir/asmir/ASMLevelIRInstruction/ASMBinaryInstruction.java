@@ -31,7 +31,8 @@ public class ASMBinaryInstruction extends ASMInstruction {
         def.clear();
         use.clear();
         if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
-        else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+        else if(src instanceof Memory){ use.addAll(((Memory) src).collectUseInfo());
+        }
         if(dst instanceof VirtualRegister){
             use.add((VirtualRegister) dst);
             def.add((VirtualRegister) dst);
@@ -42,7 +43,13 @@ public class ASMBinaryInstruction extends ASMInstruction {
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(src instanceof VirtualRegister && map.containsKey(src)) src = map.get(src);
         if(dst instanceof VirtualRegister && map.containsKey(dst)) dst = map.get(dst);
-        if(src instanceof Memory) ((Memory) src).replaceForSpill(map);
-        if(dst instanceof Memory) ((Memory) dst).replaceForSpill(map);
+        if(src instanceof Memory){
+            src = new Memory((Memory) src);
+            ((Memory) src).replaceForSpill(map);
+        }
+        if(dst instanceof Memory){
+            dst = new Memory((Memory) dst);
+            ((Memory) dst).replaceForSpill(map);
+        }
     }
 }

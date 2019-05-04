@@ -11,8 +11,12 @@ public class NameMangler {
         public final static String malloc               = "@_Zmalloci";
         public final static String mallocTrue           = "malloc";
         public final static String substring            = "@_Zstring4substringii";
+        public final static String print                = "@_Zprints";
+        public final static String println              = "@_Zprintlns";
         public final static String ord                  = "@_Zstring4ordi";
         public final static String parseInt             = "@_Zstring4parseInt";
+        public final static String printInt             = "@_ZprintInti";
+        public final static String printIntln           = "@_ZprintIntlni";
         public final static String mainMethodName       = "@main";
         public final static String mainTrue             = "main";
         public final static String inlineSuffix         = "#inline";

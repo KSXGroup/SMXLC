@@ -5,6 +5,7 @@ import kstarxin.ir.operand.physical.PhysicalRegister;
 import kstarxin.nasm.PhysicalRegisterSet;
 import kstarxin.utilities.NameMangler;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -15,18 +16,20 @@ public class ASMLevelIRMethod {
     public String                                       name;
     public LinkedList<ASMBasicBlock>                    basicBlocks;
     public VirtualRegister                              thisPointer;
+    public int                                          parameterCount;
     public int                                          ASMTmpRegisterCounter;
     public boolean                                      isBuiltIn;
     public HashSet<PhysicalRegister>                    usedCalleeSavedRegister;
     public HashSet<PhysicalRegister>                    usedCallerSavedRegister;
     public HashSet<VirtualRegister>                     virtualCalleeSavedRegister;
     public HashSet<VirtualRegister>                     virtualCallerSavedRegister;
-    public HashSet<VirtualRegister>                     virtualParameterPassingRegister;
+    public ArrayList<VirtualRegister>                   virtualParameterPassingRegister;
     public int                                          stackAligned;
 
     private HashMap<PhysicalRegister, VirtualRegister>  pvMap;
 
-    public ASMLevelIRMethod(String _name, int _ASMTmpRegisterCounter) {
+    public ASMLevelIRMethod(String _name, int _ASMTmpRegisterCounter, int parameterNum) {
+        parameterCount                  = parameterNum;
         name                            = NameMangler.convertToASMName(_name);
         ASMTmpRegisterCounter           = _ASMTmpRegisterCounter;
         basicBlocks                     = new LinkedList<ASMBasicBlock>();
@@ -37,7 +40,7 @@ public class ASMLevelIRMethod {
         usedCallerSavedRegister         = new HashSet<PhysicalRegister>();
         virtualCalleeSavedRegister      = new HashSet<VirtualRegister>();
         virtualCallerSavedRegister      = new HashSet<VirtualRegister>();
-        virtualParameterPassingRegister = new HashSet<VirtualRegister>();
+        virtualParameterPassingRegister = new ArrayList<VirtualRegister>();
 
         for(PhysicalRegister preg : PhysicalRegisterSet.CallerSavedRegister){
             virtualCallerSavedRegister.add(asmAllocateVirtualRegister(preg));

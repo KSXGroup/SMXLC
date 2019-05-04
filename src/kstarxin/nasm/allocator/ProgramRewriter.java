@@ -99,7 +99,9 @@ public class ProgramRewriter implements ASMLevelIRVisitor<Void> {
                         tmp, spilledVirtualRegisterToStackSpace.get(vreg)));
             });
         }
+
         rewritedInsts.add(inst);
+
         if(needStore){
             toStore.forEach(vreg->{
                 VirtualRegister tmp = null;

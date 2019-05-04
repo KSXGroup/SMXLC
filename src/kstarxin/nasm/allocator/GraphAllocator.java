@@ -487,7 +487,7 @@ public class GraphAllocator {
     }
 
     private void selectSpill(){
-        VirtualRegister m = getFromSpillWorkListSimple();
+        VirtualRegister m = getFromSpillWorkList();
         spillWorkList.remove(m);
         simplifyWorkList.add(m);
         freezeMoves(m);

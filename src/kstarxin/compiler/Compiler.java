@@ -117,8 +117,8 @@ public class Compiler {
         Optimizer optimizer = new Optimizer(ir);
         optimizer.run();
 
-        /*irPrinter = new IRPrinter(ir, irOutputStream);
-        irPrinter.printIR();*/
+        irPrinter = new IRPrinter(ir, irOutputStream);
+        irPrinter.printIR();
 
         /*irIntererter = new IRInterpreter(irPrintPath);
         irIntererter.runIR();*/
@@ -137,7 +137,6 @@ public class Compiler {
 
         codePrinter = new CodePrinter(asmIr,nasmOutputStreamAfter);
         codePrinter.printCode();
-
         return;
     }
 }

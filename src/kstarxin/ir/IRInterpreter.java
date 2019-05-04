@@ -780,6 +780,14 @@ public class IRInterpreter {
                 for(int i = addr + Configure.PTR_SIZE; memory[i] != '\0'; ++i) sa += (char) memory[i];
                 write(returnReg, builtinParseInt(sa));
                 break;
+            case "%@_ZprintIntlni":
+                int ii = read(para.get(0));
+                output += ii + "\n";
+                break;
+            case "%@_ZprintInti":
+                int jj = read(para.get(0));
+                output += jj + "\n";
+                break;
             default:
                 name = name.substring(1, name.length());
                 //throw new RuntimeException("in construction");

@@ -32,6 +32,9 @@ public class ASMPushInstruction extends ASMInstruction {
     @Override
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(src instanceof VirtualRegister && map.containsKey(src)) src = map.get(src);
-        if(src instanceof Memory ) ((Memory) src).replaceForSpill(map);
+        if(src instanceof Memory ){
+            src = new Memory((Memory) src);
+            ((Memory) src).replaceForSpill(map);
+        }
     }
 }

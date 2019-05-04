@@ -24,14 +24,16 @@ public class FunctionInliner {
 
 
     private int level;
+    private int recursiveInlineLevel;
     private int inlineCounter = 0;
     private IRProgram ir;
     private IRPrinter printer;
 
-    public FunctionInliner(IRProgram _ir, int _level){
+    public FunctionInliner(IRProgram _ir, int _level, int _recursiveInlineLevel){
         ir = _ir;
         level = _level;
         printer = new IRPrinter(_ir, System.out);
+        recursiveInlineLevel = _recursiveInlineLevel;
     }
 
     //function return the start bb and end bb pair
@@ -121,8 +123,23 @@ public class FunctionInliner {
         m.localVariables.values().forEach(local->{
             if(!operandMapper.containsKey(local)) operandMapper.put(local, new VirtualRegister(local.hintName, local.mangledName + NameMangler.inlineSuffix + inlineCounter));
         });
+
         //allocate new tmp vregs
-        m.tmpLocalRegisters.values().forEach(tmpreg ->{operandMapper.put(tmpreg, into.allocateNewTmpRegister());});
+        if(m != into) {
+            m.tmpLocalRegisters.values().forEach(tmpreg -> {
+                operandMapper.put(tmpreg, into.allocateNewTmpRegister());
+            });
+        }else{
+            HashMap<String, VirtualRegister> tmpMap = new HashMap<String, VirtualRegister>();
+            m.tmpLocalRegisters.values().forEach(tmpreg->{
+                VirtualRegister corresReg = into.allocateNewTmpRegisterWithoutPuttingItIntoMap();
+                operandMapper.put(tmpreg, corresReg);
+                tmpMap.put(tmpreg.hintName, corresReg);
+            });
+            tmpMap.forEach((k,v)->{
+                m.tmpLocalRegisters.put(k, v);
+            });
+        }
         //now all variables are mapped
 
         //traverse and replace
@@ -239,7 +256,8 @@ public class FunctionInliner {
             else if(ed instanceof ConditionJumpInstruction){
                 if(((ConditionJumpInstruction) ed).trueTarget == copy.endBB) ((ConditionJumpInstruction) ed).trueTarget = newBB;
                 else if(((ConditionJumpInstruction) ed).falseTarget == copy.endBB) ((ConditionJumpInstruction) ed).falseTarget = newBB;
-                else throw new RuntimeException();
+                else
+                    throw new RuntimeException();
             }
             else throw new RuntimeException();
             edbbpred.succ.remove(copy.endBB);
@@ -283,17 +301,30 @@ public class FunctionInliner {
 
 
     public void run(){
-        if(ir.getMethodMap().size() <= 2) return;
+        if(ir.getMethodMap().size() < 2) return;
+        //give up this
+        /*while(recursiveInlineLevel > 0){
+            collectCallInfo();
+            ir.getMethodMap().values().forEach(method -> {
+                method.recursiveMethodCall.forEach(call->{
+                    if(!method.isBuiltin && call.callee.canBeInlined){
+                        inlineFunction(call, method);
+                    }
+                });
+            });
+            recursiveInlineLevel--;
+        }*/
         while(level > 0) {
             collectCallInfo();
             ir.getMethodMap().values().forEach(method -> {
                 //inline non-recursive call first
                 method.nonRecursiveMethodCall.forEach(call -> {
-                    if (!method.isBuiltin && !method.canBeInlined && call.callee.canBeInlined) {
+                    if (!method.isBuiltin && !method.canBeInlined && !call.callee.isMemorized && call.callee.canBeInlined) {
                         inlineFunction(call, method);
                         //printer.printMethod(method);
                     }
                 });
+
             });
             level--;
         }

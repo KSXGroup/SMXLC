@@ -32,6 +32,9 @@ public class ASMPopInstruction extends ASMInstruction{
     @Override
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(op instanceof VirtualRegister && map.containsKey(op)) op = map.get(op);
-        if(op instanceof Memory) ((Memory) op).replaceForSpill(map);
+        if(op instanceof Memory){
+            op = new Memory((Memory)op);
+            ((Memory) op).replaceForSpill(map);
+        }
     }
 }

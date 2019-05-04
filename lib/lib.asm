@@ -192,11 +192,20 @@ L_006:  ret
 
 ALIGN   16
 
-printInt:
+_g__ZprintInti:
         mov     rsi, rdi
         xor     eax, eax
         lea     rdi, [rel LC1]
         jmp     printf
+
+ALIGN   16
+
+_g__ZprintIntlni:
+        mov     rsi, rdi
+        xor     eax, eax
+        lea     rdi, [rel LC2]
+        jmp     printf
+
 
 
 ALIGN   16
@@ -296,3 +305,6 @@ LC0:
 
 LC1:
         db 25H, 6CH, 6CH, 64H, 00H
+
+LC2:
+        db 25H, 6CH, 6CH, 64H, 0AH, 00H

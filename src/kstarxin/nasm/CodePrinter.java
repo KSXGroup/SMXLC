@@ -55,8 +55,8 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     public CodePrinter(ASMLevelIRProgram _ir, PrintStream _asmPrintStream){
         nasm            = "";
         lir             = _ir;
-        //ifAllocated     = _ir.ifAllocated;
-        ifAllocated = false;
+        ifAllocated     = _ir.ifAllocated;
+        //ifAllocated = false;
         asmPrintStream  = _asmPrintStream;
         inLEA           = false;
         currentMemorySizeFlag = QWORD;

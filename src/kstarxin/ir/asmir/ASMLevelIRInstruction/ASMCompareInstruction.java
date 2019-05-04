@@ -34,7 +34,13 @@ public class ASMCompareInstruction extends ASMInstruction{
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(lhs instanceof VirtualRegister && map.containsKey(lhs)) lhs = map.get(lhs);
         if(rhs instanceof VirtualRegister && map.containsKey(rhs)) rhs = map.get(rhs);
-        if(lhs instanceof Memory) ((Memory) lhs).replaceForSpill(map);
-        if(rhs instanceof Memory) ((Memory) rhs).replaceForSpill(map);
+        if(lhs instanceof Memory){
+            lhs = new Memory((Memory)lhs);
+            ((Memory) lhs).replaceForSpill(map);
+        }
+        if(rhs instanceof Memory){
+            rhs = new Memory((Memory)rhs);
+            ((Memory) rhs).replaceForSpill(map);
+        }
     }
 }

@@ -24,7 +24,10 @@ public class ASMCallInstruction extends ASMInstruction {
         def.clear();
         use.clear();
         def.addAll(basicBlockBelongTo.methodBelongTo.virtualCallerSavedRegister);
-        use.addAll(basicBlockBelongTo.methodBelongTo.virtualParameterPassingRegister);
+        int usedRegCnt = callee.parameterCount;
+        if(usedRegCnt > 6) usedRegCnt = 6;
+        for(int i = 0; i < usedRegCnt; ++i)
+            use.add(basicBlockBelongTo.methodBelongTo.virtualParameterPassingRegister.get(i));
     }
 
     @Override

@@ -36,6 +36,9 @@ public class ASMLEAInstruction extends ASMInstruction {
     @Override
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(dst instanceof VirtualRegister && map.containsKey(dst))  dst = map.get(dst);
-        if(src instanceof Memory) ((Memory) src).replaceForSpill(map);
+        if(src instanceof Memory){
+            src = new Memory((Memory) src);
+            ((Memory) src).replaceForSpill(map);
+        }
     }
 }

@@ -30,6 +30,8 @@ public class IRProgram {
     public Method                       ord;
     public Method                       parseInt;
     public Method                       substring;
+    public Method                       printInt;
+    public Method                       printIntln;
 
     public IRProgram(){
         stringConstantCounter   = 0;

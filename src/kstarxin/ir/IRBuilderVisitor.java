@@ -6,6 +6,7 @@ import kstarxin.ir.instruction.*;
 import kstarxin.ir.operand.*;
 import kstarxin.ir.superblock.LoopSuperBlock;
 import kstarxin.ir.superblock.SuperBlock;
+import kstarxin.optimization.NavieLoopEliminator;
 import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.*;
 
@@ -24,6 +25,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public static final String ifAfter    = "_ifAfter";
     public static final String memberSize = "size";
     public static final String substring  = "substring";
+    public static final String toString   = "toString";
     public static final String ord        = "ord";
     public static final String parseInt   = "parseInt";
     public static final String length     = "length";
@@ -46,6 +48,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     private boolean     inMethod;
     private boolean     inClass;
     private int         currentVariableOffset;
+    private NavieLoopEliminator loopEliminator;
 
     public IRBuilderVisitor(ProgramNode _ast){
         ast = _ast;
@@ -53,6 +56,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         inMethod = false;
         inClass = false;
         currentVariableOffset = 0;
+        loopEliminator = new NavieLoopEliminator(_ast);
     }
 
 
@@ -112,6 +116,17 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     if(symbol.isBuiltIn()) ir.addBuiltinMethod(mn , new Method(mn, false), symbol.getType());
                 }
         );
+        //add printInt
+        ArrayList<MxType> printInt = new ArrayList<MxType>();
+        printInt.add(new MxType(MxType.TypeEnum.INT));
+        Method methodprintInt = new Method(NameMangler.printInt, false);
+        ir.addBuiltinMethod(NameMangler.printInt, methodprintInt,null);
+
+        ArrayList<MxType> printIntln = new ArrayList<MxType>();
+        printIntln.add(new MxType(MxType.TypeEnum.INT));
+        Method methodprintIntln = new Method(NameMangler.printIntln, false);
+        ir.addBuiltinMethod(NameMangler.printIntln, methodprintIntln,null);
+
         //add strcat //add strcmp
         ArrayList<MxType> paraStrcat = new ArrayList<MxType>();
         paraStrcat.add(new MxType(MxType.TypeEnum.STRING));
@@ -156,6 +171,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         ir.substring    = methodSubstring;
         ir.parseInt     = methodParseInt;
         ir.ord          = methodOrd;
+        ir.printInt     = methodprintInt;
+        ir.printIntln   = methodprintIntln;
 
 
     }
@@ -314,6 +331,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     }
 
     public IRProgram buildIR(){
+        loopEliminator.eliminateIrrelevantLoop();
         init();
         initBuiltin();
         currentMethod       = new Method(NameMangler.initMethod ,false);
@@ -663,6 +681,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             callee = ir.getMethod(mmn);
         } else claCall = true;
         if(callee == null) throw new RuntimeException("method " + mmn + " not found");
+        if(callee.hintName.equals(NameMangler.print)) return processPrint(node);
+        if(callee.hintName.equals(NameMangler.println)) return processPrintln(node);
         MxType          callRtt = ir.getTypeWithMangledName(mmn);
         VirtualRegister retReg  = currentMethod.allocateNewTmpRegister();
         CallInstruction call    = new CallInstruction(callee, retReg);
@@ -1305,5 +1325,59 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     private Symbol getConstructorSymbol(String className, SymbolTable stb, Location loc){
         Symbol classSymbol = stb.getClassType(className, loc);
         return classSymbol.getMemberTable().getMember(className);
+    }
+
+    private Operand processPrint(MethodCallNode node){
+        ExpressionNode expr = node.getParameterExpressionList().get(0);
+        Method print = ir.getMethod(NameMangler.print);
+        if(print == null) throw new RuntimeException();
+        if(expr instanceof BinaryExpressionNode && ((BinaryExpressionNode) expr).getOp() == MxStarParser.ADD){
+            processPrintRecursive(((BinaryExpressionNode) expr).getLeft(), print);
+            processPrintRecursive(((BinaryExpressionNode) expr).getRight(), print);
+        }else addNewPrint(expr, print);
+        return null;
+    }
+
+    private Operand processPrintln(MethodCallNode node){
+        ExpressionNode expr = node.getParameterExpressionList().get(0);
+        Method print = ir.getMethod(NameMangler.print);
+        Method println = ir.getMethod(NameMangler.println);
+        if(expr instanceof BinaryExpressionNode && ((BinaryExpressionNode) expr).getOp() == MxStarParser.ADD){
+            processPrintRecursive(((BinaryExpressionNode) expr).getLeft(), print);
+            processPrintlnRecursive(((BinaryExpressionNode) expr).getRight(), print, println);
+        }else addNewPrint(expr, println);
+        return null;
+    }
+
+    private void processPrintRecursive(ExpressionNode node, Method printCallee){
+        if(node instanceof BinaryExpressionNode && ((BinaryExpressionNode) node).getOp() == MxStarParser.ADD){
+            processPrintRecursive(((BinaryExpressionNode) node).getLeft(), printCallee);
+            processPrintRecursive(((BinaryExpressionNode) node).getRight(), printCallee);
+        }else addNewPrint(node, printCallee);
+    }
+
+    private void processPrintlnRecursive(ExpressionNode node, Method printCallee, Method printlnCallee){
+        if(node instanceof BinaryExpressionNode && ((BinaryExpressionNode) node).getOp() == MxStarParser.ADD){
+            processPrintRecursive(((BinaryExpressionNode) node).getLeft(), printCallee);
+            processPrintlnRecursive(((BinaryExpressionNode) node).getRight(), printCallee, printlnCallee);
+        }else addNewPrint(node, printlnCallee);
+    }
+
+    private void addNewPrint(ExpressionNode node, Method printCallee){
+        CallInstruction call = null;
+        if(node instanceof MethodCallNode && ((MethodCallNode) node).getMethodName().equals(toString)){
+            ExpressionNode intToPrint = ((MethodCallNode) node).getParameterExpressionList().get(0);
+            if(printCallee.hintName.equals(NameMangler.println)){
+                call = new CallInstruction(ir.printIntln, null);
+                call.addParameter(resolveParameter(intToPrint));
+            } else{
+                call = new CallInstruction(ir.printInt, null);
+                call.addParameter(resolveParameter(intToPrint));
+            }
+        } else{
+            call = new CallInstruction(printCallee, null);
+            call.addParameter(resolveParameter(node));
+        }
+        currentBasicBlock.insertEnd(call);
     }
 }

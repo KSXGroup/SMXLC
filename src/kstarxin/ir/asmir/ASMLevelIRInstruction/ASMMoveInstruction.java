@@ -40,7 +40,13 @@ public class ASMMoveInstruction extends ASMInstruction {
     public void replaceOperandForSpill(HashMap<VirtualRegister, VirtualRegister> map) {
         if(src instanceof VirtualRegister && map.containsKey(src)) src = map.get(src);
         if(dst instanceof VirtualRegister && map.containsKey(dst)) dst = map.get(dst);
-        if(src instanceof Memory) ((Memory) src).replaceForSpill(map);
-        if(dst instanceof Memory) ((Memory) dst).replaceForSpill(map);
+        if(src instanceof Memory){
+            src = new Memory((Memory) src);
+            ((Memory) src).replaceForSpill(map);
+        }
+        if(dst instanceof Memory){
+            dst = new Memory((Memory) dst);
+            ((Memory) dst).replaceForSpill(map);
+        }
     }
 }

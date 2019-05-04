@@ -47,7 +47,9 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
     public ASMLevelIRProgram build(){
         processStaticData();
         mir.getMethodMap().values().forEach(method -> {
-            ASMLevelIRMethod asmm = new ASMLevelIRMethod(method.hintName, method.tmpRegisterCounter);
+            int paraNum = method.parameters.size();
+            if(method.classThisPointer != null) paraNum += 1;
+            ASMLevelIRMethod asmm = new ASMLevelIRMethod(method.hintName, method.tmpRegisterCounter, paraNum);
             if(method.isBuiltin) asmm.isBuiltIn = true;
             if(method.classThisPointer != null) asmm.thisPointer = method.classThisPointer;
             lir.addASMMethod(method, asmm);

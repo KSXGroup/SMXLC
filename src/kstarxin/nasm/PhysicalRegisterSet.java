@@ -99,7 +99,7 @@ public class PhysicalRegisterSet {
 
     //paramter passed via RDI, RSI, RDX, RCX, R8, R9
 
-    public final static HashSet<PhysicalRegister> ParameterPassingPhysicalRegister = new HashSet<PhysicalRegister>(){{
+    public final static ArrayList<PhysicalRegister> ParameterPassingPhysicalRegister = new ArrayList<PhysicalRegister>(){{
         add(RDI);
         add(RSI);
         add(RDX);

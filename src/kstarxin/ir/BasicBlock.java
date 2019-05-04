@@ -10,8 +10,8 @@ public class BasicBlock {
     public  SuperBlock                  superBlockBelongTo;
     public  LinkedHashSet<BasicBlock>   pred;
     public  LinkedHashSet<BasicBlock>   succ;
-    public  HashSet<VirtualRegister>    def;
-    public  HashSet<VirtualRegister>    use;
+    public  HashSet<VirtualRegister>    UEVAR;
+    public  HashSet<VirtualRegister>    VARKILL;
     public  HashSet<VirtualRegister>    liveOut;
     public  String                      blockLabel;
     public  int                         dfsOrder;
@@ -29,8 +29,8 @@ public class BasicBlock {
         endInst             = null;
         pred                = new LinkedHashSet<BasicBlock>();
         succ                = new LinkedHashSet<BasicBlock>();
-        def                 = new HashSet<VirtualRegister>();
-        use                 = new HashSet<VirtualRegister>();
+        UEVAR               = new HashSet<VirtualRegister>();
+        VARKILL             = new HashSet<VirtualRegister>();
         liveOut             = new HashSet<VirtualRegister>();
         isRemoved           = false;
         dfsOrder            = -1;
@@ -137,6 +137,14 @@ public class BasicBlock {
     }
 
     public void collectDefUseInfo(){
-        for(Instruction i = beginInst; i != null; i = i.next) i.collectDefUseInfo();
+        UEVAR.clear();
+        VARKILL.clear();
+        for(Instruction inst = beginInst; inst != null; inst = inst.next){
+            inst.collectDefUseInfo();
+            inst.use.forEach(op->{
+                if(!VARKILL.contains(op)) UEVAR.add(op);
+            });
+            VARKILL.addAll(inst.def);
+        }
     }
 }

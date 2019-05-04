@@ -21,6 +21,10 @@ public class BlockNode extends StatementNode {
     public LinkedList<Node> getStatementList(){
         return statements;
     }
+
+    public void setStatementList(LinkedList<Node> stm){
+        statements = stm;
+    }
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

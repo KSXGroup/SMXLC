@@ -14,6 +14,7 @@ public class Method {
     public static String retTmp             = "_returnTmpValue";
     public static String thisPtr            = "_this";
     public static String tmpRegPrefix       =  "_tmp";
+    public boolean                          isMemorized;
     public boolean                          isBuiltin;
     public boolean                          canBeInlined;
     public Integer                          tmpRegisterCounter;
@@ -40,6 +41,7 @@ public class Method {
     private HashSet<BasicBlock>             visited;
 
     public Method(String _hintName, boolean inClass){
+        isMemorized             = false;
         isBuiltin               = false;
         canBeInlined            = false;
         basicBlockInDFSOrder    = new LinkedHashSet<BasicBlock>();
@@ -103,6 +105,15 @@ public class Method {
         vreg.tmpId              = tmpRegisterCounter;
 
         tmpLocalRegisters.put(regName, vreg);
+        tmpRegisterCounter++;
+        return vreg;
+    }
+
+    public VirtualRegister allocateNewTmpRegisterWithoutPuttingItIntoMap(){
+        String          id      = tmpRegisterCounter.toString();
+        String          regName = hintName + tmpRegPrefix+id;
+        VirtualRegister vreg    = new VirtualRegister(id, regName);
+        vreg.tmpId              = tmpRegisterCounter;
         tmpRegisterCounter++;
         return vreg;
     }
