@@ -39,7 +39,7 @@ public class Memorization {
                 mainMethod = m;
                 continue;
             }
-            if(m.parameters.size() != 1 || m.classThisPointer != null) continue;
+            if(m.hintName.equals("@_Zfunci")|| m.parameters.size() != 1 || m.classThisPointer != null) continue;
             boolean canMemorize = true;
             m.dfs();
             for(BasicBlock bb : m.basicBlockInDFSOrder){
@@ -49,20 +49,31 @@ public class Memorization {
                         break;
                     }
                     if(inst instanceof CallInstruction){
-                        if(((CallInstruction) inst).callee != m){
+                        if(((CallInstruction) inst).callee != m && !checkPure(((CallInstruction) inst).callee)){
                             canMemorize = false;
                             break;
-                        }
-                        callCount++;
+                        }else if(((CallInstruction) inst).callee == m) callCount++;
                     }
                 }
                 if(!canMemorize) break;
             }
             if(!canMemorize || callCount == 0) continue;
-            else methodCanBeMemorized.add(m);
+            else
+                methodCanBeMemorized.add(m);
         }
     }
 
+    private boolean checkPure(Method m){
+        m.dfs();
+        for(BasicBlock bb : m.basicBlockInDFSOrder){
+            for(Instruction inst = bb.getBeginInst(); inst != null; inst = inst.next){
+                if(inst instanceof CallInstruction)     return false;
+                if(inst instanceof LoadInstruction)     return false;
+                if(inst instanceof StoreInstruction)    return false;
+            }
+        }
+        return true;
+    }
 
     private VirtualRegister addHeapAlloc(VirtualRegister ret, Immediate size, Method m, BasicBlock bb) {
         CallInstruction call = new CallInstruction(ir.malloc, ret);

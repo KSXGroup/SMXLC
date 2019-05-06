@@ -85,7 +85,7 @@ public class LivenessAnalyzer {
                 analysisByBasicBlock(m);
                 for(BasicBlock bb : m.basicBlockInDFSOrder){
                     for(Instruction i = bb.getBeginInst(); i != null; i = i.next){
-                        if(i instanceof BinaryArithmeticInstruction && !i.liveOut.contains(((BinaryArithmeticInstruction) i).target)){
+                        if(i instanceof BinaryArithmeticInstruction  && !(((BinaryArithmeticInstruction) i).target instanceof Address) && !i.liveOut.contains(((BinaryArithmeticInstruction) i).target)){
                             Instruction toRmove = i;
                             i = i.next;
                             toRmove.removeThisInst();
@@ -99,7 +99,7 @@ public class LivenessAnalyzer {
                             cnt++;
                             changed = true;
                             continue;
-                        }else if(i instanceof UnaryInstruction && !i.liveOut.contains(((UnaryInstruction) i).dest)){
+                        }else if(i instanceof UnaryInstruction && !(((UnaryInstruction) i).dest instanceof Address) &&!i.liveOut.contains(((UnaryInstruction) i).dest)){
                             Instruction toRemove = i;
                             i = i.next;
                             toRemove.removeThisInst();;
@@ -122,6 +122,6 @@ public class LivenessAnalyzer {
     }
 
     public void run(){
-        //deadCodeElimination();
+        deadCodeElimination();
     }
 }

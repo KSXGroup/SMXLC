@@ -4,6 +4,7 @@ import kstarxin.compiler.Configure;
 import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.IRProgram;
 import kstarxin.ir.Method;
+import kstarxin.ir.asmir.ASMBasicBlock;
 import kstarxin.ir.asmir.ASMLevelIRInstruction.*;
 import kstarxin.ir.asmir.ASMLevelIRMethod;
 import kstarxin.ir.asmir.ASMLevelIRProgram;
@@ -26,7 +27,6 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     public static final String              SECTION_DATA        = "\nSECTION\t.data\n";
     public static final String              SECTION_BSS         = "\nSECTION\t.bss\n";
     public static final String              SECTION_RODATA      = "\nSECTION\t.rodata\n";
-  //  public static final String              SECTION_INIT_ARRAY  = "\nSECTION\t.init_array\n";
     public static final String              GLOBAL              = "global";
     public static final String              QWORD               = "QWORD ";
     public static final String              DWORD               = "DWORD ";
@@ -42,7 +42,6 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     private             BufferedReader      reader;
     private             boolean             ifAllocated;
     private             boolean             inLEA;
-    private             String              currentMemorySizeFlag;
 
     private boolean isMemory(Operand op){
         if(op instanceof StackSpace || op instanceof PhysicalRegister) throw new RuntimeException();
@@ -59,7 +58,6 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
         //ifAllocated = false;
         asmPrintStream  = _asmPrintStream;
         inLEA           = false;
-        currentMemorySizeFlag = QWORD;
     }
 
     //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack if callee want to use) (callee saved register)
@@ -95,8 +93,10 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     public void printTextPart(){
         lir.getMethodMap().values().forEach(method -> {
+            ASMBasicBlock asmBasicBlock = null;
             if(!method.isBuiltIn) {
-                method.basicBlocks.forEach(asmBasicBlock -> {
+                for(int i = 0; i < method.basicBlocks.size(); ++i){
+                    asmBasicBlock = method.basicBlocks.get(i);
                     if (asmBasicBlock.nasmLabel != null)
                         nasm += "\n" + asmBasicBlock.nasmLabel + ":\n";
                     asmBasicBlock.insts.forEach(this::visit);
@@ -111,7 +111,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
                         nasm += "\n\n";
 
                     }
-                });
+                }
             }
         });
     }

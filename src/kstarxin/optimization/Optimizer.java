@@ -29,6 +29,6 @@ public class Optimizer {
         inliner.run();
         simplifier.run();
         globalVariableOptimizer.run();
-        //livenessAnalyzer.run();
+        livenessAnalyzer.run();
     }
 }
