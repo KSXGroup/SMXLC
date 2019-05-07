@@ -13,6 +13,7 @@ public class Optimizer {
     FunctionInliner         inliner;
     GlobalVariableOptimizer globalVariableOptimizer;
     LivenessAnalyzer        livenessAnalyzer;
+    LocalValueNumbering     localValueNumbering;
     Memorization            memorization;
     public Optimizer(IRProgram _ir){
         ir                      = _ir;
@@ -20,6 +21,7 @@ public class Optimizer {
         memorization            = new Memorization(_ir);
         inliner                 = new FunctionInliner(_ir, Configure.INLINE_LEVEL, Configure.RECURSIVE_INLINE_LEVEL);
         globalVariableOptimizer = new GlobalVariableOptimizer(_ir);
+        localValueNumbering     = new LocalValueNumbering(_ir);
         livenessAnalyzer        = new LivenessAnalyzer(_ir);
     }
 
@@ -29,6 +31,7 @@ public class Optimizer {
         inliner.run();
         simplifier.run();
         globalVariableOptimizer.run();
+        localValueNumbering.run();
         livenessAnalyzer.run();
     }
 }
