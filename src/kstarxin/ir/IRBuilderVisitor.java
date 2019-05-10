@@ -6,6 +6,7 @@ import kstarxin.ir.instruction.*;
 import kstarxin.ir.operand.*;
 import kstarxin.ir.superblock.LoopSuperBlock;
 import kstarxin.ir.superblock.SuperBlock;
+import kstarxin.optimization.LoopInvariantConditionMotion;
 import kstarxin.optimization.NavieLoopEliminator;
 import kstarxin.parser.MxStarParser;
 import kstarxin.utilities.*;
@@ -48,7 +49,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     private boolean     inMethod;
     private boolean     inClass;
     private int         currentVariableOffset;
-    private NavieLoopEliminator loopEliminator;
+    private NavieLoopEliminator             loopEliminator;
+    private LoopInvariantConditionMotion    loopInvariantConditionMotion;
 
     public IRBuilderVisitor(ProgramNode _ast){
         ast = _ast;
@@ -57,6 +59,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         inClass = false;
         currentVariableOffset = 0;
         loopEliminator = new NavieLoopEliminator(_ast);
+        loopInvariantConditionMotion = new LoopInvariantConditionMotion(_ast);
     }
 
 
@@ -213,7 +216,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
                     if (init != null) {
                         currentMethod.globalVariableUsed.add(sp);
                         Operand v = visit(init);
-                        if(v instanceof Immediate) sp.setInitialized(((Immediate) v).value);
+                        if(v instanceof Immediate) sp.setInitialized((int)((Immediate) v).value);
                         else if(v instanceof VirtualRegister) currentBasicBlock.insertEnd(new StoreInstruction(sp, (VirtualRegister)v));
                         else if(v instanceof Address){
                             VirtualRegister tmpAddrReg = currentMethod.allocateNewTmpRegister();
@@ -332,6 +335,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
 
     public IRProgram buildIR(){
         loopEliminator.eliminateIrrelevantLoop();
+        loopInvariantConditionMotion.moveLoopInvariantCondition();
         init();
         initBuiltin();
         currentMethod       = new Method(NameMangler.initMethod ,false);
@@ -802,7 +806,7 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
     public Operand visit(UnaryExpressionNode node) {
         Operand rhsValue = visit(node.getRight());
         if(rhsValue instanceof Immediate){
-            int irhs = ((Immediate) rhsValue).value;
+            int irhs = (int)((Immediate) rhsValue).value;
             switch (node.getOp()){
                 case MxStarParser.INC:
                     return new Immediate(irhs + 1);
@@ -845,8 +849,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
         Operand rhs = visit(node.getRight());
         Operand lhs = visit(node.getLeft());
         if(lhs instanceof Immediate && rhs instanceof Immediate){
-            int lval = ((Immediate) lhs).value;
-            int rval = ((Immediate) rhs).value;
+            int lval = (int) ((Immediate) lhs).value;
+            int rval = (int) ((Immediate) rhs).value;
             switch (op){
                 case MxStarParser.MUL:
                     return new Immediate(lval * rval);
@@ -1016,7 +1020,8 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             Symbol cons = node.getCurrentSymbolTable().getClassType(classType, node.getLocation()).getMemberTable().getMember(ASTBuilderVisitor.constructorPrefix + classType);
             if(cons != null){
                 //TODO:there may be some problem here
-                CallInstruction call = new CallInstruction(ir.getMethod(NameMangler.mangleClassConstructor(classType)), null);
+                String mn = NameMangler.mangleClassConstructor(classType, node.getParameterList());
+                CallInstruction call = new CallInstruction(ir.getMethod(mn), null);
                 call.setClassMemberCall(newInstanceAddr);
                 node.getParameterList().forEach(n ->{
                     call.addParameter(resolveParameter(n));

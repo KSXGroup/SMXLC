@@ -40,12 +40,6 @@ _g__Zstrcatss:
 ALIGN   16
 
 _g__Zstrcmpss:
-        mov     eax, 1
-        mov     rcx, qword [rsi]
-        cmp     qword [rdi], rcx
-        jg      L_001
-        mov     rax, -1
-        jl      L_001
         sub     rsp, 8
         add     rsi, 8
         add     rdi, 8
@@ -56,8 +50,9 @@ _g__Zstrcmpss:
         neg     rdx
         test    eax, eax
         mov     eax, 1
-        cmovle  rax, rdx
+        cmovg   rdx, rax
         add     rsp, 8
+        mov     rax, rdx
         ret
 
 ALIGN   8

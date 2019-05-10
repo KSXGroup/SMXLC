@@ -174,6 +174,8 @@ public class FunctionInliner {
                 for (BasicBlock bb : method.basicBlockInBFSOrder) {
                     for(Instruction inst = bb.getBeginInst(); inst != null; inst = inst.next) {
                         instCnt++;
+                        if(inst instanceof CallInstruction && ((CallInstruction) inst).callee == null)
+                            throw new RuntimeException();
                         if (inst instanceof CallInstruction && !((CallInstruction) inst).callee.isBuiltin){
                             if(((CallInstruction) inst).callee == method) method.recursiveMethodCall.add((CallInstruction) inst);
                             else method.nonRecursiveMethodCall.add((CallInstruction) inst);

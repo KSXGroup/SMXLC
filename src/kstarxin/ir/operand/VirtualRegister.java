@@ -46,6 +46,13 @@ public class VirtualRegister extends Register {
         spaceAllocatedTo = stack;
     }
 
+    public VirtualRegister copy(){
+        VirtualRegister ret = new VirtualRegister(hintName, mangledName);
+        ret.tmpId = tmpId;
+        ret.spaceAllocatedTo = spaceAllocatedTo;
+        return ret;
+    }
+
     @Override
     public <T> T accept(ASMLevelIRVisitor<T> visitor) {
         return visitor.visit(this);

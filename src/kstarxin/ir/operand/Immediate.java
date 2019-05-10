@@ -4,8 +4,8 @@ import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.asmir.ASMLevelIRVisitor;
 
 public class Immediate extends Constant {
-    public int value;
-    public Immediate(int _value){
+    public long value;
+    public Immediate(long _value){
         super(_value +"");
         value = _value;
     }

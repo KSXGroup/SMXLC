@@ -29,7 +29,7 @@ public class ASMUnaryInstruction extends ASMInstruction {
     //for div
     public ASMUnaryInstruction(NASMInstructionOperator op, ASMBasicBlock bb, Operand _src, VirtualRegister _vrax, VirtualRegister _vrdx){
         super(op.toString(), bb);
-        if(!op.equals(NASMInstructionOperator.IDIV)) throw new RuntimeException();
+        if(!op.equals(NASMInstructionOperator.IDIV) && !op.equals(NASMInstructionOperator.IMUL)) throw new RuntimeException();
         src = _src;
         operator = op;
         vrax = _vrax;
@@ -53,7 +53,18 @@ public class ASMUnaryInstruction extends ASMInstruction {
             if(src instanceof VirtualRegister) use.add((VirtualRegister) src);
             else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
             else throw new RuntimeException();
-        } else {
+        }else if(operator.equals(NASMInstructionOperator.IMUL)){
+            def.add(vrax);
+            def.add(vrdx);
+            use.add(vrax);
+            if(src instanceof VirtualRegister){
+                use.add((VirtualRegister) src);
+                //def.add((VirtualRegister) src);
+            }
+            else if(src instanceof Memory) use.addAll(((Memory) src).collectUseInfo());
+            else throw new RuntimeException();
+        }
+        else {
             if (src instanceof VirtualRegister) {
                 def.add((VirtualRegister) src);
                 use.add((VirtualRegister) src);

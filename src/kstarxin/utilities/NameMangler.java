@@ -2,6 +2,8 @@ package kstarxin.utilities;
 
 import kstarxin.ast.*;
 
+import java.util.ArrayList;
+
 public class NameMangler {
         public final static String globalPrefix         = "@";
         public final static String methodPrefix         = "_Z";
@@ -81,8 +83,13 @@ public class NameMangler {
             return ret + globalPrefix + className;
         }
 
-        public static String mangleClassConstructor(String className){
-            return globalPrefix + methodPrefix + className + globalPrefix + className;
+        public static String mangleClassConstructor(String className, ArrayList<ExpressionNode> para){
+            String type = "";
+            for(ExpressionNode e : para) {
+                if(e.getType().isPrimitiveType()) type += e.getType().toString().charAt(0);
+                else type += e.getType().toString();
+            }
+            return globalPrefix + methodPrefix + className + type + globalPrefix + className;
         }
 
         public static String mangleName(LoopNode n){

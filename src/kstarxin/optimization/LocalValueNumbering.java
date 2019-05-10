@@ -173,10 +173,11 @@ public class LocalValueNumbering implements IRBaseVisitor<Void> {
                 else throw new RuntimeException();
                 break;
             case MxStarParser.SUB:
-                if(uflag){
+                if(!uflag){
                     ret = oprand1 - oprand2;
                 }else
                     ret =-oprand2;
+                break;
             default:
                 throw new RuntimeException();
         }
@@ -198,8 +199,8 @@ public class LocalValueNumbering implements IRBaseVisitor<Void> {
         int ret = -1;
         if(immediateNumberingMap.containsKey(imm.value)) ret = immediateNumberingMap.get(imm.value);
         else{
-            immediateNumberingMap.put(imm.value, valueCounter);
-            numberingImmediateMap.put(valueCounter, imm.value);
+            immediateNumberingMap.put((int)imm.value, valueCounter);
+            numberingImmediateMap.put(valueCounter, (int)imm.value);
             ret = valueCounter;
             valueCounter++;
         }

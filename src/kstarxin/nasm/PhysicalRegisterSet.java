@@ -108,4 +108,23 @@ public class PhysicalRegisterSet {
         add(R9);
     }};
 
+    public final static HashSet<PhysicalRegister> dwordRegisterSet = new HashSet<PhysicalRegister>(){{
+        add(EAX);
+        add(EBX);
+        add(ECX);
+        add(EDX);
+        add(EBP);
+        add(ESP);
+        add(EDI);
+        add(ESI);
+        add(R8D);
+        add(R9D);
+        add(R10D);
+        add(R11D);
+        add(R12D);
+        add(R13D);
+        add(R14D);
+        add(R15D);
+    }};
+
 }

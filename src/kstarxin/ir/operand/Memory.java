@@ -91,7 +91,7 @@ public class Memory extends Address {
         }
         else{
             if(index instanceof Immediate) {
-                int sz = ((Immediate) index).value * sizePerData;
+                int sz = (int)((Immediate) index).value * sizePerData;
                 if(sz == 0) ret += "]";
                 else ret += "+" + sz + "]";
             } else {
@@ -129,7 +129,7 @@ public class Memory extends Address {
         }
         else{
             if(index instanceof Immediate) {
-                int sz = ((Immediate) index).value * sizePerData;
+                int sz = (int)((Immediate) index).value * sizePerData;
                 if(sz == 0) ret += "]";
                 else ret += "+" + sz + "]";
             } else  ret = ret + "+" + sizePerData + "*" +((VirtualRegister)index).spaceAllocatedTo.getNASMName()+ "]";

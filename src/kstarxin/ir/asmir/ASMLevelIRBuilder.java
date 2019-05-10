@@ -11,6 +11,7 @@ import kstarxin.ir.operand.*;
 import kstarxin.ir.operand.physical.*;
 import kstarxin.nasm.PhysicalRegisterSet;
 import kstarxin.parser.MxStarParser;
+import kstarxin.utilities.FastDivision;
 import kstarxin.utilities.NameMangler;
 import kstarxin.utilities.OperatorTranslator;
 import java.util.*;
@@ -180,15 +181,48 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             case MxStarParser.DIV:
                 VirtualRegister virtualEAX = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX);
                 VirtualRegister virtualEDX = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RDX);
-                currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, visit(inst.lhs)));
-                currentBasicBlock.insertEnd(new ASMCDQInstruction(currentBasicBlock));
-                if(inst.rhs instanceof Immediate) {
-                    VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
-                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.rhs)));
-                    currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock,tmp, virtualEAX, virtualEDX));
-                }else currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock, visit(inst.rhs), virtualEAX, virtualEDX));
-                if(inst.op == MxStarParser.DIV) currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEAX));
-                else currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEDX));
+                //if(!(inst.rhs instanceof Immediate)|| (inst.rhs instanceof Immediate && ((Immediate) inst.rhs).value < 0)) {
+                if(true){
+                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, visit(inst.lhs)));
+                    currentBasicBlock.insertEnd(new ASMCDQInstruction(currentBasicBlock));
+                    if (inst.rhs instanceof Immediate) {
+                        VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, visit(inst.rhs)));
+                        currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock, tmp, virtualEAX, virtualEDX));
+                    } else
+                        currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IDIV, currentBasicBlock, visit(inst.rhs), virtualEAX, virtualEDX));
+                    if (inst.op == MxStarParser.DIV)
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEAX));
+                    else
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, visit(inst.target), virtualEDX));
+                }else{
+                    int imm = (int)((Immediate) inst.rhs).value;
+                    FastDivision.Magic m = FastDivision.magicSigned(imm);
+                    VirtualRegister num = currentMethod.asmAllocateVirtualRegister();
+                    VirtualRegister copy = currentMethod.asmAllocateVirtualRegister();
+                    int shft = m.more;
+                    long multi = m.magic;
+                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, inst.lhs));
+                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, num, new Immediate(m.magic)));
+                    currentBasicBlock.insertEnd(new ASMUnaryInstruction(OperatorTranslator.NASMInstructionOperator.IMUL, currentBasicBlock, num, virtualEAX, virtualEDX));
+                    if((shft & 0x40) != 0)
+                        currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.ADD, currentBasicBlock, virtualEDX, inst.lhs));
+                    currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, virtualEDX));
+                    currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.SHR, currentBasicBlock, virtualEAX, new Immediate(Configure.REGISTER_LENGTH - 1)));
+                    currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.SAR, currentBasicBlock, virtualEDX, new Immediate(shft & 0x3F)));
+                    currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.ADD, currentBasicBlock, virtualEDX, virtualEAX));
+                    if(inst.op == MxStarParser.DIV) currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, inst.target, virtualEDX));
+                    else{
+                        VirtualRegister tmp = currentMethod.asmAllocateVirtualRegister();
+                        VirtualRegister tmp1 = currentMethod.asmAllocateVirtualRegister();
+                        VirtualRegister tmp2 = currentMethod.asmAllocateVirtualRegister();
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp, virtualEDX));
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, tmp1, new Immediate(((Immediate) inst.rhs).value)));
+                        currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.IMUL, currentBasicBlock, tmp, tmp1));
+                        currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, inst.target, inst.lhs));
+                        currentBasicBlock.insertEnd(new ASMBinaryInstruction(OperatorTranslator.NASMInstructionOperator.SUB, currentBasicBlock, inst.target, tmp));
+                    }
+                }
                 break;
             case MxStarParser.SFTL:
             case MxStarParser.SFTR:

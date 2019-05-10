@@ -7,7 +7,7 @@ import kstarxin.nasm.PhysicalRegisterSet;
 public class OperatorTranslator {
 
     public enum NASMInstructionOperator{MOV, MOVZX, CMP, PUSH, POP, ADD, SUB, IDIV, IMUL,NEG, AND, JMP, JE ,JNE,
-                                        JNZ, JGE, JG, JLE, JL, LEA, NOT, OR, XOR, DEC, INC, SAR, SAL, SHL, LEAVE,
+                                        JNZ, JGE, JG, JLE, JL, LEA, NOT, OR, XOR, DEC, INC, SHR, SAR, SAL, SHL, LEAVE,
                                         RET, SETL, SETLE, SETG, SETGE, SETE, SETNE, RESQ, RESD, DQ, DD};
 
     public static NASMInstructionOperator toNASMOperator(int op){
@@ -242,6 +242,43 @@ public class OperatorTranslator {
                 return PhysicalRegisterSet.CL;
             case RDX:
                 return PhysicalRegisterSet.DL;
+            default:
+                throw new RuntimeException();
+        }
+    }
+
+    public static PhysicalRegister to32BitRegister(PhysicalRegister preg){
+        //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack if callee want to use) (callee saved register)
+        //caller saved: RAX, RCX, RDX, RDI, RSI, RSP, R8, R9, R10, R11
+        if(PhysicalRegisterSet.dwordRegisterSet.contains(preg))
+            return preg;
+        switch (preg.enumName){
+            case RAX:
+                return PhysicalRegisterSet.EAX;
+            case RBX:
+                return PhysicalRegisterSet.EBX;
+            case RCX:
+                return PhysicalRegisterSet.ECX;
+            case RDX:
+                return PhysicalRegisterSet.EDX;
+            case RDI:
+                return PhysicalRegisterSet.EDI;
+            case RSI:
+                return PhysicalRegisterSet.ESI;
+            case R8:
+                return PhysicalRegisterSet.R8D;
+            case R9:
+                return PhysicalRegisterSet.R9D;
+            case R10:
+                return PhysicalRegisterSet.R10D;
+            case R11:
+                return PhysicalRegisterSet.R11D;
+            case R12:
+                return PhysicalRegisterSet.R12D;
+            case R13:
+                return PhysicalRegisterSet.R13D;
+            case R14:
+                return PhysicalRegisterSet.R14D;
             default:
                 throw new RuntimeException();
         }

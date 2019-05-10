@@ -48,6 +48,10 @@ public class LoopNode extends StatementNode{
         return loopName;
     }
 
+    public void setBody(Node newBody){
+        body = newBody;
+    }
+
     @Override
     public <T> T accept(ASTBaseVisitor<T> visitor) {
         return visitor.visit(this);

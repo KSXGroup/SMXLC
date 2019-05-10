@@ -10,4 +10,5 @@ public class Configure {
     public final static boolean     PRINT_REG_ALLOC_LIVEOUT = false;
     public final static short       INLINE_LEVEL            = 4;
     public final static short       RECURSIVE_INLINE_LEVEL  = 1;
+    public final static short       REGISTER_LENGTH         = 64;
 }

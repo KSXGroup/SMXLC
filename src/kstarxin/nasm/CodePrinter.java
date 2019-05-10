@@ -242,6 +242,12 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMUnaryInstruction inst) {
+        if(inst.operator.equals(NASMInstructionOperator.IDIV)){
+            if(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo != null){
+                inst.src = ((VirtualRegister) inst.src).copy();
+                ((VirtualRegister) inst.src).spaceAllocatedTo = OperatorTranslator.to32BitRegister((PhysicalRegister) ((VirtualRegister) inst.src).spaceAllocatedTo);
+            }
+        }
         nasm += inst.operator.toString() + "\t\t" + visit(inst.src) + "\n";
         return null;
     }

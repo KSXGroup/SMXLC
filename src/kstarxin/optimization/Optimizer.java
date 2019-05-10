@@ -15,6 +15,7 @@ public class Optimizer {
     LivenessAnalyzer        livenessAnalyzer;
     LocalValueNumbering     localValueNumbering;
     Memorization            memorization;
+    NaiveStrengthReduction  naiveStrengthReduction;
     public Optimizer(IRProgram _ir){
         ir                      = _ir;
         simplifier              = new CFGSimplifier(_ir);
@@ -22,6 +23,7 @@ public class Optimizer {
         inliner                 = new FunctionInliner(_ir, Configure.INLINE_LEVEL, Configure.RECURSIVE_INLINE_LEVEL);
         globalVariableOptimizer = new GlobalVariableOptimizer(_ir);
         localValueNumbering     = new LocalValueNumbering(_ir);
+        naiveStrengthReduction  = new NaiveStrengthReduction(_ir);
         livenessAnalyzer        = new LivenessAnalyzer(_ir);
     }
 
@@ -32,6 +34,7 @@ public class Optimizer {
         simplifier.run();
         globalVariableOptimizer.run();
         localValueNumbering.run();
-        livenessAnalyzer.run();
+        //naiveStrengthReduction.run();
+        //livenessAnalyzer.run();
     }
 }
