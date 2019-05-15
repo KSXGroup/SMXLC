@@ -28,13 +28,13 @@ public class Optimizer {
     }
 
     public void run(){
-        simplifier.cleanUp();
-        memorization.run();
-        inliner.run();
-        simplifier.run();
-        globalVariableOptimizer.run();
-        localValueNumbering.run();
-        //naiveStrengthReduction.run();
-        //livenessAnalyzer.run();
-    }
+            simplifier.cleanUp();
+            memorization.run();
+            inliner.run();
+            simplifier.run();
+            globalVariableOptimizer.run();
+            localValueNumbering.run();
+            naiveStrengthReduction.run();
+            livenessAnalyzer.run();
+        }
 }

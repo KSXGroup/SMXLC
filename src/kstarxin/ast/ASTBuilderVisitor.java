@@ -1,5 +1,7 @@
 package kstarxin.ast;
 import java.util.*;
+
+import kstarxin.compiler.Configure;
 import kstarxin.parser.*;
 import kstarxin.utilities.*;
 import kstarxin.utilities.MxException.*;

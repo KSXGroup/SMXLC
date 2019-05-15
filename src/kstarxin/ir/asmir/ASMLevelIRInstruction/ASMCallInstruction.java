@@ -28,6 +28,8 @@ public class ASMCallInstruction extends ASMInstruction {
         if(usedRegCnt > 6) usedRegCnt = 6;
         for(int i = 0; i < usedRegCnt; ++i)
             use.add(basicBlockBelongTo.methodBelongTo.virtualParameterPassingRegister.get(i));
+        if(ret != null)
+            def.add(ret);
     }
 
     @Override

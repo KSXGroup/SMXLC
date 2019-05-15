@@ -1,6 +1,7 @@
 package kstarxin.nasm;
 
 import kstarxin.compiler.Configure;
+import kstarxin.ir.BasicBlock;
 import kstarxin.ir.IRBaseVisitor;
 import kstarxin.ir.IRProgram;
 import kstarxin.ir.Method;
@@ -42,6 +43,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     private             BufferedReader      reader;
     private             boolean             ifAllocated;
     private             boolean             inLEA;
+    private             ASMBasicBlock       nextBB;
 
     private boolean isMemory(Operand op){
         if(op instanceof StackSpace || op instanceof PhysicalRegister) throw new RuntimeException();
@@ -97,6 +99,9 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
             if(!method.isBuiltIn) {
                 for(int i = 0; i < method.basicBlocks.size(); ++i){
                     asmBasicBlock = method.basicBlocks.get(i);
+                    if(i+1< method.basicBlocks.size())
+                        nextBB = method.basicBlocks.get(i+1);
+                    else nextBB = null;
                     if (asmBasicBlock.nasmLabel != null)
                         nasm += "\n" + asmBasicBlock.nasmLabel + ":\n";
                     asmBasicBlock.insts.forEach(this::visit);
@@ -172,7 +177,8 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMDirectJumpInstruction inst) {
-        nasm += "JMP\t\t" + inst.target.nasmLabel + "\n";
+        if(nextBB != null && inst.target == nextBB)
+            nasm += "JMP\t\t" + inst.target.nasmLabel + "\n";
         return null;
     }
 
@@ -243,7 +249,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
     @Override
     public String visit(ASMUnaryInstruction inst) {
         if(inst.operator.equals(NASMInstructionOperator.IDIV)){
-            if(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo != null){
+            if(inst.src instanceof VirtualRegister && ((VirtualRegister) inst.src).spaceAllocatedTo != null && ((VirtualRegister) inst.src).spaceAllocatedTo instanceof VirtualRegister){
                 inst.src = ((VirtualRegister) inst.src).copy();
                 ((VirtualRegister) inst.src).spaceAllocatedTo = OperatorTranslator.to32BitRegister((PhysicalRegister) ((VirtualRegister) inst.src).spaceAllocatedTo);
             }

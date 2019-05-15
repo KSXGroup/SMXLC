@@ -181,8 +181,8 @@ public class ASMLevelIRBuilder implements IRBaseVisitor<Void> {
             case MxStarParser.DIV:
                 VirtualRegister virtualEAX = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RAX);
                 VirtualRegister virtualEDX = currentMethod.asmAllocateVirtualRegister(PhysicalRegisterSet.RDX);
-                //if(!(inst.rhs instanceof Immediate)|| (inst.rhs instanceof Immediate && ((Immediate) inst.rhs).value < 0)) {
-                if(true){
+                if(!(inst.rhs instanceof Immediate)|| (inst.rhs instanceof Immediate && ((Immediate) inst.rhs).value < 0)) {
+                //if(true){
                     currentBasicBlock.insertEnd(new ASMMoveInstruction(OperatorTranslator.NASMInstructionOperator.MOV, currentBasicBlock, virtualEAX, visit(inst.lhs)));
                     currentBasicBlock.insertEnd(new ASMCDQInstruction(currentBasicBlock));
                     if (inst.rhs instanceof Immediate) {

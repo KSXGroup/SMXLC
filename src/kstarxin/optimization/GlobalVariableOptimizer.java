@@ -17,6 +17,7 @@ public class GlobalVariableOptimizer {
     }
 
     public void run(){
+        HashMap<Address, VirtualRegister> tmpMap = new HashMap<Address, VirtualRegister>();
         ir.getMethodMap().values().forEach(method -> {
             if(!method.isBuiltin) {
                 globalVariableReplacer.clear();

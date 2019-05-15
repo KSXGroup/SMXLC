@@ -171,6 +171,7 @@ public class MxType {
         if(other.name.equals(name) && other.dimension == dimension && other.type.equals(type)) return true;
         if(dimension > 0 && other.getEnumType().equals(TypeEnum.NULL)) return true;
         if(!isPrimitiveType && other.getEnumType().equals(TypeEnum.NULL)) return true;
+        if(!other.isPrimitiveType && getEnumType().equals(TypeEnum.NULL)) return true;
         if(type.equals(TypeEnum.STRING) && other.getEnumType().equals(TypeEnum.NULL)) return false;
         return false;
     }

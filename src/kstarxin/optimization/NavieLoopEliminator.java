@@ -1,6 +1,7 @@
 package kstarxin.optimization;
 
 import kstarxin.ast.*;
+import kstarxin.ir.operand.Immediate;
 import kstarxin.utilities.SymbolTable;
 
 import java.util.HashSet;
@@ -37,8 +38,8 @@ public class NavieLoopEliminator implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(ProgramNode node) {
-        if(node.getClassDeclarations().size() > 0) return null;
-        else node.getMethodDeclarations().forEach(this::visit);
+        node.getMethodDeclarations().forEach(this::visit);
+        node.getClassDeclarations().forEach(this::visit);
         return null;
     }
 
@@ -54,7 +55,18 @@ public class NavieLoopEliminator implements ASTBaseVisitor<Void> {
         localSymbolTable = node.getCurrentSymbolTable();
        LinkedList<Node> stmLst = node.getStatementList();
        for(Node n : stmLst){
-           if(inLoop && n instanceof LoopNode){
+           if(!inLoop && n instanceof LoopNode){
+               if(((LoopNode) n).getBody() == null || ((LoopNode) n).getBody() instanceof BlockNode && ((BlockNode)((LoopNode) n).getBody()).getStatementList().size() == 0){
+                   if(((LoopNode) n).getInitializer() != null && ((LoopNode) n).getCondition() != null && ((LoopNode) n).getStep() != null){
+                       if(((LoopNode) n).getInitializer() instanceof BinaryExpressionNode && ((LoopNode) n).getCondition() instanceof BinaryExpressionNode
+                               && (((LoopNode) n).getStep() instanceof SuffixIncreaseDecreaseNode))
+                           if(((LoopNode) n).getCondition() instanceof BinaryExpressionNode){
+                               BinaryExpressionNode cond = (BinaryExpressionNode) ((LoopNode) n).getCondition();
+                               if(cond.getRight() instanceof IntegerConstantNode && cond.getLeft() instanceof IdentifierNode) toRemove.add((LoopNode) n);
+                           }
+                   }
+               }
+           }if(inLoop && n instanceof LoopNode){
                canBeEliminated = false;
                return null;
            }else if(!inLoop && n instanceof LoopNode) {
@@ -90,6 +102,7 @@ public class NavieLoopEliminator implements ASTBaseVisitor<Void> {
 
     @Override
     public Void visit(ClassDeclarationNode node) {
+        node.getMemberMethodList().forEach(this::visit);
         return null;
     }
 

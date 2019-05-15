@@ -60,7 +60,6 @@ public class PhysicalRegisterSet {
     //callee should save RBX, RBP, R12, R13, R14, R15 according to SYSTEM V AMD64 ABI (registers which callee should save to stack) (callee saved register)
     //caller saved: RAX, RCX, RDX, RDI, RSI, RSP, R8, R9, R10, R11
     public final static LinkedHashSet<PhysicalRegister> PhysicalRegisterForAllocation = new LinkedHashSet<PhysicalRegister>(){{
-        add(RAX);
         add(RCX);
         add(RDX);
         add(RDI);
@@ -69,6 +68,8 @@ public class PhysicalRegisterSet {
         add(R9);
         add(R10);
         add(R11);
+        add(RAX);
+
         add(RBX);
         add(R12);
         add(R13);

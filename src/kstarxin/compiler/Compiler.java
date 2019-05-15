@@ -33,6 +33,7 @@ public class Compiler {
         try {
             FileInputStream     in      = new FileInputStream(f);
             BufferedReader      reader  = new BufferedReader(new InputStreamReader(in));
+
             CharStream          ipt     = CharStreams.fromStream(in);
             MxStarLexer         lexer   = new MxStarLexer(ipt);
             CommonTokenStream   token   = new CommonTokenStream(lexer);
@@ -126,14 +127,16 @@ public class Compiler {
         asmIrBuilder = new ASMLevelIRBuilder(ir);
         asmIr = asmIrBuilder.build();
 
-        /*naiveAllocator = new NaiveAllocator(asmIr);
-        naiveAllocator.run();*/
-
+        //if(Configure.FLAG) {
+            /*naiveAllocator = new NaiveAllocator(asmIr);
+            naiveAllocator.run();*/
+        //}else {
         /*codePrinter = new CodePrinter(asmIr,nasmOutputStream);
         codePrinter.printCode();*/
 
-        graphAllocator = new GraphAllocator(asmIr);
-        graphAllocator.run();
+            graphAllocator = new GraphAllocator(asmIr);
+            graphAllocator.run();
+        //}
 
         codePrinter = new CodePrinter(asmIr,nasmOutputStreamAfter);
         codePrinter.printCode();

@@ -1019,7 +1019,6 @@ public class IRBuilderVisitor implements ASTBaseVisitor<Operand> {
             String classType = node.getCreatorType().toString();
             Symbol cons = node.getCurrentSymbolTable().getClassType(classType, node.getLocation()).getMemberTable().getMember(ASTBuilderVisitor.constructorPrefix + classType);
             if(cons != null){
-                //TODO:there may be some problem here
                 String mn = NameMangler.mangleClassConstructor(classType, node.getParameterList());
                 CallInstruction call = new CallInstruction(ir.getMethod(mn), null);
                 call.setClassMemberCall(newInstanceAddr);

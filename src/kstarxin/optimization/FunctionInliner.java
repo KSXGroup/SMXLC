@@ -303,19 +303,21 @@ public class FunctionInliner {
 
 
     public void run(){
-        if(ir.getMethodMap().size() < 2) return;
         //give up this
-        /*while(recursiveInlineLevel > 0){
+        while(recursiveInlineLevel > 0){
             collectCallInfo();
             ir.getMethodMap().values().forEach(method -> {
-                method.recursiveMethodCall.forEach(call->{
-                    if(!method.isBuiltin && call.callee.canBeInlined){
-                        inlineFunction(call, method);
-                    }
-                });
+                if(method.hintName.equals("@_Zcdisssi")) {
+                    method.recursiveMethodCall.forEach(call -> {
+                        if (!method.isBuiltin && call.callee.canBeInlined) {
+                            inlineFunction(call, method);
+                        }
+                    });
+                }
             });
             recursiveInlineLevel--;
-        }*/
+        }
+        if(ir.getMethodMap().size() < 2) return;
         while(level > 0) {
             collectCallInfo();
             ir.getMethodMap().values().forEach(method -> {

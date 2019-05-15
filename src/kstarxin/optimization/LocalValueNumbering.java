@@ -197,7 +197,7 @@ public class LocalValueNumbering implements IRBaseVisitor<Void> {
 
     private Integer getValueNumbering(Immediate imm){
         int ret = -1;
-        if(immediateNumberingMap.containsKey(imm.value)) ret = immediateNumberingMap.get(imm.value);
+        if(immediateNumberingMap.containsKey((int)imm.value)) ret = immediateNumberingMap.get((int)imm.value);
         else{
             immediateNumberingMap.put((int)imm.value, valueCounter);
             numberingImmediateMap.put(valueCounter, (int)imm.value);
