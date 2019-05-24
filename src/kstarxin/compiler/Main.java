@@ -26,9 +26,9 @@ public class Main{
             }
         }*/
 
-        Compiler compiler = new Compiler("/home/kstarxin/code/compiler-offline-judge/compiler-testcases/TestCases/testcase_341.txt"); //17, 28, 67
+        //Compiler compiler = new Compiler("/home/kstarxin/code/compiler-offline-judge/compiler-testcases/TestCases/testcase_341.txt"); //17, 28, 67
         //Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/testcase_03.txt");
-        //Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/my.txt");
+        Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/codegen/my.txt");
         //Compiler compiler = new Compiler("/home/kstarxin/code/compiler/test/testcase_265.txt");
         //Compiler compiler = new Compiler("/home/kstarxin/code/compiler/my.mx");
         compiler.compileStart();

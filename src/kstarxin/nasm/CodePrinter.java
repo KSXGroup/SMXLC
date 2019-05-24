@@ -177,7 +177,7 @@ public class CodePrinter implements ASMLevelIRVisitor<String> {
 
     @Override
     public String visit(ASMDirectJumpInstruction inst) {
-        if(nextBB != null && inst.target == nextBB)
+        if(inst.target != nextBB)
             nasm += "JMP\t\t" + inst.target.nasmLabel + "\n";
         return null;
     }
